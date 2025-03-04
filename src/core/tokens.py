@@ -70,6 +70,9 @@ class Token(ImmutableObject):
     def is_value(self):
         return self.type in (Tokens.STR, Tokens.NUM)
 
+    def is_access_modifier(self):
+        return self.type == Tokens.KEYWORD and self.value in ('public', 'private', 'protected')
+
     def __str__(self):
         return f'{Token.__name__}.{self.type.name}({self.value.__repr__()}, start={self.start}, end={self.end})'
 

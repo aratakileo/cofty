@@ -5,5 +5,8 @@ fn
 let
 mut
 typedef
-cls
+class
 return
+public
+private
+protected

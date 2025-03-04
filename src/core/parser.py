@@ -1,6 +1,7 @@
 from src.utils.namespace_utils import ObjectPath, TYPE_TYPE, FunctionObject, ValueObject, PreFunctionObject
 from src.utils.arataki_typing import Result, TextFile, ImmutableObject
 from src.utils.parser_utils import TreeBuilder, ErrorSegmentAnchor, ErrorBuffer
+from src.utils.namespace_utils import ClassObject, Accessibility
 from src.core.tokens import Token, Tokens, IteratorBreaker
 from src.utils.exceptions import ReturnStatementError
 from src.core.namespace import Namespace
@@ -23,6 +24,34 @@ class ParserContext(ImmutableObject):
 
         self.token_index = 0
         self.error_buffer = err_buffer
+
+        self.body_parser = BodyParser(self)
+        self.expression_parser = ExpressionParser(self)
+        self.name_parser = NameParser(self)
+        self.func_parser = None
+
+    @property
+    def is_in_func(self):
+        return self.func_parser is not None
+
+    def start_subbody(self):
+        self.namespace.start_subbody()
+
+        if self.is_in_func:
+            self.func_parser.body_level += 1
+
+    def finish_subbody(self):
+        self.namespace.finish_subbody()
+
+        if self.is_in_func:
+            self.func_parser.body_level -= 1
+
+    def start_func_parsing(self):
+        self.func_parser = FunctionParser(self)
+        return self.func_parser
+
+    def finish_func_parsing(self):
+        self.func_parser = None
 
 
 class BasicParser(ImmutableObject):
@@ -93,17 +122,244 @@ class BasicParser(ImmutableObject):
 
         return Result.err(err)
 
+    def build_error_token_before(
+            self,
+            err: Exception = SyntaxError('invalid syntax'),
+            error_seeker=None
+    ):
+        return self.build_error(err, error_seeker, self.peek(step=-1))
+
+    def build_get_unaccessable_obj_error(
+            self,
+            accessibility: Accessibility,
+            error_seeker=None,
+            anchor: Token | ErrorSegmentAnchor = None
+    ):
+        return self.build_error(ReferenceError(
+            f'try to get access to {accessibility.access_modifier} object {accessibility.unaccessable_path}'
+        ), error_seeker, anchor)
+
     def ok_result(self, result):
         return self.context.error_buffer.result_or_err(Result.ok(result))
+
+
+class FunctionParser(BasicParser):
+    args: dict[str, dict[str, any]]
+
+    def __init__(self, context: ParserContext):
+        super().__init__(
+            context,
+            'returnable_type',
+            'body_level',
+            'has_completed_returnable_statement'
+        )
+        self.args = dict()
+        self.arg_parser = VariableParser.arg_init(self.context)
+        self.returnable_type = None
+        self.body_level = 0
+
+    def __name_check(self, name: ObjectPath):
+        if name[-1] in self.args:
+            return self.build_error(NameError(
+                'argument with this name is already defined as '
+                + as_serial_number(list(self.args.keys()).index(name[-1]) + 1)
+                + ' argument'
+            ))
+
+        return self.ok_result('OK')
+
+    def parse_return(self):
+        tree = self.new_tree('return-value')
+
+        if not self.token.is_kw('return'):
+            return self.build_error()
+
+        expression_result = None
+
+        if self.context.expression_parser.token_is_expression():
+            self.next()
+
+            expression_result = self.context.expression_parser.parse_value_expression()
+
+            if expression_result.is_err:
+                return expression_result
+
+            new_returnable_type = expression_result.ok_value['value-type']
+            tree['return-value'] = expression_result.ok_value.build()
+        else:
+            new_returnable_type = self.context.namespace.none_type
+
+        if self.returnable_type is None:
+            self.returnable_type = new_returnable_type
+
+        if new_returnable_type != self.returnable_type:
+            exception = TypeError(f'expected returnable type `{self.returnable_type}` but got `{new_returnable_type}`')
+
+            if expression_result is None:
+                return self.build_error_after_token(exception)
+
+            return self.build_error(exception, anchor=expression_result.ok_value.as_err_anchor())
+        else:
+            self.returnable_type = new_returnable_type
+
+        return self.ok_result(tree)
+
+    def parse_arg(self):
+        arg_result = self.arg_parser.parse(name_checker=self.__name_check)
+
+        if arg_result.is_err:
+            return arg_result
+
+        arg_tree = arg_result.ok_value.build()
+        arg_tree['type'] = arg_tree['value-type']
+
+        arg_name = arg_tree['name']
+
+        del arg_tree['start'], arg_tree['end'], arg_tree['name'], arg_tree['value-type']
+
+        self.args[arg_name] = arg_tree
+
+        return self.ok_result('SUCCESSFUL')
+
+    def parse(self, access_modifier: str | None):
+        if not self.token.is_kw('fn'):
+            return self.build_error()
+
+        func_name_exception = SyntaxError('expected function name')
+
+        if self.next() is None:
+            return self.build_error_after_token(func_name_exception)
+
+        if self.token.type != Tokens.ID:
+            return self.build_error(func_name_exception)
+
+        func_name = ObjectPath.relative(self.token.value)
+        tree = self.new_tree('func-init', {'name': self.token.value, 'access-modifier': access_modifier})
+
+        open_parenthesis_exception = SyntaxError('expected `(`')
+
+        if self.next() is None:
+            return self.build_error_after_token(open_parenthesis_exception)
+
+        if not self.token.is_parenthesis('('):
+            return self.build_error(open_parenthesis_exception)
+
+        if self.next() is None:
+            return self.build_error_after_token(SyntaxError('expected arguments description or `)`'))
+
+        arg_trees_result = self.context.expression_parser.parse_enumeration(
+            self.parse_arg,
+            IteratorBreaker(Tokens.PARENTHESIS, ')')
+        )
+
+        if arg_trees_result.is_err:
+            return arg_trees_result
+
+        if self.next() is None:
+            return self.build_error_after_token(SyntaxError('expecting returnable type or function body'))
+
+        if self.token.is_op('->'):
+            if self.next() is None:
+                return self.build_error_after_token(SyntaxError('expected returnable type'))
+
+            type_result = self.context.name_parser.parse_type()
+
+            if type_result.is_err:
+                return type_result
+
+            self.returnable_type = type_result.ok_value
+
+            if self.next() is None:
+                return self.build_error_after_token()
+
+        if not self.token.is_parenthesis('{'):
+            return self.build_error(SyntaxError('expected function body'))
+
+        if self.next() is None:
+            return self.build_error_after_token()
+
+        pre_function = PreFunctionObject(self.args, access_modifier)
+        self.context.namespace.define(func_name, pre_function)
+        self.context.namespace.goto(func_name)
+
+        body_result = self.context.body_parser.parse('func-body', BIG_BODY_BREAKER)
+
+        if body_result.is_err:
+            return body_result
+
+        if self.body_level != 0:
+            return self.build_error_token_before(ReturnStatementError('expected return statement'))
+
+        if self.returnable_type is None:
+            self.returnable_type = self.context.namespace.none_type
+
+        self.context.namespace[func_name] = FunctionObject(
+            self.args,
+            access_modifier,
+            self.returnable_type,
+            pre_function.body
+        )
+
+        tree.update({
+            'args': self.args,
+            'returnable-type': self.returnable_type,
+            'body': body_result.ok_value['body']
+        })
+
+        return self.ok_result(tree)
+
+
+class ClassParser(BasicParser):
+    def __init__(self, context: ParserContext):
+        super().__init__(context)
+
+        self.var_init_parser = VariableParser.var_init(self.context)
+
+    def parse(self, access_modifier: str):
+        if not self.token.is_kw('class'):
+            return self.build_error()
+
+        class_name_exception = SyntaxError('expected class name')
+
+        if self.next() is None:
+            return self.build_error_after_token(class_name_exception)
+
+        if self.token.type != Tokens.ID:
+            return self.build_error(class_name_exception)
+
+        class_name = ObjectPath.relative(self.token.value)
+        tree = self.new_tree('class-init', {'name': self.token.value, 'access-modifier': access_modifier})
+
+        open_parenthesis_exception = SyntaxError('expected `{`')
+
+        if self.next() is None:
+            return self.build_error_after_token(open_parenthesis_exception)
+
+        if not self.token.is_parenthesis('{'):
+            return self.build_error(open_parenthesis_exception)
+
+        if self.next() is None:
+            return self.build_error_after_token(SyntaxError('expected class body or `}`'))
+
+        self.context.namespace.define(class_name, ClassObject(access_modifier))
+        self.context.namespace.goto(class_name)
+
+        body_result = self.context.body_parser.parse('class-body', BIG_BODY_BREAKER)
+
+        if body_result.is_err:
+            return body_result
+
+        tree['body'] = body_result.ok_value['body']
+
+        return self.ok_result(tree)
 
 
 class BodyParser(BasicParser):
     def __init__(self, context: ParserContext):
         super().__init__(context)
 
-        self.expression_parser, self.name_parser = ExpressionParser(self), NameParser(self)
-        self.var_init_parser, self.var_set_parser = VariableParser.var_init(self), VariableParser.set_value(self)
-        self.current_function_parser = None
+        self.var_init_parser = VariableParser.var_init(self.context)
+        self.var_set_parser = VariableParser.set_value(self.context)
 
     def finish_block(self):
         if not self.has_next():
@@ -123,81 +379,126 @@ class BodyParser(BasicParser):
         if not self.token.is_parenthesis('{'):
             return self.build_error()
 
-        self.context.namespace.start_subbody()
+        self.context.start_subbody()
         self.next()
-
-        if self.current_function_parser is not None:
-            self.current_function_parser.body_level += 1
 
         body_result = self.parse('sub-body', BIG_BODY_BREAKER)
 
         if body_result.is_err:
             return body_result
 
-        self.context.namespace.finish_subbody()
-
-        if self.current_function_parser is not None:
-            self.current_function_parser.body_level -= 1
+        self.context.finish_subbody()
 
         return body_result
+
+    def build_not_allowed_error(self, target: str = None):
+        return self.build_error(SyntaxError(
+            'not allowed here' if target is not None else f'{target} is not allowed here'
+        ))
+
+    def build_access_modifier_not_allowed_error(self):
+        return self.build_error_token_before(SyntaxError('access modifier is not allowed here'))
 
     def parse(self, body_type: str, breaker: IteratorBreaker = None):
         body = []
         tree = self.new_tree(body_type, body=body)
 
         is_root_body, is_sub_body, is_func_body = body_type == 'root', body_type == 'sub-body', body_type == 'func-body'
-        is_in_func_body = self.current_function_parser is not None
+        is_class_body = body_type == 'class-body'
+
         ignore_blocks_except_breaker = False
 
         while self.has_next():
-            block_finished = False
+            access_modifier_has_changed = False
 
-            if is_in_func_body and not ignore_blocks_except_breaker:
+            if is_class_body:
+                access_modifier = 'private'
+            elif is_root_body:
+                access_modifier = 'public'
+            else:
+                access_modifier = None
+
+            if not ignore_blocks_except_breaker:
+                if self.token.is_access_modifier():
+                    if not is_class_body and not is_root_body:
+                        return self.build_not_allowed_error('access modifier')
+
+                    access_modifier = self.token.value
+                    access_modifier_has_changed = True
+
+                    self.next()
+
                 if self.token.is_kw('return'):
-                    value_result = self.current_function_parser.parse_return()
+                    if not self.context.is_in_func:
+                        return self.build_not_allowed_error('return statement')
+
+                    value_result = self.context.func_parser.parse_return()
 
                     if value_result.is_err:
                         return value_result
 
                     body.append(value_result.ok_value.build())
                     ignore_blocks_except_breaker = True
+                elif self.token.is_kw('let'):
+                    if not is_root_body and not is_sub_body and not self.context.is_in_func and not is_class_body:
+                        return self.build_not_allowed_error('variable initialisation')
 
-            if (is_root_body or is_sub_body or is_in_func_body) and not ignore_blocks_except_breaker:
-                if self.token.is_kw('let'):
-                    init_result = self.var_init_parser.parse()
+                    init_result = self.var_init_parser.parse(access_modifier)
 
                     if init_result.is_err:
                         return init_result
 
                     body.append(init_result.ok_value.build())
-                    block_finished = True
                 elif self.token.type == Tokens.ID and self.peek(lambda token: token.is_op('=')):
+                    if not is_root_body and not is_sub_body and not self.context.is_in_func:
+                        return self.build_not_allowed_error('setting the value')
+
+                    if access_modifier_has_changed:
+                        return self.build_access_modifier_not_allowed_error()
+
                     value_set_result = self.var_set_parser.parse()
 
                     if value_set_result.is_err:
                         return value_set_result
 
                     body.append(value_set_result.ok_value.build())
-                    block_finished = True
                 elif self.token.is_parenthesis('{'):
+                    if not is_root_body and not is_sub_body and not self.context.is_in_func:
+                        return self.build_not_allowed_error()
+
+                    if access_modifier_has_changed:
+                        return self.build_access_modifier_not_allowed_error()
+
                     sub_body_result = self.parse_sub_body()
 
                     if sub_body_result.is_err:
                         return sub_body_result
 
                     body.append(sub_body_result.ok_value.build())
-                    block_finished = True
+                elif self.token.is_kw('fn'):
+                    if not is_root_body and not is_class_body:
+                        return self.build_not_allowed_error('function')
 
-            if is_root_body and not block_finished and not ignore_blocks_except_breaker:
-                if self.token.is_kw('fn'):
-                    self.current_function_parser = FunctionParser(self)
-                    init_func_result = self.current_function_parser.parse()
+                    init_func_result = self.context.start_func_parsing().parse(access_modifier)
+
+                    if init_func_result.is_err:
+                        return init_func_result
+
+                    body.append(init_func_result.ok_value.build())
+                elif self.token.is_kw('class'):
+                    if not is_root_body and not is_class_body:
+                        return self.build_not_allowed_error('class')
+
+                    init_func_result = ClassParser(self.context).parse(access_modifier)
 
                     if init_func_result.is_err:
                         return init_func_result
 
                     body.append(init_func_result.ok_value.build())
                 elif self.token.is_kw('typedef'):
+                    if not is_root_body:
+                        return self.build_not_allowed_error()
+
                     if not self.peek(lambda token: token.type == Tokens.ID):
                         return self.build_error()
 
@@ -209,8 +510,8 @@ class BodyParser(BasicParser):
             if breaker is not None and breaker == self.token:
                 self.next()
 
-                if is_func_body:
-                    self.current_function_parser = None
+                if is_func_body or is_class_body:
+                    self.context.finish_func_parsing()
                     self.context.namespace.go_up()
 
                 return self.ok_result(tree)
@@ -225,10 +526,6 @@ class BodyParser(BasicParser):
 
 
 class NameParser(BasicParser):
-    def __init__(self, body_parser: BodyParser):
-        super().__init__(body_parser.context)
-        self.body_parser = body_parser
-
     def parse_name(self):
         if self.token.type != Tokens.ID:
             return self.build_error()
@@ -261,21 +558,23 @@ class NameParser(BasicParser):
             return name_result
 
         defined_type = self.context.namespace.find_obj_type(name_result.ok_value)
+        anchor = ErrorSegmentAnchor(anchor_start, self.token.end)
 
-        if defined_type is None or self.context.namespace.get_type(defined_type.type_name) != TYPE_TYPE:
-            return self.build_error(
-                SyntaxError('does not exist') if defined_type is None else TypeError('not a type'),
-                anchor=ErrorSegmentAnchor(anchor_start, self.token.end)
-            )
+        if defined_type is None:
+            return self.build_error(SyntaxError('does not exist'), anchor=anchor)
+
+        if not self.context.namespace.get_type(defined_type.type_name).is_type:
+            return self.build_error(TypeError('not a type'), anchor=anchor)
+
+        accessibility = self.context.namespace.check_accessibility(defined_type.type_name)
+
+        if not accessibility.is_accessable:
+            return self.build_get_unaccessable_obj_error(accessibility, anchor=anchor)
 
         return self.ok_result(defined_type)
 
 
 class ExpressionParser(BasicParser):
-    def __init__(self, body_parser: BodyParser):
-        super().__init__(body_parser.context)
-        self.body_parser = body_parser
-
     def parse_enumeration(self, segment_parser_fn, breaker: IteratorBreaker = IteratorBreaker(Tokens.NEWL, '\n')):
         expect_comma = False
 
@@ -335,15 +634,19 @@ class ExpressionParser(BasicParser):
         if self.token.type == Tokens.ID:
             start = self.token.start
 
-            name_result = self.body_parser.name_parser.parse_name()
+            name_result = self.context.name_parser.parse_name()
 
             if name_result.is_err:
                 return name_result
 
             name = ObjectPath.relative(name_result.ok_value)
+            accessibility = self.context.namespace.check_accessibility(name)
+            err_anchor = ErrorSegmentAnchor(start, self.token.end)
+
+            if not accessibility.is_accessable:
+                return self.build_get_unaccessable_obj_error(accessibility, anchor=err_anchor)
 
             value_obj = self.context.namespace[name]
-            err_anchor = ErrorSegmentAnchor(start, self.token.end)
 
             if value_obj is None:
                 return self.build_error(NameError('does not exist'), anchor=err_anchor)
@@ -376,20 +679,18 @@ class ExpressionParser(BasicParser):
 class VariableParser(BasicParser):
     def __init__(
             self,
-            body_parser: BodyParser,
+            context: ParserContext,
             let_kw: bool,
             mut_kw: bool,
             value_required: bool,
             supports_typing: bool
     ):
-        super().__init__(body_parser.context)
-
-        self.body_parser = body_parser
+        super().__init__(context)
 
         self.let_kw, self.mut_kw = let_kw, mut_kw
         self.value_required, self.supports_typing = value_required, supports_typing
 
-    def parse(self, name_checker=None):
+    def parse(self, access_modifier: str | None = None, name_checker=None):
         is_var_init = is_arg_init = is_value_set = False
 
         if self.let_kw:
@@ -402,7 +703,7 @@ class VariableParser(BasicParser):
             op_type = 'set-value'
             is_value_set = True
 
-        tree = self.new_tree(op_type)
+        tree = self.new_tree(op_type, {'access-modifier': access_modifier})
 
         if self.let_kw:
             if not self.token.is_kw('let'):
@@ -451,6 +752,11 @@ class VariableParser(BasicParser):
             if not value_object['mutable'] and ('value' not in value_object or value_object['value'] is not None):
                 return self.build_error(NameError('is immutable'))
 
+            accessibility = self.context.namespace.check_accessibility(value_name)
+
+            if not accessibility.is_accessable:
+                return self.build_get_unaccessable_obj_error(accessibility)
+
         value_type = None
 
         if self.supports_typing and self.peek(lambda token: token.is_sep(':')):
@@ -459,7 +765,7 @@ class VariableParser(BasicParser):
             if self.next() is None:
                 return self.build_error_after_token()
 
-            type_result = self.body_parser.name_parser.parse_type()
+            type_result = self.context.name_parser.parse_type()
 
             if type_result.is_err:
                 return type_result
@@ -477,7 +783,7 @@ class VariableParser(BasicParser):
             if self.next() is None:
                 return self.build_error_after_token()
 
-            content_result = self.body_parser.expression_parser.parse_value_expression()
+            content_result = self.context.expression_parser.parse_value_expression()
 
             if content_result.is_err:
                 return content_result
@@ -501,6 +807,7 @@ class VariableParser(BasicParser):
             value_object = ValueObject(
                 _value_type if _value_type is not None else value_content_type,
                 value_content,
+                access_modifier,
                 mutable
             )
 
@@ -512,188 +819,24 @@ class VariableParser(BasicParser):
         return self.ok_result(tree)
 
     @staticmethod
-    def var_init(body_parser: BodyParser):
-        return VariableParser(body_parser, let_kw=True, mut_kw=True, value_required=False, supports_typing=True)
+    def var_init(context: ParserContext):
+        return VariableParser(context, let_kw=True, mut_kw=True, value_required=False, supports_typing=True)
 
     @staticmethod
-    def set_value(body_parser: BodyParser):
-        return VariableParser(body_parser, let_kw=False, mut_kw=False, value_required=True, supports_typing=False)
+    def set_value(context: ParserContext):
+        return VariableParser(context, let_kw=False, mut_kw=False, value_required=True, supports_typing=False)
 
     @staticmethod
-    def arg_init(body_parser: BodyParser):
-        return VariableParser(body_parser, let_kw=False, mut_kw=True, value_required=False, supports_typing=True)
-
-
-class FunctionParser(BasicParser):
-    args: dict[str, dict[str, any]]
-
-    def __init__(self, body_parser: BodyParser):
-        super().__init__(
-            body_parser.context,
-            'returnable_type',
-            'body_level',
-            'has_completed_returnable_statement'
-        )
-        self.args = dict()
-        self.arg_parser = VariableParser.arg_init(body_parser)
-        self.body_parser = body_parser
-        self.returnable_type = None
-        self.body_level = 0
-        self.has_completed_returnable_statement = False
-
-    def __name_check(self, name: ObjectPath):
-        if name[-1] in self.args:
-            return self.build_error(NameError(
-                'argument with this name is already defined as '
-                + as_serial_number(list(self.args.keys()).index(name[-1]) + 1)
-                + ' argument'
-            ))
-
-        return self.ok_result('OK')
-
-    def parse_return(self):
-        tree = self.new_tree('return-value')
-
-        if not self.token.is_kw('return'):
-            return self.build_error()
-
-        expression_result = None
-
-        if self.body_parser.expression_parser.token_is_expression():
-            self.next()
-
-            expression_result = self.body_parser.expression_parser.parse_value_expression()
-
-            if expression_result.is_err:
-                return expression_result
-
-            new_returnable_type = expression_result.ok_value['value-type']
-            tree['return-value'] = expression_result.ok_value.build()
-        else:
-            new_returnable_type = self.context.namespace.none_type
-
-        if self.returnable_type is None:
-            self.returnable_type = new_returnable_type
-
-        if new_returnable_type != self.returnable_type:
-            exception = TypeError(f'expected returnable type `{self.returnable_type}` but got `{new_returnable_type}`')
-
-            if expression_result is None:
-                return self.build_error_after_token(exception)
-
-            return self.build_error(exception, anchor=expression_result.ok_value.as_err_anchor())
-        else:
-            self.returnable_type = new_returnable_type
-
-        if self.body_level == 0:
-            self.has_completed_returnable_statement = True
-
-        return self.ok_result(tree)
-
-    def parse_arg(self):
-        arg_result = self.arg_parser.parse(self.__name_check)
-
-        if arg_result.is_err:
-            return arg_result
-
-        arg_tree = arg_result.ok_value.build()
-        arg_tree['type'] = arg_tree['value-type']
-
-        arg_name = arg_tree['name']
-
-        del arg_tree['start'], arg_tree['end'], arg_tree['name'], arg_tree['value-type']
-
-        self.args[arg_name] = arg_tree
-
-        return self.ok_result('SUCCESSFUL')
-
-    def parse(self):
-        if not self.token.is_kw('fn'):
-            return self.build_error()
-
-        func_name_exception = SyntaxError('expected function name')
-
-        if self.next() is None:
-            return self.build_error_after_token(func_name_exception)
-
-        if self.token.type != Tokens.ID:
-            return self.build_error(func_name_exception)
-
-        func_name = ObjectPath.relative(self.token.value)
-        tree = self.new_tree('func-init', name=self.token.value)
-
-        open_parenthesis_exception = SyntaxError('expected `(`')
-
-        if self.next() is None:
-            return self.build_error_after_token(open_parenthesis_exception)
-
-        if not self.token.is_parenthesis('('):
-            return self.build_error(open_parenthesis_exception)
-
-        if self.next() is None:
-            return self.build_error_after_token(SyntaxError('expected arguments description or `)`'))
-
-        arg_trees_result = self.body_parser.expression_parser.parse_enumeration(
-            self.parse_arg,
-            IteratorBreaker(Tokens.PARENTHESIS, ')')
-        )
-
-        if arg_trees_result.is_err:
-            return arg_trees_result
-
-        if self.next() is None:
-            return self.build_error_after_token(SyntaxError('expecting returnable type or function body'))
-
-        if self.token.is_op('->'):
-            if self.next() is None:
-                return self.build_error_after_token(SyntaxError('expected returnable type'))
-
-            type_result = self.body_parser.name_parser.parse_type()
-
-            if type_result.is_err:
-                return type_result
-
-            self.returnable_type = type_result.ok_value
-
-            if self.next() is None:
-                return self.build_error_after_token()
-
-        if not self.token.is_parenthesis('{'):
-            return self.build_error(SyntaxError('expected function body'))
-
-        if self.next() is None:
-            return self.build_error_after_token()
-
-        pre_function = PreFunctionObject(self.args)
-        self.context.namespace.define(func_name, pre_function)
-        self.context.namespace.goto(func_name)
-
-        body_result = self.body_parser.parse('func-body', BIG_BODY_BREAKER)
-
-        if body_result.is_err:
-            return body_result
-
-        if self.returnable_type is None or not self.has_completed_returnable_statement:
-            return self.build_error(ReturnStatementError('expected return statement'), anchor=self.peek(step=-1))
-
-        self.context.namespace[func_name] = FunctionObject(self.args, self.returnable_type, pre_function.body)
-
-        tree.update({
-            'args': self.args,
-            'returnable-type': self.returnable_type,
-            'body': body_result.ok_value['body']
-        })
-
-        return self.ok_result(tree)
+    def arg_init(context: ParserContext):
+        return VariableParser(context, let_kw=False, mut_kw=True, value_required=False, supports_typing=True)
 
 
 class Parser(BasicParser):
     def __init__(self, context: ParserContext):
         super().__init__(context)
-        self.body_parser = BodyParser(context)
 
     def parse(self):
-        tree_result = self.body_parser.parse('root')
+        tree_result = self.context.body_parser.parse('root')
 
         if tree_result.is_err:
             return tree_result

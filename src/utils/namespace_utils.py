@@ -49,6 +49,10 @@ class ObjectPath(ImmutableObject):
 
         return ObjectPath(self.segments + (*other,))
 
+    def hierarchy_from_top(self) -> tuple['ObjectPath']:
+        path = self
+        return (self, *(path := path.go_up() for i in range(len(self.segments) - 1)))[::-1]
+
     @property
     def is_abs(self):
         return self.segments[0] == '$'
@@ -155,11 +159,15 @@ class ObjectType(ImmutableObject, JsonSerializable):
 
     @property
     def is_namespace(self):
-        return self.is_root and self.type_name in ('$body', '$root', '$module')
+        return self.is_root and self.type_name in ('$body', '$root', '$module', '$class')
 
     @property
     def is_func(self):
         return self.is_root and self.type_name in ('$func', '$pre-func')
+
+    @property
+    def is_type(self):
+        return self.is_root and self.type_name in ('$class', '$type')
 
     def to_json_serializable(self):
         return self.__str__()
@@ -181,6 +189,7 @@ class ObjectType(ImmutableObject, JsonSerializable):
 ROOT_TYPE, BODY_TYPE, MODULE_TYPE = ObjectType('$root'), ObjectType('$body'), ObjectType('$module')
 TYPE_TYPE, NOT_INITED_MODULE_TYPE = ObjectType('$type'), ObjectType('$not-inited-module')
 FUNC_TYPE, PRE_FUNC_TYPE = ObjectType('$func'), ObjectType('$pre-func')
+CLASS_TYPE = ObjectType('$class')
 
 
 class NamespaceObject(JsonSerializable, ImmutableObject):
@@ -199,7 +208,13 @@ class NamespaceObject(JsonSerializable, ImmutableObject):
 
 
 class ValueObject(NamespaceObject):
-    def __init__(self, type: ObjectType | None, value: dict[str, any], mutable: bool = None):
+    def __init__(
+            self,
+            type: ObjectType | None,
+            value: dict[str, any],
+            access_modifier: str | None,
+            mutable: bool = None
+    ):
         if type is None:
             if value is None:
                 raise ValueError('both type and value are None')
@@ -216,10 +231,18 @@ class ValueObject(NamespaceObject):
             self.mutable = False
 
         self.value = value
+        self.access_modifier = access_modifier
 
 
-class PreFunctionObject(NamespaceObject):
-    def __init__(self, args: ImmutableDict | dict[str, dict[str, str]]):
+class BodyHaverObject(NamespaceObject):
+    def __init__(self, type: ObjectType, body: dict = ...):
+        super().__init__(type)
+
+        self.body = body if body is not ... else dict()
+
+
+class PreFunctionObject(BodyHaverObject):
+    def __init__(self, args: ImmutableDict | dict[str, dict[str, str]], access_modifier: str | None):
         super().__init__(PRE_FUNC_TYPE)
 
         if isinstance(args, ImmutableDict):
@@ -227,17 +250,18 @@ class PreFunctionObject(NamespaceObject):
         else:
             self.args = ImmutableDict(args)
 
-        self.body = dict()
+        self.access_modifier = access_modifier
 
 
-class FunctionObject(NamespaceObject):
+class FunctionObject(BodyHaverObject):
     def __init__(
             self,
             args: ImmutableDict | dict[str, dict[str, str]],
+            access_modifier: str | None,
             returnable_type: ObjectType,
             body: dict[str, any]
     ):
-        super().__init__(FUNC_TYPE)
+        super().__init__(FUNC_TYPE, body)
 
         if isinstance(args, ImmutableDict):
             self.args = args
@@ -245,7 +269,13 @@ class FunctionObject(NamespaceObject):
             self.args = ImmutableDict(args)
 
         self.returnable_type = returnable_type
-        self.body = body
+        self.access_modifier = access_modifier
+
+
+class ClassObject(BodyHaverObject):
+    def __init__(self, access_modifier: str):
+        super().__init__(CLASS_TYPE)
+        self.access_modifier = access_modifier
 
 
 class NotInitedModule(NamespaceObject):
@@ -257,6 +287,22 @@ class NotInitedModule(NamespaceObject):
         return {'type': self.type}
 
 
+class Accessibility(ImmutableObject):
+    def __init__(self, is_accessable: bool, access_modifier: str | None, unaccessable_path: ObjectPath | None = None):
+        super().__init__()
+        self.is_accessable = is_accessable
+        self.access_modifier = access_modifier
+        self.unaccessable_path = unaccessable_path
+
+    @staticmethod
+    def accessable(access_modifier: str | None):
+        return Accessibility(True, access_modifier)
+
+    @staticmethod
+    def unaccessable(access_modifier: str, unaccessable_path: ObjectPath):
+        return Accessibility(False, access_modifier, unaccessable_path)
+
+
 __all__ = (
     'ObjectPath',
     'ObjectType',
@@ -264,7 +310,9 @@ __all__ = (
     'ValueObject',
     'PreFunctionObject',
     'FunctionObject',
+    'ClassObject',
     'NotInitedModule',
+    'Accessibility',
     'ROOT_TYPE',
     'BODY_TYPE',
     'MODULE_TYPE',

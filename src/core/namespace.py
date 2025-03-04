@@ -97,6 +97,22 @@ class Namespace(StaticTypedObject):
 
         return None
 
+    def check_accessibility(self, obj_path: ObjectPath):
+        obj = self[obj_path]
+
+        if obj is None:
+            return None
+
+        for path in self.obj_context_abs_path(obj_path).hierarchy_from_top():
+            current_obj = self[path]
+
+            if 'access_modifier' in current_obj \
+                    and current_obj['access_modifier'] == 'private' \
+                    and path.go_up() != self.current_obj_path:
+                return Accessibility.unaccessable('private', path)
+
+        return Accessibility.accessable(None if 'access_modifier' not in obj else obj['access_modifier'])
+
     @property
     def none_type(self):
         if self.__none_type is None:
