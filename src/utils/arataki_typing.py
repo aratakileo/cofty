@@ -1,4 +1,4 @@
-from os.path import abspath
+from os.path import abspath, normpath
 from json import dumps
 
 
@@ -108,12 +108,9 @@ class TextFile(ImmutableObject, JsonSerializable):
 
     def __init__(self, path: str, text: str):
         super().__init__()
-        self.path = path
+        self.path = normpath(path)
+        self.abspath = abspath(self.path)
         self.text = text
-
-    @property
-    def abspath(self):
-        return abspath(self.path)
 
     def to_json_serializable(self):
         return {
@@ -130,6 +127,9 @@ class TextFile(ImmutableObject, JsonSerializable):
         with open(path, 'r', encoding='utf-8') as f:
             return TextFile(path, f.read())
 
+    def __eq__(self, other: 'TextFile'):
+        return self.abspath == other.abspath
+
     def __str__(self):
         return self.text
 
@@ -141,7 +141,10 @@ def json_encoder(obj):
     if isinstance(obj, JsonSerializable):
         return obj.to_json_serializable()
 
-    return obj
+    if isinstance(obj, int | float | bool | str | list | tuple):
+        return obj
+
+    raise ValueError(f'{obj.__class__.__name__} is not JSON serializable')
 
 
 def json_decoder(obj, cls):

@@ -1,4 +1,5 @@
 from src.utils.arataki_typing import ImmutableObject, json_encode, Result
+from src.core.tokens import IteratorBreaker, Tokens
 from src.core.errors import Error
 
 
@@ -81,8 +82,92 @@ class ErrorBuffer:
     def has_err(self):
         return self.error is not None
 
-    def result_or_err(self, result: Result):
+    def ok_or_err_result(self, ok_value):
         if self.has_err:
             return Result.err(self.error)
 
-        return result
+        return Result.ok(ok_value)
+
+
+BIG_BODY_BREAKER = IteratorBreaker(Tokens.PARENTHESIS, '}')
+
+
+class BodyParsingContext:
+    def __init__(self, body_type: str, breaker: IteratorBreaker = None):
+        self.body_type = body_type
+        self.breaker = breaker
+        self._access_modifier = 'public'
+        self._access_modifier_has_changed = False
+
+    @property
+    def is_root_body(self):
+        return self.body_type == 'root'
+
+    @property
+    def is_subbody(self):
+        return self.body_type == 'sub-body'
+
+    @property
+    def is_func_body(self):
+        return self.body_type == 'func-body'
+
+    @property
+    def is_class_body(self):
+        return self.body_type == 'class-body'
+
+    @property
+    def is_subbody_like(self):
+        return self.is_subbody or self.is_root_body
+
+    def set_default_access_modifier(self):
+        if not self.access_modifier_is_allowed:
+            self._access_modifier = None
+            return
+
+        self._access_modifier = 'public'
+        self._access_modifier_has_changed = False
+
+        if self.is_class_body:
+            self._access_modifier = 'private'
+
+    @property
+    def access_modifier_is_allowed(self):
+        return self.is_class_body or self.is_root_body
+
+    @property
+    def access_modifier_has_changed(self):
+        return self._access_modifier_has_changed
+
+    @property
+    def access_modifier(self) -> str | None:
+        return self._access_modifier
+
+    @access_modifier.setter
+    def access_modifier(self, value: str):
+        if not self.access_modifier_is_allowed:
+            raise ValueError('Access modifier is not allowed in this context')
+
+        if self._access_modifier_has_changed:
+            raise ValueError('Access modifier has changed for the body without reset')
+
+        if value is None:
+            raise ValueError('Access modifier is None')
+
+        self._access_modifier_has_changed = True
+        self._access_modifier = value
+
+    @staticmethod
+    def subbody():
+        return BodyParsingContext('sub-body', BIG_BODY_BREAKER)
+
+    @staticmethod
+    def funcbody():
+        return BodyParsingContext('func-body', BIG_BODY_BREAKER)
+
+    @staticmethod
+    def classbody():
+        return BodyParsingContext('class-body', BIG_BODY_BREAKER)
+
+    @staticmethod
+    def rootbody():
+        return BodyParsingContext('root')

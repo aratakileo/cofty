@@ -1,7 +1,7 @@
-from src.utils.arataki_typing import ImmutableObject, JsonSerializable, ImmutableDict
+from src.utils.arataki_typing import ImmutableObject, JsonSerializable, ImmutableDict, TextFile
 
 
-class ObjectPath(ImmutableObject):
+class ObjectPath(ImmutableObject, JsonSerializable):
     segments: tuple
 
     def __init__(self, segments: list | tuple | str):
@@ -15,6 +15,10 @@ class ObjectPath(ImmutableObject):
 
         if not self.segments:
             raise ValueError('path can not be empty')
+
+        for segment in segments:
+            if not segment or segment.isspace():
+                raise ValueError('path contains empty or filled with spaces fragments')
 
     def __eq__(self, other):
         if not isinstance(other, ObjectPath):
@@ -42,16 +46,12 @@ class ObjectPath(ImmutableObject):
             other = other.split('.')
 
         if '$' in other:
-            raise ValueError(f'impossible to concatenate `{self.__str__()}` with `{".".join(other)}`')
+            raise ValueError(f'impossible to concatenate absolute paths `{self.__str__()}` and `{".".join(other)}`')
 
         if isinstance(other, ObjectPath):
             return ObjectPath(self.segments + other.segments)
 
         return ObjectPath(self.segments + (*other,))
-
-    def hierarchy_from_top(self) -> tuple['ObjectPath']:
-        path = self
-        return (self, *(path := path.go_up() for i in range(len(self.segments) - 1)))[::-1]
 
     @property
     def is_abs(self):
@@ -61,20 +61,40 @@ class ObjectPath(ImmutableObject):
     def is_root(self):
         return self.segments == ('$',)
 
-    @property
-    def first_segment(self):
-        return self.segments[0]
+    def is_abs_or_throw(self):
+        if not self.is_abs:
+            raise ValueError(f'path `{self.__str__()}` is not absolute')
 
-    @property
-    def last_segment(self):
-        return self.segments[-1]
+    def hierarchy_from_top(self, ignore_first=False, ignore_last=False) -> tuple['ObjectPath']:
+        path = self
+
+        ignore_first = 1 if ignore_first else None
+        ignore_last = -1 if ignore_last else None
+
+        return (
+                   self,
+                   *(path := path.go_up() for _ in range(len(self.segments) - 1))
+               )[::-1][ignore_first:ignore_last]
+
+    def is_close_parent_for(self, abs_path: 'ObjectPath'):
+        abs_path.is_abs_or_throw()
+        return self == abs_path.go_up()
+
+    def is_parent_for(self, abs_path: 'ObjectPath'):
+        abs_path.is_abs_or_throw()
+
+        for path in abs_path.go_up().hierarchy_from_top():
+            if path == self:
+                return True
+
+        return False
 
     def as_abs(self):
         return ObjectPath.abs(self.segments)
 
     def as_relative(self, strict=True):
-        if not self.is_abs and strict:
-            raise ValueError(f'path `{self.__str__()}` is not absolute')
+        if strict:
+            self.is_abs_or_throw()
 
         return ObjectPath(self.segments[1:])
 
@@ -96,6 +116,16 @@ class ObjectPath(ImmutableObject):
                 return False
 
         return True
+
+    def to_json_serializable(self):
+        return self.__str__()
+
+    @staticmethod
+    def from_json_serializable(obj: str):
+        if obj != '$' and not obj.startswith('$.'):
+            return ObjectType(obj)
+
+        return ObjectType(ObjectPath.abs(obj))
 
     @staticmethod
     def abs(segments: list | tuple | str):
@@ -127,6 +157,10 @@ class ObjectPath(ImmutableObject):
     @staticmethod
     def builtins_path():
         return ObjectPath('$.$builtins')
+
+    @staticmethod
+    def main_path():
+        return ObjectPath('$.$main')
 
     def __str__(self):
         return '.'.join(self.segments)
@@ -169,6 +203,10 @@ class ObjectType(ImmutableObject, JsonSerializable):
     def is_type(self):
         return self.is_root and self.type_name in ('$class', '$type')
 
+    @property
+    def is_module(self):
+        return self.is_root and self.type_name in ('$module', '$not-inited-module')
+
     def to_json_serializable(self):
         return self.__str__()
 
@@ -188,13 +226,19 @@ class ObjectType(ImmutableObject, JsonSerializable):
 
 ROOT_TYPE, BODY_TYPE, MODULE_TYPE = ObjectType('$root'), ObjectType('$body'), ObjectType('$module')
 TYPE_TYPE, NOT_INITED_MODULE_TYPE = ObjectType('$type'), ObjectType('$not-inited-module')
+MODULE_CONTAINER = ObjectType('$module-container')
 FUNC_TYPE, PRE_FUNC_TYPE = ObjectType('$func'), ObjectType('$pre-func')
 CLASS_TYPE = ObjectType('$class')
+LINK_TYPE = ObjectType('$link')
 
 
 class NamespaceObject(JsonSerializable, ImmutableObject):
     def __init__(self, type: ObjectType, *allow_mutation: str):
         super().__init__(*allow_mutation)
+
+        if type is None:
+            raise ValueError('expected object type, but got None')
+
         self.type = type
 
     def __getitem__(self, item):
@@ -205,6 +249,15 @@ class NamespaceObject(JsonSerializable, ImmutableObject):
 
     def to_json_serializable(self):
         return self.__immutable_dict__
+
+
+class LinkObject(NamespaceObject):
+    def __init__(self, abs_path: ObjectPath):
+        super().__init__(LINK_TYPE)
+
+        abs_path.is_abs_or_throw()
+
+        self.path = abs_path
 
 
 class ValueObject(NamespaceObject):
@@ -234,14 +287,14 @@ class ValueObject(NamespaceObject):
         self.access_modifier = access_modifier
 
 
-class BodyHaverObject(NamespaceObject):
+class BodyHandlerObject(NamespaceObject):
     def __init__(self, type: ObjectType, body: dict = ...):
         super().__init__(type)
 
         self.body = body if body is not ... else dict()
 
 
-class PreFunctionObject(BodyHaverObject):
+class PreFunctionObject(BodyHandlerObject):
     def __init__(self, args: ImmutableDict | dict[str, dict[str, str]], access_modifier: str | None):
         super().__init__(PRE_FUNC_TYPE)
 
@@ -253,7 +306,7 @@ class PreFunctionObject(BodyHaverObject):
         self.access_modifier = access_modifier
 
 
-class FunctionObject(BodyHaverObject):
+class FunctionObject(BodyHandlerObject):
     def __init__(
             self,
             args: ImmutableDict | dict[str, dict[str, str]],
@@ -272,16 +325,21 @@ class FunctionObject(BodyHaverObject):
         self.access_modifier = access_modifier
 
 
-class ClassObject(BodyHaverObject):
+class ClassObject(BodyHandlerObject):
     def __init__(self, access_modifier: str):
         super().__init__(CLASS_TYPE)
         self.access_modifier = access_modifier
 
 
-class NotInitedModule(NamespaceObject):
+class ModuleObject(BodyHandlerObject):
+    def __init__(self, body: dict = ...):
+        super().__init__(MODULE_TYPE, body)
+
+
+class NotInitedModuleObject(NamespaceObject):
     def __init__(self, initializer):
         super().__init__(NOT_INITED_MODULE_TYPE)
-        self.init = initializer
+        self.initializer = initializer
 
     def to_json_serializable(self):
         return {'type': self.type}
@@ -311,13 +369,17 @@ __all__ = (
     'PreFunctionObject',
     'FunctionObject',
     'ClassObject',
-    'NotInitedModule',
+    'ModuleObject',
+    'NotInitedModuleObject',
     'Accessibility',
+    'LinkObject',
     'ROOT_TYPE',
     'BODY_TYPE',
     'MODULE_TYPE',
     'TYPE_TYPE',
     'FUNC_TYPE',
+    'CLASS_TYPE',
+    'LINK_TYPE',
     'PRE_FUNC_TYPE',
     'NOT_INITED_MODULE_TYPE'
 )

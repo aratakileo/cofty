@@ -1,14 +1,12 @@
-from src.utils.namespace_utils import ObjectPath, TYPE_TYPE, FunctionObject, ValueObject, PreFunctionObject
+from src.utils.namespace_utils import ObjectPath, TYPE_TYPE, FunctionObject, ValueObject, PreFunctionObject, LinkObject
+from src.utils.parser_utils import TreeBuilder, ErrorSegmentAnchor, ErrorBuffer, BodyParsingContext
+from src.utils.namespace_utils import ClassObject, Accessibility, NotInitedModuleObject
 from src.utils.arataki_typing import Result, TextFile, ImmutableObject
-from src.utils.parser_utils import TreeBuilder, ErrorSegmentAnchor, ErrorBuffer
-from src.utils.namespace_utils import ClassObject, Accessibility
 from src.core.tokens import Token, Tokens, IteratorBreaker
 from src.utils.exceptions import ReturnStatementError
 from src.core.namespace import Namespace
 from src.utils import as_serial_number
 from src.core.errors import Error
-
-BIG_BODY_BREAKER = IteratorBreaker(Tokens.PARENTHESIS, '}')
 
 
 class ParserContext(ImmutableObject):
@@ -136,11 +134,11 @@ class BasicParser(ImmutableObject):
             anchor: Token | ErrorSegmentAnchor = None
     ):
         return self.build_error(ReferenceError(
-            f'try to get access to {accessibility.access_modifier} object {accessibility.unaccessable_path}'
+            f'try to get access to {accessibility.access_modifier} unit `{accessibility.unaccessable_path}`'
         ), error_seeker, anchor)
 
     def ok_result(self, result):
-        return self.context.error_buffer.result_or_err(Result.ok(result))
+        return self.context.error_buffer.ok_or_err_result(result)
 
 
 class FunctionParser(BasicParser):
@@ -282,7 +280,7 @@ class FunctionParser(BasicParser):
         self.context.namespace.define(func_name, pre_function)
         self.context.namespace.goto(func_name)
 
-        body_result = self.context.body_parser.parse('func-body', BIG_BODY_BREAKER)
+        body_result = self.context.body_parser.parse(BodyParsingContext.funcbody())
 
         if body_result.is_err:
             return body_result
@@ -344,7 +342,7 @@ class ClassParser(BasicParser):
         self.context.namespace.define(class_name, ClassObject(access_modifier))
         self.context.namespace.goto(class_name)
 
-        body_result = self.context.body_parser.parse('class-body', BIG_BODY_BREAKER)
+        body_result = self.context.body_parser.parse(BodyParsingContext.classbody())
 
         if body_result.is_err:
             return body_result
@@ -382,7 +380,7 @@ class BodyParser(BasicParser):
         self.context.start_subbody()
         self.next()
 
-        body_result = self.parse('sub-body', BIG_BODY_BREAKER)
+        body_result = self.parse(BodyParsingContext.subbody())
 
         if body_result.is_err:
             return body_result
@@ -391,40 +389,21 @@ class BodyParser(BasicParser):
 
         return body_result
 
-    def build_not_allowed_error(self, target: str = None):
-        return self.build_error(SyntaxError(
-            'not allowed here' if target is not None else f'{target} is not allowed here'
-        ))
-
-    def build_access_modifier_not_allowed_error(self):
-        return self.build_error_token_before(SyntaxError('access modifier is not allowed here'))
-
-    def parse(self, body_type: str, breaker: IteratorBreaker = None):
+    def parse(self, parsing_context: BodyParsingContext):
         body = []
-        tree = self.new_tree(body_type, body=body)
-
-        is_root_body, is_sub_body, is_func_body = body_type == 'root', body_type == 'sub-body', body_type == 'func-body'
-        is_class_body = body_type == 'class-body'
+        tree = self.new_tree(parsing_context.body_type, body=body)
 
         ignore_blocks_except_breaker = False
 
         while self.has_next():
-            access_modifier_has_changed = False
-
-            if is_class_body:
-                access_modifier = 'private'
-            elif is_root_body:
-                access_modifier = 'public'
-            else:
-                access_modifier = None
+            parsing_context.set_default_access_modifier()
 
             if not ignore_blocks_except_breaker:
                 if self.token.is_access_modifier():
-                    if not is_class_body and not is_root_body:
+                    if not parsing_context.access_modifier_is_allowed:
                         return self.build_not_allowed_error('access modifier')
 
-                    access_modifier = self.token.value
-                    access_modifier_has_changed = True
+                    parsing_context.access_modifier = self.token.value
 
                     self.next()
 
@@ -440,20 +419,20 @@ class BodyParser(BasicParser):
                     body.append(value_result.ok_value.build())
                     ignore_blocks_except_breaker = True
                 elif self.token.is_kw('let'):
-                    if not is_root_body and not is_sub_body and not self.context.is_in_func and not is_class_body:
+                    if not parsing_context.is_subbody_like and not self.context.is_in_func and not parsing_context.is_class_body:
                         return self.build_not_allowed_error('variable initialisation')
 
-                    init_result = self.var_init_parser.parse(access_modifier)
+                    init_result = self.var_init_parser.parse(parsing_context.access_modifier)
 
                     if init_result.is_err:
                         return init_result
 
                     body.append(init_result.ok_value.build())
                 elif self.token.type == Tokens.ID and self.peek(lambda token: token.is_op('=')):
-                    if not is_root_body and not is_sub_body and not self.context.is_in_func:
+                    if not parsing_context.is_subbody_like and not self.context.is_in_func:
                         return self.build_not_allowed_error('setting the value')
 
-                    if access_modifier_has_changed:
+                    if parsing_context.access_modifier_has_changed:
                         return self.build_access_modifier_not_allowed_error()
 
                     value_set_result = self.var_set_parser.parse()
@@ -463,10 +442,10 @@ class BodyParser(BasicParser):
 
                     body.append(value_set_result.ok_value.build())
                 elif self.token.is_parenthesis('{'):
-                    if not is_root_body and not is_sub_body and not self.context.is_in_func:
+                    if not parsing_context.is_subbody_like and not self.context.is_in_func:
                         return self.build_not_allowed_error()
 
-                    if access_modifier_has_changed:
+                    if parsing_context.access_modifier_has_changed:
                         return self.build_access_modifier_not_allowed_error()
 
                     sub_body_result = self.parse_sub_body()
@@ -476,27 +455,35 @@ class BodyParser(BasicParser):
 
                     body.append(sub_body_result.ok_value.build())
                 elif self.token.is_kw('fn'):
-                    if not is_root_body and not is_class_body:
+                    if not parsing_context.is_root_body and not parsing_context.is_class_body:
                         return self.build_not_allowed_error('function')
 
-                    init_func_result = self.context.start_func_parsing().parse(access_modifier)
+                    init_func_result = self.context.start_func_parsing().parse(parsing_context.access_modifier)
 
                     if init_func_result.is_err:
                         return init_func_result
 
                     body.append(init_func_result.ok_value.build())
                 elif self.token.is_kw('class'):
-                    if not is_root_body and not is_class_body:
+                    if not parsing_context.is_root_body and not parsing_context.is_class_body:
                         return self.build_not_allowed_error('class')
 
-                    init_func_result = ClassParser(self.context).parse(access_modifier)
+                    init_func_result = ClassParser(self.context).parse(parsing_context.access_modifier)
 
                     if init_func_result.is_err:
                         return init_func_result
 
                     body.append(init_func_result.ok_value.build())
+                elif self.token.is_kw('import'):
+                    if not parsing_context.is_subbody_like and parsing_context.is_func_body:
+                        return self.build_not_allowed_error('import')
+
+                    parse_result = self.parse_import()
+
+                    if parse_result.is_err:
+                        return parse_result
                 elif self.token.is_kw('typedef'):
-                    if not is_root_body:
+                    if not parsing_context.is_root_body:
                         return self.build_not_allowed_error()
 
                     if not self.peek(lambda token: token.type == Tokens.ID):
@@ -504,13 +491,17 @@ class BodyParser(BasicParser):
 
                     self.next()
 
-                    if self.context.namespace.define_obj(self.token.value, TYPE_TYPE) is None:
+                    obj = self.context.namespace.define_obj(self.token.value, TYPE_TYPE)
+
+                    if obj is None:
                         return self.build_error(NameError(f'already exists'))
 
-            if breaker is not None and breaker == self.token:
+                    obj['access_modifier'] = parsing_context.access_modifier
+
+            if parsing_context.breaker is not None and parsing_context.breaker == self.token:
                 self.next()
 
-                if is_func_body or is_class_body:
+                if parsing_context.is_func_body or parsing_context.is_class_body:
                     self.context.finish_func_parsing()
                     self.context.namespace.go_up()
 
@@ -519,14 +510,87 @@ class BodyParser(BasicParser):
             if not self.finish_block():
                 return self.build_error()
 
-        if breaker is not None and breaker.required and self.token != breaker:
-            return self.build_error(SyntaxError(f'expected `{breaker.value}` here'))
+        if parsing_context.breaker is not None and parsing_context.breaker.required and self.token != parsing_context.breaker:
+            return self.build_error(SyntaxError(f'expected `{parsing_context.breaker.value}` here'))
 
         return self.ok_result(tree)
 
+    def parse_import(self):
+        if not self.peek(lambda token: token.type == Tokens.ID):
+            return self.build_error()
+
+        anchor_start = self.next().start
+        parsed_path_result = self.context.name_parser.parse_name(until_fail=True)
+
+        if parsed_path_result.is_err:
+            return parsed_path_result
+
+        importall = self.peek(lambda token: token.is_sep('.')) and self.peek(lambda token: token.is_op('*'), 2)
+        anchor = ErrorSegmentAnchor(anchor_start, self.token.end)
+        relative_path = ObjectPath(parsed_path_result.ok_value)
+
+        obj = self.context.namespace[relative_path]
+
+        if obj is None:
+            return self.build_error(NameError('does not exist'), anchor=anchor)
+
+        abs_path = self.context.namespace.find_obj_abs_path(relative_path)
+        accessibility = self.context.namespace.check_accessibility(abs_path)
+
+        if not accessibility.is_accessable:
+            return self.build_get_unaccessable_obj_error(accessibility, anchor=anchor)
+
+        if not importall:
+            if self.context.namespace.is_obj_in_this_module(abs_path):
+                return self.build_error(ImportError('already exists in this scope'), anchor=anchor)
+
+            link_name = ObjectPath.relative(relative_path[-1])
+
+            if self.context.namespace.define(
+                    link_name,
+                    LinkObject(self.context.namespace.normalize_path(abs_path))
+            ) is None:
+                defined_path = self.context.namespace.obj_context_abs_path(link_name)
+                return self.build_error(NameError(f'already defined in this scope as `{defined_path}`'))
+
+            return self.ok_result('SUCCESSFULLY')
+
+        self.next(2)
+
+        if isinstance(obj, NotInitedModuleObject):
+            obj = obj.init()
+
+        obj_body = obj['body']
+
+        if self.context.namespace.is_obj_in_this_module(abs_path + tuple(obj_body.keys())[0]):
+            return self.build_error(
+                ImportError('already exists in this scope'),
+                anchor=ErrorSegmentAnchor(anchor_start, self.token.end)
+            )
+
+        for key in obj['body'].keys():
+            link_name = ObjectPath.relative(key)
+
+            if self.context.namespace.define(
+                    link_name,
+                    LinkObject(self.context.namespace.normalize_path(abs_path + key))
+            ) is None:
+                defined_path = self.context.namespace.obj_context_abs_path(ObjectPath.relative(key))
+                return self.build_error(NameError(f'`{key}` has already defined in this scope as `{defined_path}`'))
+
+        return self.ok_result('SUCCESSFULLY')
+
+    def build_not_allowed_error(self, target: str = None):
+        return self.build_error(SyntaxError(
+            'not allowed here' if target is None else f'{target} is not allowed here'
+        ))
+
+    def build_access_modifier_not_allowed_error(self):
+        return self.build_error_token_before(SyntaxError('access modifier is not allowed here'))
+
 
 class NameParser(BasicParser):
-    def parse_name(self):
+    def parse_name(self, until_fail=False):
         if self.token.type != Tokens.ID:
             return self.build_error()
 
@@ -535,18 +599,15 @@ class NameParser(BasicParser):
         if not self.has_next():
             return self.ok_result(full_name)
 
-        while self.peek(lambda token: token.is_sep('.')):
-            self.next()
-
-            if not self.peek():
-                return self.build_error()
-
-            self.next()
-
-            if self.token.type != Tokens.ID:
-                return self.build_error()
-
+        while (
+                (next_is_dot := self.peek(lambda token: token.is_sep('.')))
+                and self.peek(lambda token: token.type == Tokens.ID, 2)
+        ):
+            self.next(2)
             full_name = (*full_name, self.token.value)
+
+        if not until_fail and next_is_dot:
+            return self.build_error(anchor=self.next())
 
         return self.ok_result(full_name)
 
@@ -666,11 +727,16 @@ class ExpressionParser(BasicParser):
             }))
 
         value = self.parse_value().ok_value.build()
+        value_type = self.context.namespace.find_obj_type(
+            'str' if value['data']['type'] == 'str' else ('int' if value['data']['format'] == 'int' else 'float')
+        )
+
+        if value_type is None:
+            raise ValueError('value type is None')
+
         tree = tree.update({
             'expr': value,
-            'value-type': self.context.namespace.find_obj_type(
-                'str' if value['data']['type'] == 'str' else ('int' if value['data']['format'] == 'int' else 'float')
-            )
+            'value-type': value_type
         })
 
         return self.ok_result(tree)
@@ -836,7 +902,7 @@ class Parser(BasicParser):
         super().__init__(context)
 
     def parse(self):
-        tree_result = self.context.body_parser.parse('root')
+        tree_result = self.context.body_parser.parse(BodyParsingContext.rootbody())
 
         if tree_result.is_err:
             return tree_result
@@ -849,4 +915,5 @@ class Parser(BasicParser):
 
 __all__ = (
     'Parser',
+    'ParserContext'
 )

@@ -1,4 +1,4 @@
-from src.utils.arataki_typing import TextFile, StaticTypedObject, json_encode
+from src.utils.arataki_typing import StaticTypedObject, json_encode
 from src.utils.namespace_utils import *
 
 
@@ -19,9 +19,15 @@ class Namespace(StaticTypedObject):
         self.__mark_as_not_inited_attributes__('_Namespace__none_type')
 
     def __contains__(self, obj_path: ObjectPath):
+        if not isinstance(obj_path, ObjectPath):
+            raise TypeError(f'is not an {ObjectPath.__name__}')
+
         return self[obj_path] is not None
 
     def __setitem__(self, obj_path: ObjectPath, value: NamespaceObject | dict[str, any]):
+        if not isinstance(obj_path, ObjectPath):
+            raise TypeError(f'is not an {ObjectPath.__name__}')
+
         _current_path = self.obj_context_abs_path(obj_path).go_up()
         _current_obj = current_obj = self[_current_path]
 
@@ -32,15 +38,23 @@ class Namespace(StaticTypedObject):
             if _current_obj['type'].is_func:
                 current_obj = _current_obj
 
-        current_obj['body'][obj_path.last_segment] = value
+        current_obj['body'][obj_path[-1]] = value
 
     def __getitem__(self, obj_path: ObjectPath):
+        return self.get(obj_path, 'all')
+
+    def get(self, obj_path: ObjectPath, unpack_links: str):
+        if not isinstance(obj_path, ObjectPath):
+            raise TypeError(f'is not an {ObjectPath.__name__}')
+
+        if unpack_links not in ('all', 'notlast', 'none'):
+            raise ValueError(f"expected 'all', 'notlast' or 'none' but got {repr(unpack_links)}")
+
         if obj_path.is_root:
             return self.root_object
 
         obj_abs_path = self.obj_context_abs_path(obj_path)
         obj_relative_path = obj_abs_path.as_relative(False)
-        builtins_obj_path = ObjectPath.builtins_path()
 
         current_body = self.root_object['body']
         current_obj = self.root_object
@@ -49,29 +63,42 @@ class Namespace(StaticTypedObject):
         parent_func_obj = None
 
         for i, segment in enumerate(obj_relative_path):
+            is_last_segment = i == len(obj_relative_path) - 1
+            can_unpack = unpack_links == 'all' or unpack_links == 'notlast' and not is_last_segment
+
             if segment not in current_body:
                 if parent_func_obj is not None \
                         and segment in parent_func_obj.args:
                     current_obj = parent_func_obj.args[segment]
+                elif can_unpack and '__init__' in current_body and current_body['__init__']['type'].is_module:
+                    obj = self[current_abs_path + '__init__' + obj_path[i + 1:]]
+
+                    if obj is None: break
+
+                    return obj
                 elif obj_path.is_abs:
                     return None
                 elif '$builtins' not in obj_path:
-                    result = self[builtins_obj_path + obj_path]
+                    obj = self[ObjectPath.builtins_path() + obj_path]
 
-                    if result is None: break
+                    if obj is None: break
 
-                    return result
+                    return obj
                 else:
                     break
             else:
                 current_obj = current_body[segment]
 
-            if i == len(obj_relative_path) - 1: return current_obj
+                if can_unpack and current_obj['type'] == LINK_TYPE:
+                    current_abs_path = current_obj.path
+                    current_obj = self[current_abs_path]
+
+            if is_last_segment: return current_obj
 
             current_obj_type = current_obj['type']
 
             if current_obj_type == NOT_INITED_MODULE_TYPE:
-                current_obj.init()
+                current_obj.initializer.init()
                 current_obj = current_body[segment]
                 current_obj_type = current_obj['type']
 
@@ -87,15 +114,28 @@ class Namespace(StaticTypedObject):
         else:
             return current_body
 
-        if self.current_obj_path.is_root: return None
+        if self.current_obj_path.is_root or obj_path.is_abs: return None
 
         for i in range(len(self.current_obj_path)):
-            result = self[self.current_obj_path[:i + 1] + obj_path]
+            obj = self[self.current_obj_path[:i + 1] + obj_path]
 
-            if result is not None:
-                return result
+            if obj is not None:
+                return obj
 
         return None
+
+    def __remove(self, abs_path: ObjectPath):
+        """
+        If object by path is a `$link` object then this function will remove it, not the object by that link
+        """
+        abs_path = self.__normalize_path(None, abs_path, normalize_last=False, target='links')
+
+        if abs_path is None:
+            return False
+
+        del self[abs_path.go_up()]['body'][abs_path[-1]]
+
+        return True
 
     def check_accessibility(self, obj_path: ObjectPath):
         obj = self[obj_path]
@@ -103,15 +143,39 @@ class Namespace(StaticTypedObject):
         if obj is None:
             return None
 
-        for path in self.obj_context_abs_path(obj_path).hierarchy_from_top():
+        for path in self.normalize_path(self.obj_context_abs_path(obj_path)).hierarchy_from_top():
             current_obj = self[path]
 
             if 'access_modifier' in current_obj \
                     and current_obj['access_modifier'] == 'private' \
-                    and path.go_up() != self.current_obj_path:
+                    and not self.current_obj_path.is_close_parent_for(path):
                 return Accessibility.unaccessable('private', path)
 
         return Accessibility.accessable(None if 'access_modifier' not in obj else obj['access_modifier'])
+
+    def is_obj_in_this_module(self, obj_abs_path: ObjectPath):
+        obj_abs_path.is_abs_or_throw()
+
+        if self.current_obj_path[1] != obj_abs_path[1]:
+            return False
+
+        if len(obj_abs_path) <= 3:
+            return True
+
+        for path in obj_abs_path.go_up().hierarchy_from_top()[2:]:
+            obj = self[path]
+
+            if obj is None:
+                return False
+
+            if obj['type'] != MODULE_TYPE:
+                break
+
+            if path != self.current_obj_path[:len(path)]:
+                return False
+
+        return True
+
 
     @property
     def none_type(self):
@@ -169,14 +233,46 @@ class Namespace(StaticTypedObject):
         if obj_abs_path is None:
             return None
 
-        return ObjectType(obj_abs_path)
+        return ObjectType(self.normalize_path(obj_abs_path))
 
-    def define(self, obj_path: ObjectPath | str, obj: NamespaceObject | dict[str, any], ignore_global_namespace=True):
+    def define_module(self, abs_path: ObjectPath, module: NotInitedModuleObject | ModuleObject = ...):
+        """
+        Adds a module to the namespace, but unlike `define`,
+        creates empty modules in place of non-existent objects specified in the path,
+        and if an uninitialized module already exists along this path, it allows you to replace it
+        with an initialized one
+        """
+        abs_path.is_abs_or_throw()
+
+        if module is ...:
+            module = ModuleObject()
+
+        if (already_existed_one := self[abs_path]) is not None:
+            if already_existed_one['type'] != NOT_INITED_MODULE_TYPE or module.type != MODULE_TYPE:
+                return None
+
+            if not self.__remove(abs_path):
+                return None
+
+            return self.define(abs_path, module, ignore_current_context=True)
+
+        for path in abs_path.hierarchy_from_top(ignore_first=True, ignore_last=True):
+            if path not in self:
+                if self.define(path, ModuleObject(), ignore_current_context=True) is None:
+                    return None
+
+        return self.define(abs_path, module, ignore_current_context=True)
+
+    def define(
+            self,
+            obj_path: ObjectPath | str,
+            obj: NamespaceObject | dict[str, any],
+            ignore_global_namespace=True,
+            ignore_current_context=False
+    ):
         obj_path = obj_path if isinstance(obj_path, ObjectPath) else ObjectPath.relative(obj_path)
 
-        if obj_path.is_abs and (
-                len(obj_path) - 1 != len(self.current_obj_path) or not obj_path.startswith(self.current_obj_path)
-        ):
+        if obj_path.is_abs and not obj_path.startswith(self.current_obj_path) and not ignore_current_context:
             raise ValueError(f'unacceptable object path `{obj_path}`')
 
         if obj_path in self and (not ignore_global_namespace or obj_path[-1] in self.current_dict):
@@ -200,12 +296,6 @@ class Namespace(StaticTypedObject):
         new_obj.update(body=dict())
         return new_obj
 
-    def define_module_object(self, name: str, directory_or_file: TextFile | str, ignore_global_namespace=True):
-        new_obj = self.define_namespace_object(name, MODULE_TYPE, ignore_global_namespace)
-        new_obj.update(path=directory_or_file)
-
-        return new_obj
-
     def is_root_object(self, obj_path: ObjectPath, type: ObjectType = None):
         if obj_path not in self:
             return False
@@ -218,16 +308,67 @@ class Namespace(StaticTypedObject):
 
         return self[obj_path]
 
+    def normalize_path(self, path: ObjectPath):
+        return self.__normalize_path(None, path)
+
+    def __normalize_path(
+            self,
+            path_prefix: ObjectPath | None,
+            path: ObjectPath,
+            normalize_last=True,
+            target='all'
+    ):
+        if target not in ('all', 'links', 'module-inits'):
+            raise ValueError()
+
+        full_path = path
+
+        if path_prefix is not None:
+            full_path = path_prefix + path
+
+        if full_path not in self:
+            return None
+
+        for _path in path.hierarchy_from_top():
+            _full_path = _path
+
+            if path_prefix is not None:
+                _full_path = path_prefix + _path
+
+            obj = self.get(_full_path, 'none' if normalize_last else 'notlast')
+
+            if obj is None:
+                return None
+
+            if obj['type'] == LINK_TYPE and target in ('all', 'links'):
+                if len(_path) == len(path):
+                    return obj.path
+
+                return self.__normalize_path(obj.path, path[len(_path):], normalize_last=normalize_last)
+            elif obj['type'] == MODULE_TYPE and _path != path and target in ('all', 'module-inits'):
+                if '__init__' not in obj.body or not obj.body['__init__'].type.is_module:
+                    continue
+
+                new_path = self.__normalize_path(_path + '__init__', path[len(_path):], normalize_last=normalize_last)
+
+                if new_path is not None:
+                    return new_path
+
+        return path
+
     def goto(self, obj_path: ObjectPath):
         obj = self[obj_path]
 
-        obj_type = obj['type']
-
-        if obj is None or not obj_type.is_namespace and not obj_type.is_func:
+        if obj is None or not (obj_type := obj['type']).is_namespace and not obj_type.is_func:
             return False
 
         self.current_dict = obj['body']
-        self.current_obj_path = self.obj_context_abs_path(obj_path)
+        new_path = self.normalize_path(self.obj_context_abs_path(obj_path))
+
+        if new_path is None:
+            return False
+
+        self.current_obj_path = new_path
 
         return True
 

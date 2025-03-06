@@ -1,169 +1,159 @@
-from src.utils.namespace_utils import ObjectPath, NotInitedModule
-from os.path import dirname, basename, abspath, isfile
-from src.utils.arataki_typing import TextFile, Result
-from src.utils.exceptions import InitModuleFileError
-from src.core.parser import Parser, ParserContext
-from src.utils.parser_utils import ErrorBuffer
-from src.core.namespace import Namespace
+from os.path import dirname, abspath, isfile, join as path_join, normpath, isdir
+from src.utils.arataki_typing import TextFile, Result, ImmutableObject
+from src.utils.namespace_utils import ObjectPath, NotInitedModuleObject
+from src.core.parser import ParserContext, Parser
 from src.core.errors import ErrorHandler
+from src.core.namespace import Namespace
 from src.core.lexer import parse_tokens
-from pathlib import Path
+from os import walk as os_walk
+
+from src.utils.parser_utils import ErrorBuffer
+
+BUILTINS_FILE = TextFile.read('src/core/builtin/__init__.cft')
 
 
-BUILTIN_PROJECT_PATH = 'src/core/builtin'
+class ProcessContext(ImmutableObject):
+    def __init__(
+            self,
+            namespace: Namespace,
+            error_buffer: ErrorBuffer,
+            bodies: dict[str, dict[str, any]]
+    ):
+        super().__init__()
+        self.namespace = namespace
+        self.error_buffer = error_buffer
+        self.bodies = bodies
+
+    @staticmethod
+    def new():
+        return ProcessContext(Namespace(), ErrorBuffer(), dict())
 
 
-class CoftyProcessor:
-    error_handler: ErrorHandler = ErrorHandler()
-    namespace: Namespace = Namespace()
-    main_file: TextFile
-    project_path: str
-    bodies: dict[str, dict[str, any]]
-    error_buffer: ErrorBuffer
+class ModuleInitializer(ImmutableObject):
+    def __init__(
+            self,
+            root_obj_abs_path: ObjectPath,
+            root_dir: str,
+            file: TextFile,
+            context: ProcessContext,
+            create_obj: bool,
+            lazyinit: bool
+    ):
+        super().__init__()
 
-    def __init__(self, main_file: TextFile):
-        self.main_file = main_file
-        self.project_path = dirname(main_file.abspath)
-        self.bodies = dict()
-        self.error_buffer = ErrorBuffer()
+        root_obj_abs_path.is_abs_or_throw()
 
-        self.namespace.define_module_object('$builtins', BUILTIN_PROJECT_PATH)
-        self.namespace.define_module_object('$main', main_file)
+        self.root_obj_path = root_obj_abs_path
+        self.root_dir = normpath(abspath(root_dir))
+        self.file = file
+        self.context = context
+        self.create_obj = create_obj
+        self.lazyinit = lazyinit
 
-    def process_file(self, file: TextFile, init_module: bool, define_file_module=True):
-        if not (init_module or define_file_module):
-            return
-
-        project_path_length = len(self.project_path) + 1
-        module_obj_relative_path = ObjectPath.relative(
-            file.abspath[project_path_length:-4].replace('\\', '/').split('/')
+    def init(self):
+        obj_relative_path = ObjectPath.relative(
+            self.file.abspath[len(self.root_dir) + 1:-len('.cft')].replace('\\', '/').split('/')
         )
-        file_module_name = module_obj_relative_path[-1]
-        default_obj_path = self.namespace.current_obj_path
+        obj_abs_path = self.root_obj_path + obj_relative_path
 
-        if define_file_module:
-            temp_obj_path = default_obj_path
-            temp_project_path = self.project_path.replace('\\', '/')
+        if self.lazyinit:
+            return self.context.namespace.define_module(obj_abs_path, NotInitedModuleObject(self.notlazy()))
 
-            for path_segment in module_obj_relative_path.segments[:-1]:
-                temp_obj_path += path_segment
-                temp_project_path += '/' + path_segment
+        if not self.create_obj:
+            obj_abs_path = obj_abs_path.go_up()
 
-                if temp_obj_path in self.namespace:
-                    self.namespace.goto(temp_obj_path)
-                    continue
-
-                self.namespace.define_module_object(path_segment, temp_project_path)
-                self.namespace.goto(temp_obj_path)
-
-            if file_module_name != '__init__':
-                self.namespace.define_module_object(file_module_name, file)
-                self.namespace.goto(temp_obj_path + file_module_name)
-
-        if not init_module:
-            last_module_name = self.namespace.current_obj_path[-1]
-
-            self.namespace.goto(self.namespace.current_obj_path[:-1])
-
-            del self.namespace.current_dict[last_module_name]
-
-            current_obj_path_snapshot = self.namespace.current_obj_path
-
-            def module_initializer():
-                del self.namespace[current_obj_path_snapshot]['body'][last_module_name]
-                self.process_file(file, True, define_file_module)
-
-            self.namespace.define(last_module_name, NotInitedModule(module_initializer))
-
-            if self.namespace.current_obj_path != default_obj_path:
-                self.namespace.goto(default_obj_path)
-
-            return Result.ok('SUCCESSFUL')
-
-        tokens_result = parse_tokens(file)
+        module_obj = self.context.namespace.define_module(obj_abs_path)
+        tokens_result = parse_tokens(self.file)
 
         if tokens_result.is_err:
-            return tokens_result
+            self.context.error_buffer.error = tokens_result.err_value
+            return None
 
-        parser = Parser(ParserContext(tokens_result.ok_value, file, self.namespace, self.error_buffer))
-        body_result = parser.parse()
+        namespace_obj_path = self.context.namespace.current_obj_path
+        self.context.namespace.goto(obj_abs_path)
 
-        if self.namespace.current_obj_path != default_obj_path:
-            self.namespace.goto(default_obj_path)
+        parser_context = ParserContext(
+            tokens_result.ok_value,
+            self.file,
+            self.context.namespace,
+            self.context.error_buffer
+        )
+        body_result = Parser(parser_context).parse()
 
-        if body_result.is_ok:
-            self.bodies[f'{basename(self.project_path)}.{module_obj_relative_path.__str__()}'] = body_result.ok_value
+        self.context.namespace.goto(namespace_obj_path)
 
-        return body_result
+        if body_result.is_err:
+            return None
 
-    def process_project(self, project_path_or_main_file: str | TextFile, define_project_module=True):
-        ignore_files = tuple()
+        self.context.bodies[str(obj_abs_path[1:])] = body_result.ok_value
 
-        if isinstance(project_path_or_main_file, str):
-            self.project_path = abspath(project_path_or_main_file)
-            main_file = None
-        else:
-            main_file = project_path_or_main_file
-            self.project_path = dirname(main_file.abspath)
-            ignore_files = (main_file.abspath,)
+        return module_obj
 
-        module_init_file_path = self.project_path + '/__init__.cft'
+    def notlazy(self):
+        return ModuleInitializer(
+            self.root_obj_path,
+            self.root_dir,
+            self.file,
+            self.context,
+            self.create_obj,
+            False
+        )
 
-        if isfile(module_init_file_path):
-            if main_file is not None:
-                raise InitModuleFileError(
-                    f'it is impossible to process `{module_init_file_path}` '
-                    f'while main file `{main_file.abspath}` described'
-                )
 
-            module_init_file = TextFile.read(module_init_file_path)
-            ignore_files = (*ignore_files, module_init_file.abspath)
-        else:
-            module_init_file = None
+class CoftyProcessor(ImmutableObject):
+    def __init__(self, main_file: TextFile):
+        super().__init__()
+        self.error_handler = ErrorHandler()
+        self.main_file = main_file
+        self.context = ProcessContext.new()
 
-        project_module_name = basename(self.project_path)
-        default_obj_path = self.namespace.current_obj_path
+        self.context.namespace.define_module(ObjectPath.builtins_path())
+        self.context.namespace.define_module(ObjectPath.main_path())
 
-        if define_project_module:
-            self.namespace.define_module_object(project_module_name, self.project_path)
-            self.namespace.goto(default_obj_path + project_module_name)
+    def __preprocess_modules(self, abs_root: ObjectPath, root_dir: str, ignore_files: list[str]):
+        abs_root.is_abs_or_throw()
 
-        for file_path in Path(self.project_path).glob('*.cft'):
-            if file_path.__str__() in ignore_files:
-                continue
+        if isfile(root_dir):
+            raise NotADirectoryError(f'expected directory, but got file `{root_dir}`')
 
-            result = self.process_file(TextFile.read(file_path.__str__()), False)
+        if not isdir(root_dir):
+            raise RuntimeError(f'directory `{root_dir}` does not exist')
 
-            if result.is_err:
-                return result
+        root_dir = normpath(root_dir)
 
-        if main_file is not None:
-            result = self.process_file(main_file, True, False)
+        for dirpath, dirnames, filenames in os_walk(root_dir):
+            for filename in [f for f in filenames if f.endswith('.cft')]:
+                file_path = normpath(abspath(path_join(dirpath, filename)))
 
-            if result.is_err:
-                return result
+                if file_path in ignore_files:
+                    continue
 
-        if module_init_file is not None:
-            result = self.process_file(module_init_file, True, False)
+                ModuleInitializer(
+                    abs_root,
+                    root_dir,
+                    TextFile.read(file_path),
+                    self.context,
+                    True,
+                    True
+                ).init()
 
-            if result.is_err:
-                return result
+                if self.context.error_buffer.has_err:
+                    break
 
-        if self.namespace.current_obj_path != default_obj_path:
-            self.namespace.goto(default_obj_path)
+    def __process_root_file(self, file: TextFile, file_path: ObjectPath):
+        file_path.is_abs_or_throw()
 
-        return Result.ok('SUCCESSFUL')
+        root_dir = dirname(file.abspath)
+
+        self.__preprocess_modules(file_path, root_dir, [file.abspath])
+        ModuleInitializer(file_path, root_dir, file, self.context, False, False).init()
 
     def process(self):
-        self.namespace.goto(ObjectPath.builtins_path())
+        self.__process_root_file(BUILTINS_FILE, ObjectPath.builtins_path())
 
-        result = self.process_project(BUILTIN_PROJECT_PATH, define_project_module=False)
+        if self.context.error_buffer.has_err:
+            return Result.err(self.context.error_buffer.error)
 
-        if result.is_err:
-            return result
+        self.__process_root_file(self.main_file, ObjectPath.main_path())
 
-        self.namespace.goto(ObjectPath.abs('$main'))
-
-        result = self.process_project(self.main_file, define_project_module=False)
-
-        return result if result.is_err else Result.ok(self.bodies)
+        return self.context.error_buffer.ok_or_err_result(self.context.bodies)
