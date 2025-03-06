@@ -22,7 +22,7 @@ with open(dirname(__file__) + '/keywords.txt', 'r', encoding='utf-8') as f:
     TOKEN_DESCRIPTIONS = {
         Tokens.KEYWORD: '|'.join(f.read().splitlines()),
         Tokens.COMMENT: r'--.*(:?\n|\Z)',
-        Tokens.NUM: r'[\d_]+(?:\.[\d_]*|[fF])?',
+        Tokens.NUM: r'_*\d+[\d_]*(?:\.[\d_]*|[fF])?',
         Tokens.ID: r'(?!_*\d+)[A-Za-z\d_]+',
         Tokens.STR: r'\'(?:\\.|[^\'])*\'|"(?:\\.|[^"])*"',
         Tokens.NEWL: r'\n',
