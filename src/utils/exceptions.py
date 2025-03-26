@@ -1,2 +1,0 @@
-class ReturnStatementError(Exception):
-    pass

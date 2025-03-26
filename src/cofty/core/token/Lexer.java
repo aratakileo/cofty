@@ -1,0 +1,79 @@
+package cofty.core.token;
+
+import cofty.core.message.MessageBuilder;
+import cofty.core.message.MessageHandler;
+import cofty.type.TextContent;
+import cofty.type.exception.SyntaxError;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class Lexer {
+    private static final Pattern PATTERN;
+
+    private final TextContent text;
+    private final MessageHandler messages;
+    private final Matcher matcher;
+
+    public Lexer(@NotNull TextContent text, @NotNull MessageHandler messages) {
+        this.text = text;
+        this.messages = messages;
+        this.matcher = PATTERN.matcher(text.text);
+    }
+
+    public @NotNull ArrayList<Token> parse() {
+        final var tokens = new ArrayList<Token>();
+        var prevToken = (Token)null;
+
+        for (final var matchResult: matcher.results().toList()) {
+            final var tokenType = TokenType.valueOf(matchResult);
+            final var token = Token.build(matchResult, tokenType);
+
+            if (prevToken != null && prevToken.type.equals(TokenType.MISMATCH)) {
+                if (token.type.equals(TokenType.MISMATCH)) {
+                    prevToken = prevToken.merge(token);
+                    continue;
+                }
+
+                showSyntaxError(prevToken);
+            }
+
+            if (!tokenType.isIn(TokenType.SKIP, TokenType.MISMATCH))
+                tokens.add(token);
+
+            prevToken = token;
+        }
+
+        if (prevToken != null && prevToken.type.equals(TokenType.MISMATCH))
+            showSyntaxError(prevToken);
+
+        return tokens;
+    }
+
+    private void showSyntaxError(@NotNull Token token) {
+        final var message = MessageBuilder.err(text, token, new SyntaxError("invalid syntax"));
+        messages.putBuildedMessage(message);
+    }
+
+    static {
+        var patternTexts = new ArrayList<String>();
+
+        final var patterns = new LinkedHashMap<TokenType, String>();
+        patterns.put(TokenType.DOUBLE, "_*\\d+[\\d_]*(?:\\.[\\d_]*|[dD])");
+        patterns.put(TokenType.INT, "_*\\d+[\\d_]*");
+        patterns.put(TokenType.KW, "let|mut");
+        patterns.put(TokenType.ID, "(?!_*\\d+)[A-Za-z\\d_]+");
+        patterns.put(TokenType.OP, "=");
+        patterns.put(TokenType.NEWLINE, "\n+");
+        patterns.put(TokenType.SKIP, "\\s+");
+        patterns.put(TokenType.MISMATCH, ".");
+
+        for (var pattern: patterns.entrySet())
+            patternTexts.add(String.format("(?<%s>%s)", pattern.getKey().name(), pattern.getValue()));
+
+        PATTERN = Pattern.compile(String.join("|", patternTexts));
+    }
+}
