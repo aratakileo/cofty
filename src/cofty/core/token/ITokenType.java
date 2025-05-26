@@ -1,13 +1,19 @@
 package cofty.core.token;
 
+import cofty.core.parse.AstParseEntry;
+import cofty.core.parse.AstPeeker;
+import cofty.core.parse.ParseContext;
+import cofty.core.parse.AstParser;
 import cofty.type.Containable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
-public interface ITokenType extends Containable<ITokenType> {
+public interface ITokenType extends Containable<ITokenType>, AstParser<Token>, AstPeeker {
     @NotNull TokenType type();
     @Nullable String content();
 
@@ -20,5 +26,28 @@ public interface ITokenType extends Containable<ITokenType> {
     @Override
     default boolean isIn(@NotNull ITokenType... values) {
         return Arrays.stream(values).anyMatch(this::equals);
+    }
+
+    @Override
+    default @NotNull Optional<Token> parse(@NotNull ParseContext context) {
+        return peek(context) ? Optional.of(context.strictCurrent()) : Optional.empty();
+    }
+
+    default @NotNull AstParser<Token> getTransactableParser() {
+        return context -> {
+            final var result = new AtomicReference<Token>(null);
+
+            context.startTransaction().match(this, result::set).finishTransaction(true);
+
+            return Optional.ofNullable(result.get());
+        };
+    }
+
+    default boolean safePeek(@NotNull ParseContext context) {
+        return equals(context.strictCurrent().type);
+    }
+
+    default @NotNull AstParseEntry<Token> getParseEntry() {
+        return AstParseEntry.bind(this, getTransactableParser());
     }
 }

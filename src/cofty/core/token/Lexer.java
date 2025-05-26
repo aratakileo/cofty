@@ -67,8 +67,14 @@ public class Lexer {
         patterns.put(TokenType.KW, "let|mut");
         patterns.put(TokenType.ID, "(?!_*\\d+)[A-Za-z\\d_]+");
         patterns.put(TokenType.OP, "=");
-        patterns.put(TokenType.NEWLINE, "\n+");
-        patterns.put(TokenType.SKIP, "\\s+");
+        patterns.put(TokenType.SEP, ":|\\.");
+
+        // \r\n - newline for Windows
+        // \n - newline for UNIX
+        // [ \t]* - to ignore NEWLINE token splitting
+        patterns.put(TokenType.NEWLINE, "([ \t]*(?:\r\n|\n)[ \t]*)+");
+
+        patterns.put(TokenType.SKIP, "[ \t]+");
         patterns.put(TokenType.MISMATCH, ".");
 
         for (var pattern: patterns.entrySet())

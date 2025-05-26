@@ -1,0 +1,43 @@
+package cofty.core.ast.object;
+
+import cofty.core.ast.AstObject;
+import cofty.core.parse.AstParseEntry;
+import cofty.core.parse.AstParser;
+import cofty.core.parse.AstPeeker;
+import cofty.core.token.Operator;
+import cofty.core.token.Token;
+import cofty.core.token.TokenType;
+
+import java.util.Optional;
+
+public class SetVarAst implements AstObject {
+    public final static AstPeeker PEEKER = context -> context.strictCurrent().type.equals(TokenType.ID) && context.peek(1, token -> token.type.equals(Operator.ASSIGN));
+
+    public final static AstParser<SetVarAst> PARSER = context -> {
+        final var result = new SetVarAst();
+
+        context.startTransaction()
+                .match(TokenType.ID, idToken -> result.name = idToken)
+                .syntaxErrorOnFail("expected var id")
+                .match(Operator.ASSIGN)
+                .syntaxErrorOnFail("expected assign")
+                .match(ValueAst.PARSER, valueAst -> result.value = valueAst)
+                .syntaxErrorOnFail("expected value")
+                .finishTransaction();
+
+        return context.isFailed() ? Optional.empty() : Optional.of(result);
+    };
+
+    public final static AstParseEntry<SetVarAst> PARSE_ENTRY = AstParseEntry.bind(PEEKER, PARSER);
+
+    public Token name;
+    public ValueAst value = null;
+
+    @Override
+    public String toString() {
+        return "SetVarAst{" +
+                "name=" + name +
+                ", value=" + value +
+                '}';
+    }
+}

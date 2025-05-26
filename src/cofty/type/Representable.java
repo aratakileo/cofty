@@ -2,13 +2,17 @@ package cofty.type;
 
 import cofty.util.Lists;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
 public interface Representable {
     @NotNull String toReprString();
 
-    static @NotNull String repr(@NotNull String string) {
+    static @NotNull String repr(@Nullable String string) {
+        if (string == null)
+            return "null";
+
         final var result = new StringBuilder("\"");
 
         for (var ch: string.toCharArray())
@@ -26,11 +30,14 @@ public interface Representable {
         return result.append('"').toString();
     }
 
-    static @NotNull String repr(@NotNull Representable value) {
-        return value.toReprString();
+    static @NotNull String repr(@Nullable Representable value) {
+        return value == null ? "null" : value.toReprString();
     }
 
-    static <T> @NotNull String repr(@NotNull ArrayList<T> arrayList) {
+    static <T> @NotNull String repr(@Nullable ArrayList<T> arrayList) {
+        if (arrayList == null)
+            return "null";
+
         return String.format(
                 "%s.arrayListOf(%s)",
                 Lists.class.getSimpleName(),
@@ -38,7 +45,10 @@ public interface Representable {
         );
     }
 
-    static <T> @NotNull String repr(T value) {
+    static <T> @NotNull String repr(@Nullable T value) {
+        if (value == null)
+            return "null";
+
         return value.toString();
     }
 }

@@ -26,6 +26,7 @@ public enum TokenType implements Representable, ITokenType {
 
                 return switch (tokenType) {
                     case OP -> Operator.of(matched);
+                    case SEP -> Separator.of(matched);
                     case KW -> Keyword.of(matched);
                     default -> tokenType;
                 };

@@ -1,11 +1,12 @@
 package cofty.core.token;
 
+import cofty.core.ast.AstValue;
 import cofty.type.Representable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.MatchResult;
 
-public class Token {
+public class Token implements AstValue {
     public final ITokenType type;
     public final String content;
     public final int start, end;
