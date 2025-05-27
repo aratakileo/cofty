@@ -79,7 +79,7 @@ public class MessageBuilder {
     }
 
     private int lineStart() {
-        return Math.max(0, textContent.text.lastIndexOf('\n', start));
+        return textContent.text.lastIndexOf('\n', start) + 1;
     }
 
     private int lineEnd() {
@@ -91,8 +91,16 @@ public class MessageBuilder {
         return textContent.text.substring(lineStart(), lineEnd());
     }
 
+    private int lineNumberByStart() {
+        return Strings.getLineNumber(textContent.text, start);
+    }
+
+    private int lineNumberByEnd() {
+        return Strings.getLineNumber(textContent.text, end);
+    }
+
     private @NotNull String cursorContent() {
-        return " ".repeat(cursorStart + start - lineStart()) + "^".repeat(cursorEnd - cursorStart);
+        return " ".repeat(cursorStart + Math.max(start - lineStart(), 0)) + "^".repeat(cursorEnd - cursorStart);
     }
 
     public @NotNull String build() {
@@ -107,7 +115,7 @@ public class MessageBuilder {
                 %s""",
                 messageType,
                 Representable.repr(textContent.path),
-                Strings.getLineNumber(textContent.text, end),
+                lineNumberByStart(),
                 line(),
                 cursorContent(),
                 content

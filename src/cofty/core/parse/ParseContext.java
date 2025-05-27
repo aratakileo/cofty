@@ -4,6 +4,7 @@ import cofty.core.ast.AstValue;
 import cofty.core.message.MessageBuilder;
 import cofty.core.message.MessageHandler;
 import cofty.core.token.Token;
+import cofty.core.token.TokenType;
 import cofty.type.TextContent;
 import cofty.type.exception.SyntaxError;
 import org.jetbrains.annotations.NotNull;
@@ -110,7 +111,7 @@ public class ParseContext {
         elseProcessed = true;
 
         messages.putBuildedMessage(
-                hasCurrent()
+                hasCurrent() && !strictCurrent().type.equals(TokenType.NEWLINE)
                         ? MessageBuilder.err(text, strictCurrent(), err)
                         : MessageBuilder.errAfter(text, strictPeekPrev(), err)
         );

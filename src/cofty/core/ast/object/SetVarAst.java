@@ -22,7 +22,6 @@ public class SetVarAst implements AstObject {
                 .match(Operator.ASSIGN)
                 .syntaxErrorOnFail("expected assign")
                 .match(ValueAst.PARSER, valueAst -> result.value = valueAst)
-                .syntaxErrorOnFail("expected value")
                 .finishTransaction();
 
         return context.isFailed() ? Optional.empty() : Optional.of(result);

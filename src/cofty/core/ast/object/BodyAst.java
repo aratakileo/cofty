@@ -26,10 +26,11 @@ public class BodyAst implements AstObject {
                 if (parseEntry.peek(context)) {
                     final var subresult = parseEntry.parse(context);
 
+                    successfullyParsed = subresult.isPresent();
+
                     if (subresult.isEmpty())
                         break;
 
-                    successfullyParsed = true;
                     astBodyValues.add(Cast.unsafe(subresult.get()));
                 }
         }

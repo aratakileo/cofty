@@ -69,11 +69,10 @@ public class Lexer {
         patterns.put(TokenType.OP, "=");
         patterns.put(TokenType.SEP, ":|\\.");
 
-        // \r\n - newline for Windows
-        // \n - newline for UNIX
-        // [ \t]* - to ignore NEWLINE token splitting
-        patterns.put(TokenType.NEWLINE, "([ \t]*(?:\r\n|\n)[ \t]*)+");
+        // [ \t]* - to avoid NEWLINE token splitting
+        patterns.put(TokenType.NEWLINE, "([ \t]*\n[ \t]*)+");
 
+        // [ \t] instead of \\s to avoid absorption NEWLINE token by SKIP token
         patterns.put(TokenType.SKIP, "[ \t]+");
         patterns.put(TokenType.MISMATCH, ".");
 
