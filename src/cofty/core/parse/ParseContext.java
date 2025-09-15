@@ -118,13 +118,16 @@ public class ParseContext {
         return this;
     }
 
-    public @NotNull ParseContext errorOnFail(@NotNull Exception err) {
+    public void putErrorMessage(@NotNull Exception err) {
         messages.putBuildedMessage(
                 hasCurrent() && !currentOrThrow().type.equals(TokenType.NEWLINE)
                         ? MessageBuilder.err(text, currentOrThrow(), err)
                         : MessageBuilder.errAfter(text, strictPeekPrev(), err)
         );
-        return this;
+    }
+
+    public void putErrorMessage(@NotNull Exception err, int cursorStart) {
+        messages.putBuildedMessage(MessageBuilder.err(text, cursorStart, cursorEnd(), err));
     }
 
     public void resetIndexSnapshot() {

@@ -46,21 +46,11 @@ public interface ParserNode {
                 if (node == null)
                     throw new IllegalStateException();
 
-                context.messages.putBuildedMessage(MessageBuilder.err(
-                        context.text,
-                        errorCursorStart,
-                        context.cursorEnd(),
-                        node.flag().failMessageOrThrow()
-                ));
+                context.putErrorMessage(node.flag().failMessageOrThrow(), errorCursorStart);
             }
 
             if (queueFlag.isFailMessage())
-                context.messages.putBuildedMessage(MessageBuilder.err(
-                        context.text,
-                        cursorStart,
-                        context.cursorEnd(),
-                        queueFlag.failMessageOrThrow()
-                ));
+                context.putErrorMessage(queueFlag.failMessageOrThrow(), cursorStart);
 
             return false;
         }
@@ -71,12 +61,7 @@ public interface ParserNode {
             context.resetIndexSnapshot();
 
         if (queueFlag.isFailMessage())
-            context.messages.putBuildedMessage(MessageBuilder.err(
-                    context.text,
-                    cursorStart,
-                    context.cursorEnd(),
-                    queueFlag.failMessageOrThrow()
-            ));
+            context.putErrorMessage(queueFlag.failMessageOrThrow(), cursorStart);
         else if (prevNode.flag().isFailMessage())
             context.messages.putBuildedMessage(MessageBuilder.errAfter(
                     context.text,

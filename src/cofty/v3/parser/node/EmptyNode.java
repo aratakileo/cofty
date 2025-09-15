@@ -39,7 +39,7 @@ public abstract class EmptyNode implements ParserNode {
         if (!topLevelFlag.isGeneral()) return false;
 
         if (flag.isFailMessage())
-            context.errorOnFail(flag.failMessageOrThrow());
+            context.putErrorMessage(flag.failMessageOrThrow());
         else if (flag.isGeneral())
             context.next();
 
