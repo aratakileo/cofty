@@ -9,22 +9,22 @@ import cofty.core.token.*;
 import java.util.Optional;
 
 public class InitVarAst implements AstObject {
-    public final static AstPeeker PEEKER = context -> context.strictCurrent().type.equals(Keyword.LET);
+    public final static AstPeeker PEEKER = context -> context.currentOrThrow().type.equals(Keyword.LET);
 
     public final static AstParser<InitVarAst> PARSER = context -> {
         final var result = new InitVarAst();
 
         context.startTransaction()
                 .match(Keyword.LET)
-                .syntaxErrorOnFail("expected `let` keyword")
+                .syntaxErrorOnFail_v2("expected `let` keyword")
                 .startTransaction()
-                .match(Keyword.MUT, _ -> result.mutable = true)
+                .match(Keyword.MUT, ignore -> result.mutable = true)
                 .finishTransaction(true)
                 .match(TokenType.ID, idToken -> result.name = idToken)
                 .startTransaction()
                 .match(Separator.COLON)
                 .match(TokenType.ID, idToken -> result.type = idToken)
-                .syntaxErrorOnFail("expected variable type")
+                .syntaxErrorOnFail_v2("expected variable type")
                 .finishTransaction(true)
                 .startTransaction()
                 .match(Operator.ASSIGN)

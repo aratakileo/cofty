@@ -23,7 +23,7 @@ public class ParseContext {
     public final TextContent text;
     public final MessageHandler messages;
 
-    protected int index = 0, successfulCases = 0;
+    private int index = 0, successfulCases = 0, indexSnapshot = -1;
     protected boolean failed = false, elseProcessed = false;
 
     private ParseContext(@NotNull ParseContext parent) {
@@ -95,27 +95,64 @@ public class ParseContext {
             return Optional.empty();
         }
 
-        unsafeNext();
+        next();
         successfulCases++;
 
         return result;
     }
 
-    public @NotNull ParseContext syntaxErrorOnFail(@NotNull String errorMessage) {
-        return errorOnFail(new SyntaxError(errorMessage));
+    public @NotNull ParseContext syntaxErrorOnFail_v2(@NotNull String errorMessage) {
+        return errorOnFail_v2(new SyntaxError(errorMessage));
     }
 
-    public @NotNull ParseContext errorOnFail(@NotNull Exception err) {
+    public @NotNull ParseContext errorOnFail_v2(@NotNull Exception err) {
         if (!failed || elseProcessed) return this;
 
         elseProcessed = true;
 
         messages.putBuildedMessage(
-                hasCurrent() && !strictCurrent().type.equals(TokenType.NEWLINE)
-                        ? MessageBuilder.err(text, strictCurrent(), err)
+                hasCurrent() && !currentOrThrow().type.equals(TokenType.NEWLINE)
+                        ? MessageBuilder.err(text, currentOrThrow(), err)
                         : MessageBuilder.errAfter(text, strictPeekPrev(), err)
         );
         return this;
+    }
+
+    public @NotNull ParseContext errorOnFail(@NotNull Exception err) {
+        messages.putBuildedMessage(
+                hasCurrent() && !currentOrThrow().type.equals(TokenType.NEWLINE)
+                        ? MessageBuilder.err(text, currentOrThrow(), err)
+                        : MessageBuilder.errAfter(text, strictPeekPrev(), err)
+        );
+        return this;
+    }
+
+    public void resetIndexSnapshot() {
+        indexSnapshot = -1;
+    }
+
+    public void createIndexSnapshot() {
+        if (indexSnapshot != -1)
+            throw new IllegalStateException();
+
+        indexSnapshot = index;
+    }
+
+    public void rollbackIndex() {
+        if (indexSnapshot == -1)
+            throw new IllegalStateException();
+
+        index = indexSnapshot;
+
+        resetIndexSnapshot();
+    }
+
+    public int cursorStart() {
+        return hasCurrent() ? tokens.get(index).start : tokens.get(index - 1).end;
+    }
+
+    public int cursorEnd() {
+        return hasCurrent() ? tokens.get(index).end : tokens.get(index - 1).end;
     }
 
     public @NotNull ParseContext finishTransaction(boolean mayIgnoreFail) {
@@ -148,21 +185,21 @@ public class ParseContext {
         return index < tokens.size();
     }
 
-    public @NotNull Token strictCurrent() {
+    public @NotNull Token currentOrThrow() {
         if (!hasCurrent())
             throw new RuntimeException("has no current token");
 
         return tokens.get(index);
     }
 
-    public @NotNull Token strictNext() {
+    public @NotNull Token nextOrThrow() {
         if (!hasNext())
             throw new RuntimeException("has no next token");
 
         return tokens.get(++index);
     }
 
-    public @Nullable Token unsafeNext() {
+    public @Nullable Token next() {
         if (!hasCurrent())
             return null;
 

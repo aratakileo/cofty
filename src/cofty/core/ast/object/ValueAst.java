@@ -20,7 +20,7 @@ public class ValueAst implements AstObject {
                         default -> throw new IllegalStateException();
                     };
                 })
-                .syntaxErrorOnFail("expected value")
+                .syntaxErrorOnFail_v2("expected value")
                 .finishTransaction();
 
         return context.isFailed() ? Optional.empty() : Optional.of(result);

@@ -11,16 +11,16 @@ import cofty.core.token.TokenType;
 import java.util.Optional;
 
 public class SetVarAst implements AstObject {
-    public final static AstPeeker PEEKER = context -> context.strictCurrent().type.equals(TokenType.ID) && context.peek(1, token -> token.type.equals(Operator.ASSIGN));
+    public final static AstPeeker PEEKER = context -> context.currentOrThrow().type.equals(TokenType.ID) && context.peek(1, token -> token.type.equals(Operator.ASSIGN));
 
     public final static AstParser<SetVarAst> PARSER = context -> {
         final var result = new SetVarAst();
 
         context.startTransaction()
                 .match(TokenType.ID, idToken -> result.name = idToken)
-                .syntaxErrorOnFail("expected var id")
+                .syntaxErrorOnFail_v2("expected var id")
                 .match(Operator.ASSIGN)
-                .syntaxErrorOnFail("expected assign")
+                .syntaxErrorOnFail_v2("expected assign")
                 .match(ValueAst.PARSER, valueAst -> result.value = valueAst)
                 .finishTransaction();
 

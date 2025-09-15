@@ -30,7 +30,7 @@ public interface ITokenType extends Containable<ITokenType>, AstParser<Token>, A
 
     @Override
     default @NotNull Optional<Token> parse(@NotNull ParseContext context) {
-        return peek(context) ? Optional.of(context.strictCurrent()) : Optional.empty();
+        return peek(context) ? Optional.of(context.currentOrThrow()) : Optional.empty();
     }
 
     default @NotNull AstParser<Token> getTransactableParser() {
@@ -44,7 +44,7 @@ public interface ITokenType extends Containable<ITokenType>, AstParser<Token>, A
     }
 
     default boolean safePeek(@NotNull ParseContext context) {
-        return equals(context.strictCurrent().type);
+        return equals(context.currentOrThrow().type);
     }
 
     default @NotNull AstParseEntry<Token> getParseEntry() {

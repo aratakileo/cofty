@@ -140,7 +140,19 @@ public class MessageBuilder {
             @NotNull Token token,
             @NotNull Exception err
     ) {
-        return new MessageBuilder(MessageType.ERROR, textContent).setContent(err).fillCursor(token).build();
+        return err(textContent, token.start, token.end, err);
+    }
+
+    public static @NotNull String err(
+            @NotNull TextContent textContent,
+            int cursorStart,
+            int cursorEnd,
+            @NotNull Exception err
+    ) {
+        return new MessageBuilder(MessageType.ERROR, textContent)
+                .setContent(err)
+                .fillCursor(cursorStart, cursorEnd)
+                .build();
     }
 
     public static @NotNull String errAfter(
