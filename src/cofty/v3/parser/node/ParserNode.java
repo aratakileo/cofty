@@ -20,6 +20,7 @@ public interface ParserNode {
     @NotNull NodeModifier modifier();
 
     boolean proceed(@NotNull ParseContext context, @NotNull NodeModifier topLevelModifier);
+
     default boolean proceedQueue(@NotNull ParseContext context, @NotNull NodeModifier queueModifier) {
         var node = this;
         var prevNode = this;
@@ -90,7 +91,7 @@ public interface ParserNode {
     <E extends ParserNode> @NotNull E then(@NotNull E next);
 
     default @NotNull TokenTypeNode thenToken(@NotNull ITokenType type, @NotNull NodeModifier modifier) {
-        return ParserNode.token(type, modifier);
+        return then(ParserNode.token(type, modifier));
     }
 
     static @NotNull TokenTypeNode token(@NotNull ITokenType tokenType) {

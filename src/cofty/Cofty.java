@@ -40,7 +40,7 @@ public class Cofty {
         ParserNode parserNode;
 
         (parserNode = ParserNode.tokenOrSyntaxFail(Keyword.LET))
-                .thenToken(Keyword.MUT, NodeModifier.peekSucceed(_ -> isMut.set(true)))
+                .thenToken(Keyword.MUT, NodeModifier.peekSucceed(ignore -> isMut.set(true)))
                 .thenToken(TokenType.ID, NodeModifier.syntaxFail("expected name"))
                 .thenToken(Operator.ASSIGN, NodeModifier.syntaxFail("expected assign operator"))
                 .thenToken(TokenType.INT, NodeModifier.syntaxFail("expected value"));
