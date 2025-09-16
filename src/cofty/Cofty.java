@@ -10,7 +10,9 @@ import cofty.type.Representable;
 import cofty.type.TextContent;
 import cofty.util.Strings;
 import cofty.v3.parser.node.ParserNode;
-import cofty.v3.parser.node.flag.NodeFlag;
+import cofty.v3.parser.node.flag.NodeModifier;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Cofty {
     public static void main(String[] args) {
@@ -34,15 +36,16 @@ public class Cofty {
 //        System.out.println(parseResult.map(BodyAst::toString).orElse(""));
 
         // v3
+        AtomicBoolean isMut = new AtomicBoolean(false);
         ParserNode parserNode;
 
         (parserNode = ParserNode.tokenOrSyntaxFail(Keyword.LET))
-                .then(ParserNode.token(Keyword.MUT, NodeFlag.peek()))
-                .then(ParserNode.token(TokenType.ID, NodeFlag.syntaxFail("expected name")))
-                .then(ParserNode.token(Operator.ASSIGN, NodeFlag.syntaxFail("expected assign operator")))
-                .then(ParserNode.token(TokenType.INT, NodeFlag.syntaxFail("expected value")));
+                .thenToken(Keyword.MUT, NodeModifier.peekSucceed(_ -> isMut.set(true)))
+                .thenToken(TokenType.ID, NodeModifier.syntaxFail("expected name"))
+                .thenToken(Operator.ASSIGN, NodeModifier.syntaxFail("expected assign operator"))
+                .thenToken(TokenType.INT, NodeModifier.syntaxFail("expected value"));
 
-        Strings.println("Is parsed:", parserNode.proceedQueue(parseContext, NodeFlag.general()));
+        Strings.println("Is parsed:", parserNode.proceedQueue(parseContext, NodeModifier.general()), "is mut:", isMut);
 
         messages.print();
     }

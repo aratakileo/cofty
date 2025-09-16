@@ -4,10 +4,10 @@ import cofty.type.Representable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FailMessageFlag implements NodeFlag, Representable {
+public class FailModifier implements NodeModifier, Representable {
     public final Exception failMessage;
 
-    public FailMessageFlag(@NotNull Exception failMessage) {
+    public FailModifier(@NotNull Exception failMessage) {
         this.failMessage = failMessage;
     }
 
@@ -22,8 +22,13 @@ public class FailMessageFlag implements NodeFlag, Representable {
     }
 
     @Override
-    public boolean isFailMessage() {
+    public boolean isFail() {
         return true;
+    }
+
+    @Override
+    public boolean isSucceed() {
+        return false;
     }
 
     @Override
@@ -34,6 +39,6 @@ public class FailMessageFlag implements NodeFlag, Representable {
 
     @Override
     public @NotNull String toReprString() {
-        return String.format("%s.fail(%s)", NodeFlag.class.getSimpleName(), Representable.repr(failMessage));
+        return String.format("%s.fail(%s)", NodeModifier.class.getSimpleName(), Representable.repr(failMessage));
     }
 }

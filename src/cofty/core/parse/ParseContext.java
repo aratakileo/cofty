@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -209,6 +210,14 @@ public class ParseContext {
         index++;
 
         return hasCurrent() ? tokens.get(index) : null;
+    }
+
+    public @Nullable Token peek(int step) {
+        return tokens.get(index + step);
+    }
+
+    public @NotNull Token peekOrThrow(int step) {
+        return Objects.requireNonNull(tokens.get(index + step));
     }
 
     public boolean peek(int step, @NotNull Function<Token, Boolean> peeker) {

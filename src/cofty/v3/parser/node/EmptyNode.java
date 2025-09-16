@@ -1,17 +1,17 @@
 package cofty.v3.parser.node;
 
 import cofty.core.parse.ParseContext;
-import cofty.v3.parser.node.flag.NodeFlag;
+import cofty.v3.parser.node.flag.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class EmptyNode implements ParserNode {
-    public final NodeFlag flag;
+    public final NodeModifier modifier;
 
     private ParserNode next = null;
 
-    public EmptyNode(@NotNull NodeFlag flag) {
-        this.flag = flag;
+    public EmptyNode(@NotNull NodeModifier modifier) {
+        this.modifier = modifier;
     }
 
     @Override
@@ -20,8 +20,8 @@ public abstract class EmptyNode implements ParserNode {
     }
 
     @Override
-    public @NotNull NodeFlag flag() {
-        return flag;
+    public @NotNull NodeModifier modifier() {
+        return modifier;
     }
 
     @Override
@@ -30,7 +30,7 @@ public abstract class EmptyNode implements ParserNode {
         return next;
     }
 
-    protected boolean postProceed(boolean proceed, @NotNull ParseContext context, @NotNull NodeFlag topLevelFlag) {
+    protected boolean postProceed(boolean proceed, @NotNull ParseContext context, @NotNull NodeModifier topLevelFlag) {
         if (proceed) {
             context.next();
             return true;
@@ -38,9 +38,9 @@ public abstract class EmptyNode implements ParserNode {
 
         if (!topLevelFlag.isGeneral()) return false;
 
-        if (flag.isFailMessage())
-            context.putErrorMessage(flag.failMessageOrThrow());
-        else if (flag.isGeneral())
+        if (modifier.isFail())
+            context.putErrorMessage(modifier.failMessageOrThrow());
+        else if (modifier.isGeneral())
             context.next();
 
         return false;
