@@ -25,19 +25,28 @@ public interface ParserNode {
         var prevNode = this;
         var cursorStart = context.cursorStart();
 
-        if (flag().isPeek())
+        if (queueFlag.isPeek())
             context.createIndexSnapshot();
 
         while (node != null) {
-            if (node.proceed(context, queueFlag)) {
+            var indexSnapshotForNode = !queueFlag.isPeek() && node.flag().isPeek();
+
+            if (indexSnapshotForNode)
+                context.createIndexSnapshot();
+
+            if (node.proceed(context, queueFlag) || indexSnapshotForNode) {
                 prevNode = node;
                 node = node.next();
+
+                if (indexSnapshotForNode) context.rollbackIndex();
+
                 continue;
             }
 
-            if (flag().isPeek())
+            if (queueFlag.isPeek())
                 context.rollbackIndex();
-            else if (queueFlag.isGeneral() && !node.flag().isFailMessage()) {
+
+            if (queueFlag.isGeneral() && !node.flag().isFailMessage()) {
                 var errorCursorStart = context.cursorStart();
 
                 while (node != null && !node.flag().isFailMessage())
@@ -57,7 +66,7 @@ public interface ParserNode {
 
         if (!context.hasCurrent()) return true;
 
-        if (flag().isPeek())
+        if (queueFlag.isPeek())
             context.resetIndexSnapshot();
 
         if (queueFlag.isFailMessage())
@@ -76,19 +85,19 @@ public interface ParserNode {
 
     <E extends ParserNode> @NotNull E then(@NotNull E next);
 
-    static @NotNull TokeTypeNode token(@NotNull ITokenType tokenType) {
-        return new TokeTypeNode(tokenType, NodeFlag.general());
+    static @NotNull TokenTypeNode token(@NotNull ITokenType tokenType) {
+        return new TokenTypeNode(tokenType, NodeFlag.general());
     }
 
-    static @NotNull TokeTypeNode token(@NotNull ITokenType tokenType, @NotNull NodeFlag flag) {
-        return new TokeTypeNode(tokenType, flag);
+    static @NotNull TokenTypeNode token(@NotNull ITokenType tokenType, @NotNull NodeFlag flag) {
+        return new TokenTypeNode(tokenType, flag);
     }
 
-    static @NotNull TokeTypeNode tokenOrSyntaxFail(@NotNull Keyword keyword) {
-        return new TokeTypeNode(keyword, NodeFlag.syntaxFail("expected `" + keyword.name().toLowerCase() + "` keyword"));
+    static @NotNull TokenTypeNode tokenOrSyntaxFail(@NotNull Keyword keyword) {
+        return new TokenTypeNode(keyword, NodeFlag.syntaxFail("expected `" + keyword.name().toLowerCase() + "` keyword"));
     }
 
-    static @NotNull TokeTypeNode tokenOrSyntaxFail(@NotNull Separator separator) {
-        return new TokeTypeNode(separator, NodeFlag.syntaxFail("expected `" + separator.sep + "` separator"));
+    static @NotNull TokenTypeNode tokenOrSyntaxFail(@NotNull Separator separator) {
+        return new TokenTypeNode(separator, NodeFlag.syntaxFail("expected `" + separator.sep + "` separator"));
     }
 }

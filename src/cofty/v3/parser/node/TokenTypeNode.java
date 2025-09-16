@@ -2,13 +2,14 @@ package cofty.v3.parser.node;
 
 import cofty.core.parse.ParseContext;
 import cofty.core.token.ITokenType;
+import cofty.type.Representable;
 import cofty.v3.parser.node.flag.NodeFlag;
 import org.jetbrains.annotations.NotNull;
 
-public class TokeTypeNode extends EmptyNode {
+public class TokenTypeNode extends EmptyNode implements Representable {
     public final ITokenType tokenType;
 
-    public TokeTypeNode(@NotNull ITokenType tokenType, @NotNull NodeFlag flag) {
+    public TokenTypeNode(@NotNull ITokenType tokenType, @NotNull NodeFlag flag) {
         super(flag);
         this.tokenType = tokenType;
     }
@@ -19,6 +20,16 @@ public class TokeTypeNode extends EmptyNode {
                 context.hasCurrent() && context.currentOrThrow().type.equals(tokenType),
                 context,
                 topLevelFlag
+        );
+    }
+
+    @Override
+    public @NotNull String toReprString() {
+        return String.format(
+                "%s.token(%s, %s)",
+                ParserNode.class.getSimpleName(),
+                Representable.repr(tokenType),
+                Representable.repr(flag)
         );
     }
 }

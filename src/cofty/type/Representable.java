@@ -34,6 +34,10 @@ public interface Representable {
         return value == null ? "null" : value.toReprString();
     }
 
+    static @NotNull String repr(@NotNull Exception exception) {
+        return String.format("new %s(%s)", exception.getClass().getSimpleName(), repr(exception.getMessage()));
+    }
+
     static <T> @NotNull String repr(@Nullable ArrayList<T> arrayList) {
         if (arrayList == null)
             return "null";
@@ -48,6 +52,9 @@ public interface Representable {
     static <T> @NotNull String repr(@Nullable T value) {
         if (value == null)
             return "null";
+
+        if (value instanceof Representable representable)
+            return repr(representable);
 
         return value.toString();
     }

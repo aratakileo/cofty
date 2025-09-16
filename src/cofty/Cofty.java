@@ -8,6 +8,7 @@ import cofty.core.token.Operator;
 import cofty.core.token.TokenType;
 import cofty.type.Representable;
 import cofty.type.TextContent;
+import cofty.util.Strings;
 import cofty.v3.parser.node.ParserNode;
 import cofty.v3.parser.node.flag.NodeFlag;
 
@@ -26,7 +27,7 @@ public class Cofty {
 
         messages.print();
 
-        System.out.println(Representable.repr(parsedTokens));
+        Strings.println(Representable.repr(parsedTokens));
 
         // v2
 //        final var parseResult = BodyAst.PARSER.parse(parseContext);
@@ -36,11 +37,12 @@ public class Cofty {
         ParserNode parserNode;
 
         (parserNode = ParserNode.tokenOrSyntaxFail(Keyword.LET))
+                .then(ParserNode.token(Keyword.MUT, NodeFlag.peek()))
                 .then(ParserNode.token(TokenType.ID, NodeFlag.syntaxFail("expected name")))
                 .then(ParserNode.token(Operator.ASSIGN, NodeFlag.syntaxFail("expected assign operator")))
                 .then(ParserNode.token(TokenType.INT, NodeFlag.syntaxFail("expected value")));
 
-        System.out.printf("Is parsed: %b%n", parserNode.proceedQueue(parseContext, NodeFlag.general()));
+        Strings.println("Is parsed:", parserNode.proceedQueue(parseContext, NodeFlag.general()));
 
         messages.print();
     }

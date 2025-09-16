@@ -19,5 +19,16 @@ public final class Strings {
         return count(source.substring(0, charIndex), "\n") + 1;
     }
 
+    public static void println(Object... values) {
+        for (var i = 0; i < values.length; i++) {
+            System.out.print(values[i]);
+
+            if (i != values.length - 1)
+                System.out.print(' ');
+        }
+
+        System.out.println();
+    }
+
     private Strings() {}
 }

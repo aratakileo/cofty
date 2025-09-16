@@ -1,8 +1,10 @@
 package cofty.v3.parser.node.flag;
 
+import cofty.type.Representable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public enum Flags implements NodeFlag {
+public enum Flags implements NodeFlag, Representable {
     GENERAL,
     PEEK;
 
@@ -24,5 +26,10 @@ public enum Flags implements NodeFlag {
     @Override
     public @Nullable Exception failMessage() {
         return null;
+    }
+
+    @Override
+    public @NotNull String toReprString() {
+        return String.format("%s.%s()", NodeFlag.class.getSimpleName(), name().toLowerCase());
     }
 }
