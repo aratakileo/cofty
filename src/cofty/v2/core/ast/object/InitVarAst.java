@@ -1,9 +1,9 @@
-package cofty.core.ast.object;
+package cofty.v2.core.ast.object;
 
-import cofty.core.ast.AstObject;
-import cofty.core.parse.AstParseEntry;
-import cofty.core.parse.AstParser;
-import cofty.core.parse.AstPeeker;
+import cofty.v2.core.ast.AstObject;
+import cofty.v2.core.parse.AstParseEntry;
+import cofty.v2.core.parse.AstParser;
+import cofty.v2.core.parse.AstPeeker;
 import cofty.core.token.*;
 
 import java.util.Optional;
@@ -32,7 +32,7 @@ public class InitVarAst implements AstObject {
                 .finishTransaction(true)
                 .finishTransaction();
 
-        return context.isFailed() ? Optional.empty() : Optional.of(result);
+        return context.isFailed_v2() ? Optional.empty() : Optional.of(result);
     };
 
     public final static AstParseEntry<InitVarAst> PARSE_ENTRY = AstParseEntry.bind(PEEKER, PARSER);

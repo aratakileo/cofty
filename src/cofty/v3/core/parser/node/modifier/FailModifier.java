@@ -1,4 +1,4 @@
-package cofty.v3.parser.node.flag;
+package cofty.v3.core.parser.node.modifier;
 
 import cofty.type.Representable;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +27,7 @@ public class FailModifier implements NodeModifier, Representable {
     }
 
     @Override
-    public boolean isSucceed() {
+    public boolean isAction() {
         return false;
     }
 

@@ -1,4 +1,4 @@
-package cofty.v3.parser.node.flag;
+package cofty.v3.core.parser.node.modifier;
 
 import cofty.type.exception.SyntaxError;
 import org.jetbrains.annotations.NotNull;
@@ -10,7 +10,7 @@ public interface NodeModifier {
     boolean isGeneral();
     boolean isPeek();
     boolean isFail();
-    boolean isSucceed();
+    boolean isAction();
 
     default @Nullable Exception failMessage() {
         return null;
@@ -20,12 +20,12 @@ public interface NodeModifier {
         return Objects.requireNonNull(failMessage());
     }
 
-    default @Nullable SucceedApplier succeedApplier() {
+    default @Nullable ModifierAction action() {
         return null;
     }
 
-    default @NotNull SucceedApplier succeedApplierOrThrow() {
-        return Objects.requireNonNull(succeedApplier());
+    default @NotNull ModifierAction actionOrThrow() {
+        return Objects.requireNonNull(action());
     }
 
     static @NotNull NodeModifier prioritize(@NotNull NodeModifier topLevelFlag, @NotNull NodeModifier currentLevelFlag) {
@@ -35,16 +35,16 @@ public interface NodeModifier {
         return currentLevelFlag;
     }
 
-    static @NotNull SucceedModifier generalSucceed(@NotNull SucceedApplier applier) {
-        return new SucceedModifier(Modifiers.GENERAL, applier);
+    static @NotNull ActionModifier generalAndAction(@NotNull ModifierAction action) {
+        return new ActionModifier(Modifiers.GENERAL, action);
     }
 
-    static @NotNull SucceedModifier peekSucceed(@NotNull SucceedApplier applier) {
-        return new SucceedModifier(Modifiers.PEEK, applier);
+    static @NotNull ActionModifier peekAndAction(@NotNull ModifierAction action) {
+        return new ActionModifier(Modifiers.PEEK, action);
     }
 
-    static @NotNull SucceedModifier syntaxFailSucceed(@NotNull SucceedApplier applier, @NotNull String message) {
-        return new SucceedModifier(syntaxFail(message), applier);
+    static @NotNull ActionModifier syntaxFailAndAction(@NotNull ModifierAction action, @NotNull String message) {
+        return new ActionModifier(syntaxFail(message), action);
     }
 
     static @NotNull FailModifier fail(@NotNull Exception message) {

@@ -1,8 +1,7 @@
-package cofty.v3.parser.node.flag;
+package cofty.v3.core.parser.node.modifier;
 
 import cofty.type.Representable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public enum Modifiers implements NodeModifier, Representable {
     GENERAL,
@@ -24,7 +23,7 @@ public enum Modifiers implements NodeModifier, Representable {
     }
 
     @Override
-    public boolean isSucceed() {
+    public boolean isAction() {
         return false;
     }
 

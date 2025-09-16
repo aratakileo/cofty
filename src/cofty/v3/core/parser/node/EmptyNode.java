@@ -1,11 +1,12 @@
-package cofty.v3.parser.node;
+package cofty.v3.core.parser.node;
 
 import cofty.core.parse.ParseContext;
-import cofty.v3.parser.node.flag.NodeModifier;
+import cofty.type.Representable;
+import cofty.v3.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class EmptyNode implements ParserNode {
+public abstract class EmptyNode implements ParserNode, Representable {
     public final NodeModifier modifier;
 
     private ParserNode next = null;
@@ -44,5 +45,10 @@ public abstract class EmptyNode implements ParserNode {
             context.next();
 
         return false;
+    }
+
+    @Override
+    public String toString() {
+        return toReprString();
     }
 }

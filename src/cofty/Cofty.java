@@ -2,17 +2,11 @@ package cofty;
 
 import cofty.core.message.MessageHandler;
 import cofty.core.parse.ParseContext;
-import cofty.core.token.Keyword;
 import cofty.core.token.Lexer;
-import cofty.core.token.Operator;
-import cofty.core.token.TokenType;
 import cofty.type.Representable;
 import cofty.type.TextContent;
 import cofty.util.Strings;
-import cofty.v3.parser.node.ParserNode;
-import cofty.v3.parser.node.flag.NodeModifier;
-
-import java.util.concurrent.atomic.AtomicBoolean;
+import cofty.v3.core.parser.ast.InitVarObject;
 
 public class Cofty {
     public static void main(String[] args) {
@@ -36,16 +30,8 @@ public class Cofty {
 //        System.out.println(parseResult.map(BodyAst::toString).orElse(""));
 
         // v3
-        AtomicBoolean isMut = new AtomicBoolean(false);
-        ParserNode parserNode;
-
-        (parserNode = ParserNode.tokenOrSyntaxFail(Keyword.LET))
-                .thenToken(Keyword.MUT, NodeModifier.peekSucceed(ignore -> isMut.set(true)))
-                .thenToken(TokenType.ID, NodeModifier.syntaxFail("expected name"))
-                .thenToken(Operator.ASSIGN, NodeModifier.syntaxFail("expected assign operator"))
-                .thenToken(TokenType.INT, NodeModifier.syntaxFail("expected value"));
-
-        Strings.println("Is parsed:", parserNode.proceedQueue(parseContext, NodeModifier.general()), "is mut:", isMut);
+        var parsedData = new InitVarObject();
+        Strings.println("Is parsed:", parsedData.parse(parseContext), "Data:", parsedData);
 
         messages.print();
     }

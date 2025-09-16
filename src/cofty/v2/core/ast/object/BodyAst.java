@@ -1,9 +1,9 @@
-package cofty.core.ast.object;
+package cofty.v2.core.ast.object;
 
-import cofty.core.ast.AstObject;
-import cofty.core.ast.AstValueList;
-import cofty.core.parse.AstParseEntry;
-import cofty.core.parse.AstParser;
+import cofty.v2.core.ast.AstObject;
+import cofty.v2.core.ast.AstValueList;
+import cofty.v2.core.parse.AstParseEntry;
+import cofty.v2.core.parse.AstParser;
 import cofty.core.token.TokenType;
 import cofty.util.Cast;
 
@@ -35,7 +35,7 @@ public class BodyAst implements AstObject {
                 }
         }
 
-        return context.isFailed() ? Optional.empty() : Optional.of(result);
+        return context.isFailed_v2() ? Optional.empty() : Optional.of(result);
     };
 
     public AstValueList<?> body = new AstValueList<>();

@@ -1,11 +1,11 @@
-package cofty.v3.parser.node;
+package cofty.v3.core.parser.node;
 
 import cofty.core.message.MessageBuilder;
 import cofty.core.parse.ParseContext;
 import cofty.core.token.ITokenType;
 import cofty.core.token.Keyword;
 import cofty.core.token.Separator;
-import cofty.v3.parser.node.flag.NodeModifier;
+import cofty.v3.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

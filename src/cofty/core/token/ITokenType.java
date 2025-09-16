@@ -1,9 +1,9 @@
 package cofty.core.token;
 
-import cofty.core.parse.AstParseEntry;
-import cofty.core.parse.AstPeeker;
+import cofty.v2.core.parse.AstParseEntry;
+import cofty.v2.core.parse.AstPeeker;
 import cofty.core.parse.ParseContext;
-import cofty.core.parse.AstParser;
+import cofty.v2.core.parse.AstParser;
 import cofty.type.Containable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

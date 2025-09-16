@@ -1,12 +1,14 @@
 package cofty.core.parse;
 
-import cofty.core.ast.AstValue;
+import cofty.v2.core.ast.AstValue;
 import cofty.core.message.MessageBuilder;
 import cofty.core.message.MessageHandler;
 import cofty.core.token.Token;
 import cofty.core.token.TokenType;
 import cofty.type.TextContent;
 import cofty.type.exception.SyntaxError;
+import cofty.v2.core.parse.AstParser;
+import cofty.v2.core.parse.AstPeeker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,8 +52,12 @@ public class ParseContext {
         this.parent = null;
     }
 
-    public boolean isFailed() {
+    public boolean isFailed_v2() {
         return failed;
+    }
+
+    public boolean hasNoCriticalErrors() {
+        return messages.count() == 0;
     }
 
     public <T extends AstValue, V extends AstParser<T>, P extends AstPeeker> @NotNull ParseContext matchIf(

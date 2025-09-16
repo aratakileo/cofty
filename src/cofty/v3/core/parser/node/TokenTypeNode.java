@@ -1,12 +1,12 @@
-package cofty.v3.parser.node;
+package cofty.v3.core.parser.node;
 
 import cofty.core.parse.ParseContext;
 import cofty.core.token.ITokenType;
 import cofty.type.Representable;
-import cofty.v3.parser.node.flag.NodeModifier;
+import cofty.v3.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 
-public class TokenTypeNode extends EmptyNode implements Representable {
+public class TokenTypeNode extends EmptyNode {
     public final ITokenType tokenType;
 
     public TokenTypeNode(@NotNull ITokenType tokenType, @NotNull NodeModifier modifier) {
@@ -22,8 +22,8 @@ public class TokenTypeNode extends EmptyNode implements Representable {
                 topLevelModifier
         );
 
-        if (proceeded && modifier.isSucceed())
-            modifier.succeedApplierOrThrow().apply(context.peekOrThrow(-1));
+        if (proceeded && modifier.isAction())
+            modifier.actionOrThrow().applyToken(context.peekOrThrow(-1));
 
         return proceeded;
     }

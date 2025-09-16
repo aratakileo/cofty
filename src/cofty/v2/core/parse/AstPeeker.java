@@ -1,5 +1,6 @@
-package cofty.core.parse;
+package cofty.v2.core.parse;
 
+import cofty.core.parse.ParseContext;
 import org.jetbrains.annotations.NotNull;
 
 public interface AstPeeker {

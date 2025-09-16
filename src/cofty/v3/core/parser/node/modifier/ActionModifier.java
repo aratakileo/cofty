@@ -1,25 +1,25 @@
-package cofty.v3.parser.node.flag;
+package cofty.v3.core.parser.node.modifier;
 
 import cofty.type.Representable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SucceedModifier implements NodeModifier, Representable {
+public class ActionModifier implements NodeModifier, Representable {
     public final NodeModifier rootModifier;
-    public final SucceedApplier succeedApplier;
+    public final ModifierAction action;
 
-    public SucceedModifier(@NotNull NodeModifier rootModifier, @NotNull SucceedApplier succeedApplier) {
-        this.succeedApplier = succeedApplier;
+    public ActionModifier(@NotNull NodeModifier rootModifier, @NotNull ModifierAction action) {
+        this.action = action;
 
-        if (rootModifier.isSucceed())
+        if (rootModifier.isAction())
             throw new IllegalStateException();
 
         this.rootModifier = rootModifier;
     }
 
     @Override
-    public @Nullable SucceedApplier succeedApplier() {
-        return succeedApplier;
+    public @Nullable ModifierAction action() {
+        return action;
     }
 
     @Override
@@ -38,13 +38,13 @@ public class SucceedModifier implements NodeModifier, Representable {
     }
 
     @Override
-    public @Nullable Exception failMessage() {
-        return rootModifier.failMessage();
+    public boolean isAction() {
+        return true;
     }
 
     @Override
-    public boolean isSucceed() {
-        return true;
+    public @Nullable Exception failMessage() {
+        return rootModifier.failMessage();
     }
 
     @Override
@@ -53,7 +53,7 @@ public class SucceedModifier implements NodeModifier, Representable {
                 "new %s(%s, %s)",
                 this.getClass().getSimpleName(),
                 Representable.repr(rootModifier),
-                succeedApplier
+                action
         );
     }
 }

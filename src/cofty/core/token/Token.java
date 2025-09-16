@@ -1,6 +1,6 @@
 package cofty.core.token;
 
-import cofty.core.ast.AstValue;
+import cofty.v2.core.ast.AstValue;
 import cofty.type.Representable;
 import org.jetbrains.annotations.NotNull;
 

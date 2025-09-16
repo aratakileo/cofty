@@ -1,7 +1,7 @@
-package cofty.core.ast.object;
+package cofty.v2.core.ast.object;
 
-import cofty.core.ast.AstObject;
-import cofty.core.parse.AstParser;
+import cofty.v2.core.ast.AstObject;
+import cofty.v2.core.parse.AstParser;
 import cofty.core.token.Token;
 import cofty.core.token.TokenType;
 
@@ -23,7 +23,7 @@ public class ValueAst implements AstObject {
                 .syntaxErrorOnFail_v2("expected value")
                 .finishTransaction();
 
-        return context.isFailed() ? Optional.empty() : Optional.of(result);
+        return context.isFailed_v2() ? Optional.empty() : Optional.of(result);
     };
 
     public Token value;

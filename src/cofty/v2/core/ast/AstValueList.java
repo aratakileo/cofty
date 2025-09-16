@@ -1,4 +1,4 @@
-package cofty.core.ast;
+package cofty.v2.core.ast;
 
 import org.jetbrains.annotations.NotNull;
 
