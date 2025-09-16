@@ -11,4 +11,8 @@ public interface AstObject {
     default boolean parse(@NotNull ParseContext context) {
         return parserNode().proceedQueue(context, NodeModifier.general());
     }
+
+    default boolean preview(@NotNull ParseContext context) {
+        return parserNode().proceedQueue(context, NodeModifier.previewAnchorGeneral());
+    }
 }

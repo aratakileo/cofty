@@ -12,23 +12,8 @@ public class FailModifier implements NodeModifier, Representable {
     }
 
     @Override
-    public boolean isGeneral() {
-        return false;
-    }
-
-    @Override
-    public boolean isPeek() {
-        return false;
-    }
-
-    @Override
     public boolean isFail() {
         return true;
-    }
-
-    @Override
-    public boolean isAction() {
-        return false;
     }
 
     @Override

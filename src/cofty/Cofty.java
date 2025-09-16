@@ -30,8 +30,16 @@ public class Cofty {
 //        System.out.println(parseResult.map(BodyAst::toString).orElse(""));
 
         // v3
-        var parsedData = new InitVarObject();
-        Strings.println("Is parsed:", parsedData.parse(parseContext), "Data:", parsedData);
+        var astObject = new InitVarObject();
+        var isPreviewSucceed = astObject.preview(parseContext);
+
+        Strings.println("Is preview succeeded:", isPreviewSucceed);
+        Strings.println("Ast object after preview:", astObject);
+
+        if (isPreviewSucceed) {
+            Strings.println("Is parsed:", astObject.parse(parseContext));
+            Strings.println("Ast object after parse:", astObject);
+        }
 
         messages.print();
     }

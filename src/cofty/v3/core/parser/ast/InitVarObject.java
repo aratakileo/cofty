@@ -41,8 +41,10 @@ public class InitVarObject implements AstObject {
     public @NotNull ParserNode parserNode() {
         TokenTypeNode node;
 
-        (node = ParserNode.tokenOrSyntaxFail(Keyword.LET))
-                .thenToken(Keyword.MUT, NodeModifier.peekAndAction(this::setMutable))
+        (node = ParserNode.token(
+                Keyword.LET,
+                NodeModifier.previewAnchor(NodeModifier.syntaxFail("expected `let` keyword")))
+        ).thenToken(Keyword.MUT, NodeModifier.peekAndAction(this::setMutable))
                 .thenToken(TokenType.ID, NodeModifier.syntaxFailAndAction(this::setName, "expected name"))
                 .thenToken(Operator.ASSIGN, NodeModifier.syntaxFail("expected assign operator"))
                 .thenToken(TokenType.INT, NodeModifier.syntaxFailAndAction(this::setValue, "expected value"));

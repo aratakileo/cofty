@@ -3,7 +3,7 @@ package cofty.v3.core.parser.node.modifier;
 import cofty.type.Representable;
 import org.jetbrains.annotations.NotNull;
 
-public enum Modifiers implements NodeModifier, Representable {
+public enum SimpleModifiers implements NodeModifier, Representable {
     GENERAL,
     PEEK;
 
@@ -15,16 +15,6 @@ public enum Modifiers implements NodeModifier, Representable {
     @Override
     public boolean isPeek() {
         return this == PEEK;
-    }
-
-    @Override
-    public boolean isFail() {
-        return false;
-    }
-
-    @Override
-    public boolean isAction() {
-        return false;
     }
 
     @Override

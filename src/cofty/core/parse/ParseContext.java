@@ -1,5 +1,6 @@
 package cofty.core.parse;
 
+import cofty.type.exception.NoSnapshotException;
 import cofty.v2.core.ast.AstValue;
 import cofty.core.message.MessageBuilder;
 import cofty.core.message.MessageHandler;
@@ -150,7 +151,7 @@ public class ParseContext {
 
     public void rollbackIndex() {
         if (indexSnapshot == -1)
-            throw new IllegalStateException();
+            throw new NoSnapshotException();
 
         index = indexSnapshot;
 

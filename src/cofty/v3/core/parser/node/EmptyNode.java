@@ -31,13 +31,13 @@ public abstract class EmptyNode implements ParserNode, Representable {
         return next;
     }
 
-    protected boolean postProceed(boolean proceed, @NotNull ParseContext context, @NotNull NodeModifier topLevelFlag) {
+    protected boolean postProceed(boolean proceed, @NotNull ParseContext context, @NotNull NodeModifier topLevelModifier) {
         if (proceed) {
             context.next();
             return true;
         }
 
-        if (!topLevelFlag.isGeneral()) return false;
+        if (!topLevelModifier.isGeneral() || topLevelModifier.isPreviewAnchor()) return false;
 
         if (modifier.isFail())
             context.putErrorMessage(modifier.failMessageOrThrow());

@@ -5,12 +5,11 @@ import cofty.type.exception.InvalidRootNodeModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ActionModifier implements NodeModifier, Representable {
+public class PreviewAnchorModifier implements NodeModifier, Representable {
     public final NodeModifier rootModifier;
-    public final ModifierAction action;
 
-    public ActionModifier(@NotNull NodeModifier rootModifier, @NotNull ModifierAction action) {
-        if (rootModifier.isAction())
+    public PreviewAnchorModifier(@NotNull NodeModifier rootModifier) {
+        if (rootModifier.isPreviewAnchor())
             throw new InvalidRootNodeModifier(String.format(
                     "`%s` for `%s`",
                     rootModifier.getClass().getSimpleName(),
@@ -18,12 +17,11 @@ public class ActionModifier implements NodeModifier, Representable {
             ));
 
         this.rootModifier = rootModifier;
-        this.action = action;
     }
 
     @Override
     public @Nullable ModifierAction action() {
-        return action;
+        return rootModifier.action();
     }
 
     @Override
@@ -43,6 +41,11 @@ public class ActionModifier implements NodeModifier, Representable {
 
     @Override
     public boolean isAction() {
+        return rootModifier.isAction();
+    }
+
+    @Override
+    public boolean isPreviewAnchor() {
         return true;
     }
 
@@ -54,10 +57,9 @@ public class ActionModifier implements NodeModifier, Representable {
     @Override
     public @NotNull String toReprString() {
         return String.format(
-                "new %s(%s, %s)",
-                this.getClass().getSimpleName(),
-                Representable.repr(rootModifier),
-                action
+                "%s.previewAnchor(%s)",
+                NodeModifier.class.getSimpleName(),
+                Representable.repr(rootModifier)
         );
     }
 }

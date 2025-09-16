@@ -26,40 +26,39 @@ public interface ParserNode {
         var prevNode = this;
         var cursorStart = context.cursorStart();
 
-        if (queueModifier.isPeek())
+        if (queueModifier.isSnapshotMaker())
             context.createIndexSnapshot();
 
         while (node != null) {
-            var indexSnapshotForNode = !queueModifier.isPeek() && node.modifier().isPeek();
+            var isIndexSnapshotForNode = !queueModifier.isSnapshotMaker() && node.modifier().isPeek();
 
-            if (indexSnapshotForNode)
+            if (isIndexSnapshotForNode)
                 context.createIndexSnapshot();
 
-            var proceedResult = node.proceed(context, queueModifier);
+            var isResultProceeded = node.proceed(context, queueModifier);
+            var isPreviewFinished = node.modifier().isPreviewAnchor()
+                    && queueModifier.isPreviewAnchor()
+                    && isResultProceeded;
 
-            if (!proceedResult && indexSnapshotForNode)
-                context.rollbackIndex();
+            if (!isResultProceeded && isIndexSnapshotForNode || isPreviewFinished) context.rollbackIndex();
+            if (isResultProceeded && isIndexSnapshotForNode) context.resetIndexSnapshot();
+            if (isPreviewFinished) return true;
 
-            if (proceedResult && indexSnapshotForNode)
-                context.resetIndexSnapshot();
-
-            if (proceedResult || indexSnapshotForNode) {
+            if (isResultProceeded || isIndexSnapshotForNode) {
                 prevNode = node;
                 node = node.next();
                 continue;
             }
 
-            if (queueModifier.isPeek())
-                context.rollbackIndex();
+            if (queueModifier.isSnapshotMaker() || queueModifier.isPreviewAnchor()) context.rollbackIndex();
+            if (queueModifier.isPreviewAnchor()) return false;
 
             if (queueModifier.isGeneral() && !node.modifier().isFail()) {
                 var errorCursorStart = context.cursorStart();
 
-                while (node != null && !node.modifier().isFail())
-                    node = node.next();
+                while (node != null && !node.modifier().isFail()) node = node.next();
 
-                if (node == null)
-                    throw new IllegalStateException();
+                if (node == null) throw new IllegalStateException();
 
                 context.putErrorMessage(node.modifier().failMessageOrThrow(), errorCursorStart);
             }
@@ -70,10 +69,15 @@ public interface ParserNode {
             return false;
         }
 
-        if (!context.hasCurrent()) return true;
+        if (!context.hasCurrent()) {
+            if (queueModifier.isPreviewAnchor())
+                throw new IllegalStateException("It is expected that at least one node in the queue contains a preview anchor modifier");
 
-        if (queueModifier.isPeek())
-            context.resetIndexSnapshot();
+            return true;
+        }
+
+        if (queueModifier.isSnapshotMaker()) context.resetIndexSnapshot();
+        if (queueModifier.isPreviewAnchor()) return false;
 
         if (queueModifier.isFail())
             context.putErrorMessage(queueModifier.failMessageOrThrow(), cursorStart);

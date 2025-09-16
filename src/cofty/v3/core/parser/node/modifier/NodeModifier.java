@@ -7,10 +7,29 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public interface NodeModifier {
-    boolean isGeneral();
-    boolean isPeek();
-    boolean isFail();
-    boolean isAction();
+    default boolean isGeneral() {
+        return false;
+    }
+
+    default boolean isPeek() {
+        return false;
+    }
+
+    default boolean isFail() {
+        return false;
+    }
+
+    default boolean isAction() {
+        return false;
+    }
+
+    default boolean isPreviewAnchor() {
+        return false;
+    }
+
+    default boolean isSnapshotMaker() {
+        return isPeek() || isPreviewAnchor();
+    }
 
     default @Nullable Exception failMessage() {
         return null;
@@ -36,11 +55,11 @@ public interface NodeModifier {
     }
 
     static @NotNull ActionModifier generalAndAction(@NotNull ModifierAction action) {
-        return new ActionModifier(Modifiers.GENERAL, action);
+        return new ActionModifier(SimpleModifiers.GENERAL, action);
     }
 
     static @NotNull ActionModifier peekAndAction(@NotNull ModifierAction action) {
-        return new ActionModifier(Modifiers.PEEK, action);
+        return new ActionModifier(SimpleModifiers.PEEK, action);
     }
 
     static @NotNull ActionModifier syntaxFailAndAction(@NotNull ModifierAction action, @NotNull String message) {
@@ -55,11 +74,19 @@ public interface NodeModifier {
         return new FailModifier(new SyntaxError(message));
     }
 
-    static @NotNull Modifiers general() {
-        return Modifiers.GENERAL;
+    static @NotNull PreviewAnchorModifier previewAnchor(@NotNull NodeModifier rootModifier) {
+        return new PreviewAnchorModifier(rootModifier);
     }
 
-    static @NotNull Modifiers peek() {
-        return Modifiers.PEEK;
+    static @NotNull PreviewAnchorModifier previewAnchorGeneral() {
+        return new PreviewAnchorModifier(SimpleModifiers.GENERAL);
+    }
+
+    static @NotNull SimpleModifiers general() {
+        return SimpleModifiers.GENERAL;
+    }
+
+    static @NotNull SimpleModifiers peek() {
+        return SimpleModifiers.PEEK;
     }
 }
