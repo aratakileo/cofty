@@ -1,4 +1,4 @@
-package cofty.core.token;
+package cofty.core.lexer.token;
 
 import cofty.v2.core.ast.AstValue;
 import cofty.type.Representable;

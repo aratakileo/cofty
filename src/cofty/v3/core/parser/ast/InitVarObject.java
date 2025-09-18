@@ -1,7 +1,7 @@
 package cofty.v3.core.parser.ast;
 
-import cofty.core.parse.ParseContext;
-import cofty.core.token.*;
+import cofty.core.parser.ParseContext;
+import cofty.core.lexer.token.*;
 import cofty.type.exception.SyntaxError;
 import cofty.v3.core.parser.node.ParserNode;
 import cofty.v3.core.parser.node.TokenTypeNode;
@@ -54,9 +54,9 @@ public class InitVarObject implements AstObject {
         ).thenToken(Keyword.MUT, NodeModifier.peekAndAction(this::setMutable))
                 .thenToken(TokenType.ID, NodeModifier.syntaxFailAndAction(this::setName, "expected variable name"))
                 .thenToken(Separator.COLON, NodeModifier.peek())
-                .thenToken(TokenType.ID, NodeModifier.prevNodeDependedSyntaxFailAndAction(this::setExplicitlySpecifiedType, "expected type declaration"))
+                .thenToken(TokenType.ID, NodeModifier.dependedActionOrSyntaxFail(this::setExplicitlySpecifiedType, "expected type declaration"))
                 .thenToken(Operator.ASSIGN, NodeModifier.peek())
-                .thenToken(TokenType.INT, NodeModifier.prevNodeDependedSyntaxFailAndAction(this::setValue, "expected variable value"));
+                .thenToken(TokenType.INT, NodeModifier.dependedActionOrSyntaxFail(this::setValue, "expected variable value"));
 
         return node;
     }

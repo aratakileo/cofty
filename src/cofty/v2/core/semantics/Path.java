@@ -1,7 +1,7 @@
 package cofty.v2.core.semantics;
 
-import cofty.core.token.Token;
-import cofty.core.token.TokenType;
+import cofty.core.lexer.token.Token;
+import cofty.core.lexer.token.TokenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

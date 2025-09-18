@@ -4,7 +4,7 @@ import cofty.v2.core.ast.AstObject;
 import cofty.v2.core.parse.AstParseEntry;
 import cofty.v2.core.parse.AstParser;
 import cofty.v2.core.parse.AstPeeker;
-import cofty.core.token.*;
+import cofty.core.lexer.token.*;
 
 import java.util.Optional;
 

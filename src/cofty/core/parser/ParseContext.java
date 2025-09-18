@@ -1,11 +1,11 @@
-package cofty.core.parse;
+package cofty.core.parser;
 
 import cofty.type.exception.NoSnapshotException;
 import cofty.v2.core.ast.AstValue;
 import cofty.core.message.MessageBuilder;
 import cofty.core.message.MessageHandler;
-import cofty.core.token.Token;
-import cofty.core.token.TokenType;
+import cofty.core.lexer.token.Token;
+import cofty.core.lexer.token.TokenType;
 import cofty.type.TextContent;
 import cofty.type.exception.SyntaxError;
 import cofty.v2.core.parse.AstParser;

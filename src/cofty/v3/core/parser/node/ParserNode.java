@@ -1,10 +1,10 @@
 package cofty.v3.core.parser.node;
 
 import cofty.core.message.MessageBuilder;
-import cofty.core.parse.ParseContext;
-import cofty.core.token.ITokenType;
-import cofty.core.token.Keyword;
-import cofty.core.token.Separator;
+import cofty.core.parser.ParseContext;
+import cofty.core.lexer.token.ITokenType;
+import cofty.core.lexer.token.Keyword;
+import cofty.core.lexer.token.Separator;
 import cofty.type.exception.InvalidParserNodeStateInQueue;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
@@ -28,25 +28,25 @@ public interface ParserNode {
         var node = this;
         var prevNode = this;
         var cursorStart = context.cursorStart();
-        var ignorePrevNodeDepended = false;
-        var isInPrevNodeDependedQueue = false;
+        var ignoreDependedNodes = false;
+        var isInDependedQueue = false;
 
         if (queueModifier.isSnapshotMaker())
             context.createIndexSnapshot();
 
         while (node != null) {
-            if (ignorePrevNodeDepended) {
+            if (ignoreDependedNodes) {
                 if (node.modifier().isPrevNodeDepended()) {
                     prevNode = node;
                     node = node.next();
                     continue;
                 }
 
-                ignorePrevNodeDepended = false;
+                ignoreDependedNodes = false;
             }
 
-            if (isInPrevNodeDependedQueue && !node.modifier().isPrevNodeDepended())
-                isInPrevNodeDependedQueue = false;
+            if (isInDependedQueue && !node.modifier().isPrevNodeDepended())
+                isInDependedQueue = false;
 
             if (node.modifier().isPrevNodeDepended()
                     && !prevNode.modifier().isPrevNodeDepended()
@@ -65,12 +65,12 @@ public interface ParserNode {
             if (!isResultProceeded && isIndexSnapshotForNode || isPreviewFinished) context.rollbackIndex();
             if (isResultProceeded && isIndexSnapshotForNode) context.resetIndexSnapshot();
             if (isPreviewFinished) return true;
-            if (node.modifier().isPeek() && !isResultProceeded) ignorePrevNodeDepended = true;
+            if (node.modifier().isPeek() && !isResultProceeded) ignoreDependedNodes = true;
 
             if (node.modifier().isPeek()
                     && isResultProceeded
                     && node.next() != null
-                    && node.nextOrThrow().modifier().isPrevNodeDepended()) isInPrevNodeDependedQueue = true;
+                    && node.nextOrThrow().modifier().isPrevNodeDepended()) isInDependedQueue = true;
 
             if (isResultProceeded || isIndexSnapshotForNode) {
                 prevNode = node;
@@ -85,8 +85,8 @@ public interface ParserNode {
                 var errorCursorStart = context.cursorStart();
 
                 while (node != null && !node.modifier().isFail()) {
-                    if (isInPrevNodeDependedQueue && !node.modifier().isPrevNodeDepended())
-                        throw new InvalidParserNodeStateInQueue("a closing FailModifier was expected for prev node depended queue");
+                    if (isInDependedQueue && !node.modifier().isPrevNodeDepended())
+                        throw new InvalidParserNodeStateInQueue("a closing fail modifier was expected for depended queue");
 
                     node = node.next();
                 }

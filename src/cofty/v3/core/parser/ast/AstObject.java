@@ -1,6 +1,6 @@
 package cofty.v3.core.parser.ast;
 
-import cofty.core.parse.ParseContext;
+import cofty.core.parser.ParseContext;
 import cofty.v3.core.parser.node.ParserNode;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;

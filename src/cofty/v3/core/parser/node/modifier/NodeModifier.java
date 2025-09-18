@@ -82,15 +82,15 @@ public interface NodeModifier {
         return new PreviewAnchorModifier(rootModifier);
     }
 
-    static @NotNull PrevNodeDepended prevNodeDepended(@NotNull NodeModifier rootModifier) {
-        return new PrevNodeDepended(rootModifier);
+    static @NotNull DependedModifier depended(@NotNull NodeModifier rootModifier) {
+        return new DependedModifier(rootModifier);
     }
 
-    static @NotNull PrevNodeDepended prevNodeDependedSyntaxFailAndAction(
+    static @NotNull DependedModifier dependedActionOrSyntaxFail(
             @NotNull ModifierAction action,
             @NotNull String message
     ) {
-        return new PrevNodeDepended(NodeModifier.syntaxFailAndAction(action, message));
+        return new DependedModifier(NodeModifier.syntaxFailAndAction(action, message));
     }
 
     static @NotNull PreviewAnchorModifier previewAnchorGeneral() {

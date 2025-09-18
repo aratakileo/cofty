@@ -1,7 +1,7 @@
 package cofty.v3.core.parser.node;
 
-import cofty.core.parse.ParseContext;
-import cofty.core.token.ITokenType;
+import cofty.core.parser.ParseContext;
+import cofty.core.lexer.token.ITokenType;
 import cofty.type.Representable;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;

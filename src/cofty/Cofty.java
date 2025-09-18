@@ -1,8 +1,8 @@
 package cofty;
 
 import cofty.core.message.MessageHandler;
-import cofty.core.parse.ParseContext;
-import cofty.core.token.Lexer;
+import cofty.core.parser.ParseContext;
+import cofty.core.lexer.Lexer;
 import cofty.type.Representable;
 import cofty.type.TextContent;
 import cofty.util.Strings;

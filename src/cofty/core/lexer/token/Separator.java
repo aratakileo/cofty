@@ -1,7 +1,6 @@
-package cofty.core.token;
+package cofty.core.lexer.token;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public enum Separator implements ITokenType {
     DOT("."),

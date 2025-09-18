@@ -1,6 +1,6 @@
 package cofty.v3.core.parser.node.modifier;
 
-import cofty.core.token.Token;
+import cofty.core.lexer.token.Token;
 import org.jetbrains.annotations.NotNull;
 
 public interface ModifierAction {

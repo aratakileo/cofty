@@ -1,8 +1,8 @@
-package cofty.core.token;
+package cofty.core.lexer.token;
 
 import cofty.v2.core.parse.AstParseEntry;
 import cofty.v2.core.parse.AstPeeker;
-import cofty.core.parse.ParseContext;
+import cofty.core.parser.ParseContext;
 import cofty.v2.core.parse.AstParser;
 import cofty.type.Containable;
 import org.jetbrains.annotations.NotNull;

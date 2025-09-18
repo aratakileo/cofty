@@ -1,4 +1,4 @@
-package cofty.core.token;
+package cofty.core.lexer.token;
 
 import cofty.type.Representable;
 import org.jetbrains.annotations.NotNull;

@@ -1,7 +1,9 @@
-package cofty.core.token;
+package cofty.core.lexer;
 
 import cofty.core.message.MessageBuilder;
 import cofty.core.message.MessageHandler;
+import cofty.core.lexer.token.Token;
+import cofty.core.lexer.token.TokenType;
 import cofty.type.TextContent;
 import cofty.type.exception.SyntaxError;
 import org.jetbrains.annotations.NotNull;
