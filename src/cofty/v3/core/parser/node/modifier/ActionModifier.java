@@ -1,23 +1,15 @@
 package cofty.v3.core.parser.node.modifier;
 
 import cofty.type.Representable;
-import cofty.type.exception.InvalidRootNodeModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ActionModifier implements NodeModifier, Representable {
-    public final NodeModifier rootModifier;
+public class ActionModifier extends ContainerModifier implements Representable {
     public final ModifierAction action;
 
     public ActionModifier(@NotNull NodeModifier rootModifier, @NotNull ModifierAction action) {
-        if (rootModifier.isAction())
-            throw new InvalidRootNodeModifier(String.format(
-                    "`%s` for `%s`",
-                    rootModifier.getClass().getSimpleName(),
-                    getClass().getSimpleName()
-            ));
+        super(rootModifier, rootModifier.isAction());
 
-        this.rootModifier = rootModifier;
         this.action = action;
     }
 
@@ -27,28 +19,8 @@ public class ActionModifier implements NodeModifier, Representable {
     }
 
     @Override
-    public boolean isGeneral() {
-        return rootModifier.isGeneral();
-    }
-
-    @Override
-    public boolean isPeek() {
-        return rootModifier.isPeek();
-    }
-
-    @Override
-    public boolean isFail() {
-        return rootModifier.isFail();
-    }
-
-    @Override
     public boolean isAction() {
         return true;
-    }
-
-    @Override
-    public @Nullable Exception failMessage() {
-        return rootModifier.failMessage();
     }
 
     @Override

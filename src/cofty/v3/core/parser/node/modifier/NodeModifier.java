@@ -27,6 +27,10 @@ public interface NodeModifier {
         return false;
     }
 
+    default boolean isPrevNodeDepended() {
+        return false;
+    }
+
     default boolean isSnapshotMaker() {
         return isPeek() || isPreviewAnchor();
     }
@@ -76,6 +80,17 @@ public interface NodeModifier {
 
     static @NotNull PreviewAnchorModifier previewAnchor(@NotNull NodeModifier rootModifier) {
         return new PreviewAnchorModifier(rootModifier);
+    }
+
+    static @NotNull PrevNodeDepended prevNodeDepended(@NotNull NodeModifier rootModifier) {
+        return new PrevNodeDepended(rootModifier);
+    }
+
+    static @NotNull PrevNodeDepended prevNodeDependedSyntaxFailAndAction(
+            @NotNull ModifierAction action,
+            @NotNull String message
+    ) {
+        return new PrevNodeDepended(NodeModifier.syntaxFailAndAction(action, message));
     }
 
     static @NotNull PreviewAnchorModifier previewAnchorGeneral() {

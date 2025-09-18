@@ -5,6 +5,7 @@ import cofty.core.parse.ParseContext;
 import cofty.core.token.ITokenType;
 import cofty.core.token.Keyword;
 import cofty.core.token.Separator;
+import cofty.type.exception.InvalidParserNodeStateInQueue;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,14 +23,35 @@ public interface ParserNode {
     boolean proceed(@NotNull ParseContext context, @NotNull NodeModifier topLevelModifier);
 
     default boolean proceedQueue(@NotNull ParseContext context, @NotNull NodeModifier queueModifier) {
+        if (queueModifier.isPrevNodeDepended()) throw new IllegalStateException();
+
         var node = this;
         var prevNode = this;
         var cursorStart = context.cursorStart();
+        var ignorePrevNodeDepended = false;
+        var isInPrevNodeDependedQueue = false;
 
         if (queueModifier.isSnapshotMaker())
             context.createIndexSnapshot();
 
         while (node != null) {
+            if (ignorePrevNodeDepended) {
+                if (node.modifier().isPrevNodeDepended()) {
+                    prevNode = node;
+                    node = node.next();
+                    continue;
+                }
+
+                ignorePrevNodeDepended = false;
+            }
+
+            if (isInPrevNodeDependedQueue && !node.modifier().isPrevNodeDepended())
+                isInPrevNodeDependedQueue = false;
+
+            if (node.modifier().isPrevNodeDepended()
+                    && !prevNode.modifier().isPrevNodeDepended()
+                    && !prevNode.modifier().isPeek()) throw new InvalidParserNodeStateInQueue();
+
             var isIndexSnapshotForNode = !queueModifier.isSnapshotMaker() && node.modifier().isPeek();
 
             if (isIndexSnapshotForNode)
@@ -43,6 +65,12 @@ public interface ParserNode {
             if (!isResultProceeded && isIndexSnapshotForNode || isPreviewFinished) context.rollbackIndex();
             if (isResultProceeded && isIndexSnapshotForNode) context.resetIndexSnapshot();
             if (isPreviewFinished) return true;
+            if (node.modifier().isPeek() && !isResultProceeded) ignorePrevNodeDepended = true;
+
+            if (node.modifier().isPeek()
+                    && isResultProceeded
+                    && node.next() != null
+                    && node.nextOrThrow().modifier().isPrevNodeDepended()) isInPrevNodeDependedQueue = true;
 
             if (isResultProceeded || isIndexSnapshotForNode) {
                 prevNode = node;
@@ -56,9 +84,14 @@ public interface ParserNode {
             if (queueModifier.isGeneral() && !node.modifier().isFail()) {
                 var errorCursorStart = context.cursorStart();
 
-                while (node != null && !node.modifier().isFail()) node = node.next();
+                while (node != null && !node.modifier().isFail()) {
+                    if (isInPrevNodeDependedQueue && !node.modifier().isPrevNodeDepended())
+                        throw new InvalidParserNodeStateInQueue("a closing FailModifier was expected for prev node depended queue");
 
-                if (node == null) throw new IllegalStateException();
+                    node = node.next();
+                }
+
+                if (node == null) throw new InvalidParserNodeStateInQueue();
 
                 context.putErrorMessage(node.modifier().failMessageOrThrow(), errorCursorStart);
             }
@@ -71,7 +104,7 @@ public interface ParserNode {
 
         if (!context.hasCurrent()) {
             if (queueModifier.isPreviewAnchor())
-                throw new IllegalStateException("It is expected that at least one node in the queue contains a preview anchor modifier");
+                throw new InvalidParserNodeStateInQueue("Expected that at least one node in the queue contains a preview anchor modifier");
 
             return true;
         }
@@ -87,7 +120,7 @@ public interface ParserNode {
                     context.currentOrThrow(),
                     prevNode.modifier().failMessageOrThrow()
             ));
-        else throw new IllegalStateException();
+        else throw new InvalidParserNodeStateInQueue();
 
         return false;
     }

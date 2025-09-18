@@ -138,6 +138,10 @@ public class ParseContext {
         messages.putBuildedMessage(MessageBuilder.err(text, cursorStart, cursorEnd(), err));
     }
 
+    public void putErrorMessageAfter(@NotNull Exception err, @NotNull Token token) {
+        messages.putBuildedMessage(MessageBuilder.errAfter(text, token, err));
+    }
+
     public void resetIndexSnapshot() {
         indexSnapshot = -1;
     }
