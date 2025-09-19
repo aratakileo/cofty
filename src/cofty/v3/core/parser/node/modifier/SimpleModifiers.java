@@ -18,6 +18,11 @@ public enum SimpleModifiers implements NodeModifier, Representable {
     }
 
     @Override
+    public @NotNull ModifierType type() {
+        return this == GENERAL ? ModifierType.GENERAL : ModifierType.PEEK;
+    }
+
+    @Override
     public @NotNull String toReprString() {
         return String.format("%s.%s()", NodeModifier.class.getSimpleName(), name().toLowerCase());
     }

@@ -1,5 +1,6 @@
 package cofty;
 
+import cofty.core.lexer.token.TokenType;
 import cofty.core.message.MessageHandler;
 import cofty.core.parser.ParseContext;
 import cofty.core.lexer.Lexer;
@@ -7,6 +8,8 @@ import cofty.type.Representable;
 import cofty.type.TextContent;
 import cofty.util.Strings;
 import cofty.v3.core.parser.ast.InitVarObject;
+import cofty.v3.core.parser.node.ParserNode;
+import cofty.v3.core.parser.node.modifier.NodeModifier;
 
 public class Cofty {
     public static void main(String[] args) {
@@ -31,13 +34,26 @@ public class Cofty {
 
         // v3
         var astObject = new InitVarObject();
-        var isPreviewSucceed = astObject.preview(parseContext);
+//        var isPreviewSucceed = astObject.preview(parseContext);
+//
+//        Strings.println("Is preview succeeded:", isPreviewSucceed);
+//        Strings.println("Ast object after preview:", astObject);
+//
+//        if (isPreviewSucceed) {
+//            Strings.println("Is parsed:", astObject.parse(parseContext));
+//            Strings.println("Ast object after parse:", astObject);
+//        }
 
+        var rootNode = ParserNode.anyOfBuilder(NodeModifier.general())
+                .add(astObject.parserNode())
+                .setSeparator(ParserNode.token(TokenType.NEWLINE))
+                .build();
+
+        var isPreviewSucceed = rootNode.proceed(parseContext, NodeModifier.previewAnchorGeneral());
         Strings.println("Is preview succeeded:", isPreviewSucceed);
-        Strings.println("Ast object after preview:", astObject);
 
         if (isPreviewSucceed) {
-            Strings.println("Is parsed:", astObject.parse(parseContext));
+            Strings.println("Is proceeded:", rootNode.proceed(parseContext, NodeModifier.general()));
             Strings.println("Ast object after parse:", astObject);
         }
 

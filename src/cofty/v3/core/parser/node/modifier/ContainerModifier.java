@@ -5,9 +5,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class ContainerModifier implements NodeModifier {
-    public final NodeModifier rootModifier;
+    protected NodeModifier rootModifier;
+    public final ModifierType type;
 
-    public ContainerModifier(@NotNull NodeModifier rootModifier, boolean isInvalidRootModifier) {
+    protected ContainerModifier(
+            @NotNull NodeModifier rootModifier,
+            @NotNull ModifierType type,
+            boolean isInvalidRootModifier
+    ) {
         if (isInvalidRootModifier)
             throw new InvalidRootNodeModifier(String.format(
                     "`%s` for `%s`",
@@ -16,6 +21,7 @@ public abstract class ContainerModifier implements NodeModifier {
             ));
 
         this.rootModifier = rootModifier;
+        this.type = type;
     }
 
     @Override
@@ -56,5 +62,22 @@ public abstract class ContainerModifier implements NodeModifier {
     @Override
     public @Nullable Exception failMessage() {
         return rootModifier.failMessage();
+    }
+
+    @Override
+    public @NotNull ModifierType type() {
+        return type;
+    }
+
+    public @NotNull NodeModifier remove(@NotNull ModifierType type) {
+        if (type == type())
+            return rootModifier;
+
+        if (rootModifier instanceof ContainerModifier subContainer) {
+            rootModifier = subContainer.remove(type);
+            return this;
+        }
+
+        throw new IllegalStateException();
     }
 }

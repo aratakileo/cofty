@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 public class DependedModifier extends ContainerModifier implements Representable {
 
     public DependedModifier(@NotNull NodeModifier rootModifier) {
-        super(rootModifier, rootModifier.isPrevNodeDepended()
+        super(rootModifier, ModifierType.DEPENDED, rootModifier.isPrevNodeDepended()
                 || rootModifier.isPeek()
                 || rootModifier.isPreviewAnchor()
         );

@@ -13,6 +13,6 @@ public interface AstObject {
     }
 
     default boolean preview(@NotNull ParseContext context) {
-        return parserNode().proceedQueue(context, NodeModifier.previewAnchorGeneral());
+        return parserNode().previewQueue(context);
     }
 }

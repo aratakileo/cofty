@@ -7,6 +7,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public interface NodeModifier {
+    @NotNull ModifierType type();
+
     default boolean isGeneral() {
         return false;
     }
@@ -49,13 +51,6 @@ public interface NodeModifier {
 
     default @NotNull ModifierAction actionOrThrow() {
         return Objects.requireNonNull(action());
-    }
-
-    static @NotNull NodeModifier prioritize(@NotNull NodeModifier topLevelFlag, @NotNull NodeModifier currentLevelFlag) {
-        if (!topLevelFlag.isGeneral())
-            return topLevelFlag;
-
-        return currentLevelFlag;
     }
 
     static @NotNull ActionModifier generalAndAction(@NotNull ModifierAction action) {
@@ -103,5 +98,21 @@ public interface NodeModifier {
 
     static @NotNull SimpleModifiers peek() {
         return SimpleModifiers.PEEK;
+    }
+
+    static @NotNull NodeModifier prioritize(
+            @NotNull NodeModifier topLevelModifier,
+            @NotNull NodeModifier currentLevelModifier
+    ) {
+        /*
+         * TODO: this is obviously wrong, fix it!
+         */
+        if (topLevelModifier.isGeneral() && topLevelModifier instanceof PreviewAnchorModifier _modifier)
+            return _modifier.remove(ModifierType.PREVIEW);
+
+        if (!topLevelModifier.isGeneral())
+            return topLevelModifier;
+
+        return currentLevelModifier;
     }
 }

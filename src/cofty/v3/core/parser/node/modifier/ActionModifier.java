@@ -8,7 +8,7 @@ public class ActionModifier extends ContainerModifier implements Representable {
     public final ModifierAction action;
 
     public ActionModifier(@NotNull NodeModifier rootModifier, @NotNull ModifierAction action) {
-        super(rootModifier, rootModifier.isAction());
+        super(rootModifier, ModifierType.ACTION, rootModifier.isAction());
 
         this.action = action;
     }

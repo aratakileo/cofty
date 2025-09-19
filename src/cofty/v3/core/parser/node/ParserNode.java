@@ -1,8 +1,6 @@
 package cofty.v3.core.parser.node;
 
 import cofty.core.lexer.token.ITokenType;
-import cofty.core.lexer.token.Keyword;
-import cofty.core.lexer.token.Separator;
 import cofty.core.parser.ParseContext;
 import cofty.type.exception.InvalidParserNodeStateInQueue;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
@@ -22,7 +20,7 @@ public interface ParserNode {
     boolean proceed(@NotNull ParseContext context, @NotNull NodeModifier topLevelModifier);
 
     default boolean proceedQueue(@NotNull ParseContext context, @NotNull NodeModifier queueModifier) {
-        if (queueModifier.isPrevNodeDepended()) throw new IllegalStateException();
+        if (queueModifier.isPrevNodeDepended() || queueModifier.isAction()) throw new IllegalStateException();
 
         var node = this;
         var prevNode = this;
@@ -123,10 +121,18 @@ public interface ParserNode {
         return false;
     }
 
+    default boolean previewQueue(@NotNull ParseContext context) {
+        return proceedQueue(context, NodeModifier.previewAnchorGeneral());
+    }
+
     <E extends ParserNode> @NotNull E then(@NotNull E next);
 
     default @NotNull TokenTypeNode thenToken(@NotNull ITokenType type, @NotNull NodeModifier modifier) {
         return then(ParserNode.token(type, modifier));
+    }
+
+    default @NotNull AnyOfNodeQueue.Builder thenAnyOfBuilder(@NotNull NodeModifier modifier) {
+        return new AnyOfNodeQueue.Builder(modifier, this::then);
     }
 
     static @NotNull TokenTypeNode token(@NotNull ITokenType tokenType) {
@@ -137,11 +143,7 @@ public interface ParserNode {
         return new TokenTypeNode(tokenType, modifier);
     }
 
-    static @NotNull TokenTypeNode tokenOrSyntaxFail(@NotNull Keyword keyword) {
-        return new TokenTypeNode(keyword, NodeModifier.syntaxFail("expected `" + keyword.name().toLowerCase() + "` keyword"));
-    }
-
-    static @NotNull TokenTypeNode tokenOrSyntaxFail(@NotNull Separator separator) {
-        return new TokenTypeNode(separator, NodeModifier.syntaxFail("expected `" + separator.sep + "` separator"));
+    static @NotNull AnyOfNodeQueue.Builder anyOfBuilder(@NotNull NodeModifier modifier) {
+        return new AnyOfNodeQueue.Builder(modifier, null);
     }
 }

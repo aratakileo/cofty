@@ -21,6 +21,10 @@ public class FailModifier implements NodeModifier, Representable {
         return failMessage;
     }
 
+    @Override
+    public @NotNull ModifierType type() {
+        return ModifierType.FAIL;
+    }
 
     @Override
     public @NotNull String toReprString() {

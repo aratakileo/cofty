@@ -1,14 +1,13 @@
 package cofty.core.lexer.token;
 
-import cofty.v2.core.parse.AstParseEntry;
-import cofty.v2.core.parse.AstPeeker;
 import cofty.core.parser.ParseContext;
-import cofty.v2.core.parse.AstParser;
 import cofty.type.Containable;
+import cofty.v2.core.parse.AstParseEntry;
+import cofty.v2.core.parse.AstParser;
+import cofty.v2.core.parse.AstPeeker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
@@ -21,11 +20,6 @@ public interface ITokenType extends Containable<ITokenType>, AstParser<Token>, A
         return itype.type().equals(type())
                 && (itype.content() == null) == (content() == null)
                 && Objects.equals(itype.content(), content());
-    }
-
-    @Override
-    default boolean isIn(@NotNull ITokenType... values) {
-        return Arrays.stream(values).anyMatch(this::equals);
     }
 
     @Override

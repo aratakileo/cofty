@@ -5,7 +5,11 @@ import org.jetbrains.annotations.NotNull;
 
 public class PreviewAnchorModifier extends ContainerModifier implements Representable {
     public PreviewAnchorModifier(@NotNull NodeModifier rootModifier) {
-        super(rootModifier, rootModifier.isPreviewAnchor() || rootModifier.isPeek());
+        super(
+                rootModifier,
+                ModifierType.PREVIEW,
+                rootModifier.isPreviewAnchor() || rootModifier.isPeek()
+        );
     }
 
     @Override
