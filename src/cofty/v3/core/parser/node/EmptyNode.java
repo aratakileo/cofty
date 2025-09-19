@@ -40,7 +40,7 @@ public abstract class EmptyNode implements ParserNode, Representable {
         if (!topLevelModifier.isGeneral() || topLevelModifier.isPreviewAnchor()) return false;
 
         if (modifier.isFail())
-            context.putErrorMessage(modifier.failMessageOrThrow());
+            context.CRITICAL_MESSAGES.putErr(modifier.failMessageOrThrow());
         else if (modifier.isGeneral())
             context.next();
 

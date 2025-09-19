@@ -1,26 +1,18 @@
 package cofty.core.message;
 
-import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
+import cofty.core.message.channel.MessageChannel;
+import cofty.core.message.channel.MessagesChannel;
 
 public class MessageHandler {
-    private final ArrayList<String> messages = new ArrayList<>();
+    public final MessagesChannel CRITICAL = new MessagesChannel(MessageChannel.CRITICAL),
+            NON_CRITICAL = new MessagesChannel(MessageChannel.NON_CRITICAL);
 
-    public int count() {
-        return messages.size();
-    }
-
-    public void putBuildedMessage(@NotNull String message) {
-        messages.add(message);
-    }
-
-    public void putMessages(@NotNull MessageHandler messages) {
-        this.messages.addAll(messages.messages);
+    public boolean hasCriticalErrors() {
+        return CRITICAL.count() != 0;
     }
 
     public void print() {
-        for (final var message: messages)
-            System.out.println(message);
+        CRITICAL.print();
+        NON_CRITICAL.print();
     }
 }

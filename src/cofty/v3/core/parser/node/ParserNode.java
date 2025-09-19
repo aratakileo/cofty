@@ -1,10 +1,9 @@
 package cofty.v3.core.parser.node;
 
-import cofty.core.message.MessageBuilder;
-import cofty.core.parser.ParseContext;
 import cofty.core.lexer.token.ITokenType;
 import cofty.core.lexer.token.Keyword;
 import cofty.core.lexer.token.Separator;
+import cofty.core.parser.ParseContext;
 import cofty.type.exception.InvalidParserNodeStateInQueue;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
@@ -93,11 +92,11 @@ public interface ParserNode {
 
                 if (node == null) throw new InvalidParserNodeStateInQueue();
 
-                context.putErrorMessage(node.modifier().failMessageOrThrow(), errorCursorStart);
+                context.CRITICAL_MESSAGES.putErr(node.modifier().failMessageOrThrow(), errorCursorStart);
             }
 
             if (queueModifier.isFail())
-                context.putErrorMessage(queueModifier.failMessageOrThrow(), cursorStart);
+                context.CRITICAL_MESSAGES.putErr(queueModifier.failMessageOrThrow(), cursorStart);
 
             return false;
         }
@@ -113,13 +112,12 @@ public interface ParserNode {
         if (queueModifier.isPreviewAnchor()) return false;
 
         if (queueModifier.isFail())
-            context.putErrorMessage(queueModifier.failMessageOrThrow(), cursorStart);
+            context.CRITICAL_MESSAGES.putErr(queueModifier.failMessageOrThrow(), cursorStart);
         else if (prevNode.modifier().isFail())
-            context.messages.putBuildedMessage(MessageBuilder.errAfter(
-                    context.text,
-                    context.currentOrThrow(),
-                    prevNode.modifier().failMessageOrThrow()
-            ));
+            context.CRITICAL_MESSAGES.putErrAfterToken(
+                    prevNode.modifier().failMessageOrThrow(),
+                    context.currentOrThrow()
+            );
         else throw new InvalidParserNodeStateInQueue();
 
         return false;

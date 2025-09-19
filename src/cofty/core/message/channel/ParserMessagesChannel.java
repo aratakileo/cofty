@@ -1,0 +1,26 @@
+package cofty.core.message.channel;
+
+import cofty.core.parser.ParseContext;
+import org.jetbrains.annotations.NotNull;
+
+public class ParserMessagesChannel extends AssociatedMessagesChannel {
+    public final ParseContext context;
+
+    protected ParserMessagesChannel(@NotNull ParseContext context, @NotNull MessagesChannel channel) {
+        super(context.text, channel);
+        this.context = context;
+    }
+
+    public void putErr(@NotNull Exception err) {
+        final var token = context.cursor();
+
+        if (context.isCursorOutOfQueue())
+            putErrAfterToken(err, token);
+        else
+            putErr(err, token);
+    }
+
+    public void putErr(@NotNull Exception err, int cursorStart) {
+        putErr(err, cursorStart, context.cursorEnd());
+    }
+}

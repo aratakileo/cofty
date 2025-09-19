@@ -56,8 +56,7 @@ public class Lexer {
     }
 
     private void showSyntaxError(@NotNull Token token) {
-        final var message = MessageBuilder.err(text, token, new SyntaxError("invalid syntax"));
-        messages.putBuildedMessage(message);
+        messages.CRITICAL.put(MessageBuilder.err(text, token, new SyntaxError("invalid syntax")));
     }
 
     static {

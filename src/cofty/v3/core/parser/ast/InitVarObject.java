@@ -68,7 +68,10 @@ public class InitVarObject implements AstObject {
         if (!isSuccessfullyParsed) return false;
 
         if (explicitlySpecifiedType == null && value == null) {
-            context.putErrorMessageAfter(new SyntaxError("expected a variable value or an explicitly specified type"), name);
+            context.NON_CRITICAL_MESSAGES.putErrAfterToken(
+                    new SyntaxError("expected a variable value or an explicitly specified type"),
+                    name
+            );
             return false;
         }
 

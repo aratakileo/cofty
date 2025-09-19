@@ -78,19 +78,6 @@ public class MessageBuilder {
         return this;
     }
 
-    private int lineStart() {
-        return textContent.text.lastIndexOf('\n', start) + 1;
-    }
-
-    private int lineEnd() {
-        final var lineEnd = textContent.text.indexOf('\n', end);
-        return lineEnd == -1 ? textContent.text.length() : lineEnd;
-    }
-
-    private @NotNull String line() {
-        return textContent.text.substring(lineStart(), lineEnd());
-    }
-
     private int lineNumberByStart() {
         return Strings.getLineNumber(textContent.text, start);
     }
@@ -99,27 +86,11 @@ public class MessageBuilder {
         return Strings.getLineNumber(textContent.text, end);
     }
 
-    private @NotNull String cursorContent() {
-        return " ".repeat(cursorStart + Math.max(start - lineStart(), 0)) + "^".repeat(cursorEnd - cursorStart);
-    }
-
-    public @NotNull String build() {
+    public @NotNull Message build() {
         if (content == null)
             throw new IllegalStateException("Message content is not set");
 
-        return String.format(
-                """
-                %s: File %s, line %s
-                    %s
-                    %s
-                %s""",
-                messageType,
-                Representable.repr(textContent.path),
-                lineNumberByStart(),
-                line(),
-                cursorContent(),
-                content
-        );
+        return new Message(textContent, messageType, content, lineNumberByStart(), start, end, cursorStart, cursorEnd);
     }
 
     @Override
@@ -135,7 +106,7 @@ public class MessageBuilder {
                 '}';
     }
 
-    public static @NotNull String err(
+    public static @NotNull Message err(
             @NotNull TextContent textContent,
             @NotNull Token token,
             @NotNull Exception err
@@ -143,7 +114,7 @@ public class MessageBuilder {
         return err(textContent, token.start, token.end, err);
     }
 
-    public static @NotNull String err(
+    public static @NotNull Message err(
             @NotNull TextContent textContent,
             int cursorStart,
             int cursorEnd,
@@ -155,7 +126,7 @@ public class MessageBuilder {
                 .build();
     }
 
-    public static @NotNull String errAfter(
+    public static @NotNull Message errAfter(
             @NotNull TextContent textContent,
             @NotNull Token token,
             @NotNull Exception err
@@ -166,10 +137,5 @@ public class MessageBuilder {
                 .setCursorLengthByRight(1)
                 .moveCursor(1)
                 .build();
-    }
-
-    public enum MessageType {
-        ERROR,
-        WARNING
     }
 }

@@ -1,5 +1,6 @@
 package cofty.core.parser;
 
+import cofty.core.message.channel.ParserMessagesChannel;
 import cofty.type.exception.NoSnapshotException;
 import cofty.v2.core.ast.AstValue;
 import cofty.core.message.MessageBuilder;
@@ -27,14 +28,13 @@ public class ParseContext {
     public final TextContent text;
     public final MessageHandler messages;
 
+    public final ParserMessagesChannel CRITICAL_MESSAGES, NON_CRITICAL_MESSAGES;
+
     private int index = 0, successfulCases = 0, indexSnapshot = -1;
     protected boolean failed = false, elseProcessed = false;
 
     private ParseContext(@NotNull ParseContext parent) {
-        this.tokens = parent.tokens;
-        this.text = parent.text;
-        this.messages = new MessageHandler();
-        this.parent = parent;
+        this(parent.tokens, parent.text, new MessageHandler(), parent);
         this.index = parent.index;
         this.failed = parent.failed;
 
@@ -42,23 +42,31 @@ public class ParseContext {
             this.elseProcessed = true;
     }
 
+    private ParseContext(
+            @NotNull List<Token> tokens,
+            @NotNull TextContent text,
+            @NotNull MessageHandler messages,
+            @Nullable ParseContext parent
+    ) {
+        this.tokens = tokens;
+        this.text = text;
+        this.messages = messages;
+        this.parent = parent;
+
+        CRITICAL_MESSAGES = messages.CRITICAL.associate(this);
+        NON_CRITICAL_MESSAGES = messages.NON_CRITICAL.associate(this);
+    }
+
     public ParseContext(
             @NotNull List<Token> tokens,
             @NotNull TextContent text,
             @NotNull MessageHandler messages
     ) {
-        this.tokens = tokens;
-        this.text = text;
-        this.messages = messages;
-        this.parent = null;
+        this(tokens, text, messages, null);
     }
 
     public boolean isFailed_v2() {
         return failed;
-    }
-
-    public boolean hasNoCriticalErrors() {
-        return messages.count() == 0;
     }
 
     public <T extends AstValue, V extends AstParser<T>, P extends AstPeeker> @NotNull ParseContext matchIf(
@@ -118,28 +126,12 @@ public class ParseContext {
 
         elseProcessed = true;
 
-        messages.putBuildedMessage(
+        CRITICAL_MESSAGES.put(
                 hasCurrent() && !currentOrThrow().type.equals(TokenType.NEWLINE)
                         ? MessageBuilder.err(text, currentOrThrow(), err)
                         : MessageBuilder.errAfter(text, strictPeekPrev(), err)
         );
         return this;
-    }
-
-    public void putErrorMessage(@NotNull Exception err) {
-        messages.putBuildedMessage(
-                hasCurrent() && !currentOrThrow().type.equals(TokenType.NEWLINE)
-                        ? MessageBuilder.err(text, currentOrThrow(), err)
-                        : MessageBuilder.errAfter(text, strictPeekPrev(), err)
-        );
-    }
-
-    public void putErrorMessage(@NotNull Exception err, int cursorStart) {
-        messages.putBuildedMessage(MessageBuilder.err(text, cursorStart, cursorEnd(), err));
-    }
-
-    public void putErrorMessageAfter(@NotNull Exception err, @NotNull Token token) {
-        messages.putBuildedMessage(MessageBuilder.errAfter(text, token, err));
     }
 
     public void resetIndexSnapshot() {
@@ -163,11 +155,19 @@ public class ParseContext {
     }
 
     public int cursorStart() {
-        return hasCurrent() ? tokens.get(index).start : tokens.get(index - 1).end;
+        return !isCursorOutOfQueue() ? tokens.get(index).start : tokens.get(index - 1).end;
     }
 
     public int cursorEnd() {
-        return hasCurrent() ? tokens.get(index).end : tokens.get(index - 1).end;
+        return !isCursorOutOfQueue() ? tokens.get(index).end : tokens.get(index - 1).end;
+    }
+
+    public @NotNull Token cursor() {
+        return !isCursorOutOfQueue() ? currentOrThrow() : strictPeekPrev();
+    }
+
+    public boolean isCursorOutOfQueue() {
+        return !hasCurrent() || currentOrThrow().type.equals(TokenType.NEWLINE);
     }
 
     public @NotNull ParseContext finishTransaction(boolean mayIgnoreFail) {
@@ -175,7 +175,7 @@ public class ParseContext {
             return this;
 
         if (!mayIgnoreFail || successfulCases > 0) {
-            parent.messages.putMessages(messages);
+//            parent.messages.putMessages(messages);
             parent.failed = failed;
         }
 
