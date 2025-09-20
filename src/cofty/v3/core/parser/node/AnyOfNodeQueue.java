@@ -3,6 +3,7 @@ package cofty.v3.core.parser.node;
 import cofty.core.parser.ParseContext;
 import cofty.type.Representable;
 import cofty.type.exception.SyntaxError;
+import cofty.v3.core.parser.node.modifier.ModifierType;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,19 +32,32 @@ public class AnyOfNodeQueue extends EmptyNode {
     @Override
     public boolean proceed(@NotNull ParseContext context, @NotNull NodeModifier topLevelModifier) {
         var result = true;
+        var separatorWasNotProceed = false;
+
+        if (topLevelModifier.is(ModifierType.PREVIEW))
+            context.createIndexSnapshot();
 
         root: while (context.hasCurrent()) {
             var nodeIsTriedToProceed = false;
 
             for (final var node : nodes)
                 if (node.previewQueue(context)) {
-                    node.proceedQueue(context, NodeModifier.prioritize(topLevelModifier, modifier));
+                    if (topLevelModifier.is(ModifierType.PREVIEW)) break root;
+
+                    if (separatorWasNotProceed) {
+                        context.CRITICAL_MESSAGES.putErr(new SyntaxError("invalid syntax"));
+                        result = false;
+                        break root;
+                    }
+
                     nodeIsTriedToProceed = true;
+
+                    node.proceedQueue(context, NodeModifier.prioritize(topLevelModifier, modifier));
                     break;
                 }
 
             if (!nodeIsTriedToProceed) {
-                if (!topLevelModifier.isSnapshotMaker())
+                if (!topLevelModifier.isAny(ModifierType.PREVIEW, ModifierType.PEEK))
                     context.CRITICAL_MESSAGES.putErr(new SyntaxError("invalid syntax"));
 
                 result = false;
@@ -52,20 +66,17 @@ public class AnyOfNodeQueue extends EmptyNode {
 
             if (!context.hasCurrent()) break;
 
-            var thereIsAtLeastOneSeparator = false;
+            var isFirstSeparatorScan = true;
 
             while (separator != null && context.hasCurrent()) {
-                if (!separator.previewQueue(context) && !thereIsAtLeastOneSeparator) {
-                    if (!topLevelModifier.isSnapshotMaker())
-                        context.CRITICAL_MESSAGES.putErr(new SyntaxError("invalid syntax"));
+                if (!separator.previewQueue(context)) {
+                    if (isFirstSeparatorScan)
+                        separatorWasNotProceed = true;
 
-
-
-                    result = false;
-                    break root;
+                    break;
                 }
 
-                thereIsAtLeastOneSeparator = true;
+                isFirstSeparatorScan = false;
 
                 if (!separator.proceed(context, NodeModifier.prioritize(topLevelModifier, modifier))) {
                     result = false;
@@ -74,7 +85,10 @@ public class AnyOfNodeQueue extends EmptyNode {
             }
         }
 
-        return postProceed(result, context, topLevelModifier);
+        if (topLevelModifier.is(ModifierType.PREVIEW))
+            context.rollbackIndex();
+
+        return result;
     }
 
     @Override

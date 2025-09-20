@@ -1,19 +1,19 @@
 package cofty.core.parser;
 
-import cofty.core.message.channel.ParserMessagesChannel;
-import cofty.type.exception.NoSnapshotException;
-import cofty.v2.core.ast.AstValue;
-import cofty.core.message.MessageBuilder;
-import cofty.core.message.MessageHandler;
 import cofty.core.lexer.token.Token;
 import cofty.core.lexer.token.TokenType;
+import cofty.core.message.MessageBuilder;
+import cofty.core.message.MessageHandler;
+import cofty.core.message.channel.ParserMessagesChannel;
 import cofty.type.TextContent;
 import cofty.type.exception.SyntaxError;
+import cofty.v2.core.ast.AstValue;
 import cofty.v2.core.parse.AstParser;
 import cofty.v2.core.parse.AstPeeker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -30,8 +30,10 @@ public class ParseContext {
 
     public final ParserMessagesChannel CRITICAL_MESSAGES, NON_CRITICAL_MESSAGES;
 
-    private int index = 0, successfulCases = 0, indexSnapshot = -1;
-    protected boolean failed = false, elseProcessed = false;
+    private int index = 0, successfulCases = 0;
+    private ArrayList<Integer> indexSnapshotStack = new ArrayList<>();
+
+    private boolean failed = false, elseProcessed = false;
 
     private ParseContext(@NotNull ParseContext parent) {
         this(parent.tokens, parent.text, new MessageHandler(), parent);
@@ -129,45 +131,25 @@ public class ParseContext {
         CRITICAL_MESSAGES.put(
                 hasCurrent() && !currentOrThrow().type.equals(TokenType.NEWLINE)
                         ? MessageBuilder.err(text, currentOrThrow(), err)
-                        : MessageBuilder.errAfter(text, strictPeekPrev(), err)
+                        : MessageBuilder.errAfter(text, peekPrevOrThrow(), err)
         );
         return this;
     }
 
-    public void resetIndexSnapshot() {
-        indexSnapshot = -1;
+    public int snapshotStackSize() {
+        return indexSnapshotStack.size();
+    }
+
+    public void removeIndexSnapshot() {
+        indexSnapshotStack.removeFirst();
     }
 
     public void createIndexSnapshot() {
-        if (indexSnapshot != -1)
-            throw new IllegalStateException();
-
-        indexSnapshot = index;
+        indexSnapshotStack.add(index);
     }
 
     public void rollbackIndex() {
-        if (indexSnapshot == -1)
-            throw new NoSnapshotException();
-
-        index = indexSnapshot;
-
-        resetIndexSnapshot();
-    }
-
-    public int cursorStart() {
-        return !isCursorOutOfQueue() ? tokens.get(index).start : tokens.get(index - 1).end;
-    }
-
-    public int cursorEnd() {
-        return !isCursorOutOfQueue() ? tokens.get(index).end : tokens.get(index - 1).end;
-    }
-
-    public @NotNull Token cursor() {
-        return !isCursorOutOfQueue() ? currentOrThrow() : strictPeekPrev();
-    }
-
-    public boolean isCursorOutOfQueue() {
-        return !hasCurrent() || currentOrThrow().type.equals(TokenType.NEWLINE);
+        index = indexSnapshotStack.removeFirst();
     }
 
     public @NotNull ParseContext finishTransaction(boolean mayIgnoreFail) {
@@ -200,6 +182,10 @@ public class ParseContext {
         return index < tokens.size();
     }
 
+    public boolean hasNonNewLineCurrent() {
+        return hasCurrent() && !currentOrThrow().type.equals(TokenType.NEWLINE);
+    }
+
     public @NotNull Token currentOrThrow() {
         if (!hasCurrent())
             throw new RuntimeException("has no current token");
@@ -223,6 +209,14 @@ public class ParseContext {
         return hasCurrent() ? tokens.get(index) : null;
     }
 
+    public @NotNull Token cursor() {
+        return hasCurrent() ? currentOrThrow() : peekPrevOrThrow();
+    }
+
+    public @NotNull Token nonNewLineCursorOrPrev() {
+        return hasNonNewLineCurrent() ? currentOrThrow() : peekPrevOrThrow();
+    }
+
     public @Nullable Token peek(int step) {
         return tokens.get(index + step);
     }
@@ -235,7 +229,7 @@ public class ParseContext {
         return index + step < tokens.size() && peeker.apply(tokens.get(index + step));
     }
 
-    public @NotNull Token strictPeekPrev() {
+    public @NotNull Token peekPrevOrThrow() {
         if (index == 0)
             throw new RuntimeException("has no prev token");
 

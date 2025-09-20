@@ -12,15 +12,15 @@ public class ParserMessagesChannel extends AssociatedMessagesChannel {
     }
 
     public void putErr(@NotNull Exception err) {
-        final var token = context.cursor();
+        final var token = context.nonNewLineCursorOrPrev();
 
-        if (context.isCursorOutOfQueue())
+        if (context.hasNonNewLineCurrent())
             putErrAfterToken(err, token);
         else
             putErr(err, token);
     }
 
     public void putErr(@NotNull Exception err, int cursorStart) {
-        putErr(err, cursorStart, context.cursorEnd());
+        putErr(err, cursorStart, context.nonNewLineCursorOrPrev().end);
     }
 }

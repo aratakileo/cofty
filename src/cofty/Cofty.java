@@ -46,11 +46,13 @@ public class Cofty {
 
         var rootNode = ParserNode.anyOfBuilder(NodeModifier.general())
                 .add(astObject.parserNode())
-                .setSeparator(ParserNode.token(TokenType.NEWLINE))
+                .setSeparator(ParserNode.token(TokenType.NEWLINE, NodeModifier.previewAnchorAndGeneral()))
                 .build();
 
-        var isPreviewSucceed = rootNode.proceed(parseContext, NodeModifier.previewAnchorGeneral());
+        var isPreviewSucceed = rootNode.proceed(parseContext, NodeModifier.previewAnchorAndGeneral());
         Strings.println("Is preview succeeded:", isPreviewSucceed);
+        Strings.println("Snapshots stack size:", parseContext.snapshotStackSize());
+        Strings.println("Cursor after preview:", parseContext.cursor());
 
         if (isPreviewSucceed) {
             Strings.println("Is proceeded:", rootNode.proceed(parseContext, NodeModifier.general()));

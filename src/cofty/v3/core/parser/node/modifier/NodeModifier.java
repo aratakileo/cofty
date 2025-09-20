@@ -1,118 +1,222 @@
 package cofty.v3.core.parser.node.modifier;
 
+import cofty.type.Representable;
 import cofty.type.exception.SyntaxError;
+import cofty.util.Lists;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 
-public interface NodeModifier {
-    @NotNull ModifierType type();
+public final class NodeModifier {
+    private final HashSet<@NotNull ModifierType> types;
+    
+    public final Exception failMessage;
+    public final ModifierAction action;
 
-    default boolean isGeneral() {
-        return false;
-    }
-
-    default boolean isPeek() {
-        return false;
-    }
-
-    default boolean isFail() {
-        return false;
-    }
-
-    default boolean isAction() {
-        return false;
-    }
-
-    default boolean isPreviewAnchor() {
-        return false;
-    }
-
-    default boolean isPrevNodeDepended() {
-        return false;
-    }
-
-    default boolean isSnapshotMaker() {
-        return isPeek() || isPreviewAnchor();
-    }
-
-    default @Nullable Exception failMessage() {
-        return null;
-    }
-
-    default @NotNull Exception failMessageOrThrow() {
-        return Objects.requireNonNull(failMessage());
-    }
-
-    default @Nullable ModifierAction action() {
-        return null;
-    }
-
-    default @NotNull ModifierAction actionOrThrow() {
-        return Objects.requireNonNull(action());
-    }
-
-    static @NotNull ActionModifier generalAndAction(@NotNull ModifierAction action) {
-        return new ActionModifier(SimpleModifiers.GENERAL, action);
-    }
-
-    static @NotNull ActionModifier peekAndAction(@NotNull ModifierAction action) {
-        return new ActionModifier(SimpleModifiers.PEEK, action);
-    }
-
-    static @NotNull ActionModifier syntaxFailAndAction(@NotNull ModifierAction action, @NotNull String message) {
-        return new ActionModifier(syntaxFail(message), action);
-    }
-
-    static @NotNull FailModifier fail(@NotNull Exception message) {
-        return new FailModifier(message);
-    }
-
-    static @NotNull FailModifier syntaxFail(@NotNull String message) {
-        return new FailModifier(new SyntaxError(message));
-    }
-
-    static @NotNull PreviewAnchorModifier previewAnchor(@NotNull NodeModifier rootModifier) {
-        return new PreviewAnchorModifier(rootModifier);
-    }
-
-    static @NotNull DependedModifier depended(@NotNull NodeModifier rootModifier) {
-        return new DependedModifier(rootModifier);
-    }
-
-    static @NotNull DependedModifier dependedActionOrSyntaxFail(
-            @NotNull ModifierAction action,
-            @NotNull String message
+    private NodeModifier(
+            @NotNull HashSet<@NotNull ModifierType> types, 
+            @Nullable Exception failMessage, 
+            @Nullable ModifierAction action
     ) {
-        return new DependedModifier(NodeModifier.syntaxFailAndAction(action, message));
+        this.types = new HashSet<>(types);
+        this.failMessage = failMessage;
+        this.action = action;
+    }
+    
+    public boolean is(@NotNull ModifierType type) {
+        return types.contains(type);
+    }
+    
+    public boolean is(@NotNull ModifierType @NotNull... types) {
+        return this.types.containsAll(List.of(types));
+    }
+    
+    public boolean isAny(@NotNull ModifierType type) {
+        return is(type);
+    }
+    
+    public boolean isAny(@NotNull ModifierType type1, @NotNull ModifierType type2) {
+        return is(type1) || is(type2);
     }
 
-    static @NotNull PreviewAnchorModifier previewAnchorGeneral() {
-        return new PreviewAnchorModifier(SimpleModifiers.GENERAL);
+    public boolean isAny(@NotNull ModifierType @NotNull... types) {
+        return Lists.containsAny(this.types, types);
     }
 
-    static @NotNull SimpleModifiers general() {
-        return SimpleModifiers.GENERAL;
+    public @NotNull Exception failMessageOrThrow() {
+        return Objects.requireNonNull(failMessage);
     }
 
-    static @NotNull SimpleModifiers peek() {
-        return SimpleModifiers.PEEK;
+    public @NotNull ModifierAction actionOrThrow() {
+        return Objects.requireNonNull(action);
     }
 
-    static @NotNull NodeModifier prioritize(
+    public static @NotNull NodeModifier fail(@NotNull Exception message) {
+        return new NodeModifier(Lists.hashSetOf(ModifierType.FAIL), message, null);
+    }
+
+    public static @NotNull NodeModifier syntaxFail(@NotNull String message) {
+        return fail(new SyntaxError(message));
+    }
+
+    public static @NotNull NodeModifier previewAnchorAndGeneral() {
+        return new NodeModifier(
+                Lists.hashSetOf(ModifierType.GENERAL, ModifierType.PREVIEW),
+                null,
+                null
+        );
+    }
+
+    public static @NotNull NodeModifier general() {
+        return new NodeModifier(Lists.hashSetOf(ModifierType.GENERAL), null, null);
+    }
+
+    public static @NotNull NodeModifier peek() {
+        return new NodeModifier(Lists.hashSetOf(ModifierType.PEEK), null, null);
+    }
+
+    public static @NotNull Builder builder() {
+        return new Builder();
+    }
+
+    public static @NotNull NodeModifier prioritize(
             @NotNull NodeModifier topLevelModifier,
             @NotNull NodeModifier currentLevelModifier
     ) {
-        /*
-         * TODO: this is obviously wrong, fix it!
-         */
-        if (topLevelModifier.isGeneral() && topLevelModifier instanceof PreviewAnchorModifier _modifier)
-            return _modifier.remove(ModifierType.PREVIEW);
-
-        if (!topLevelModifier.isGeneral())
+        if (!topLevelModifier.isAny(ModifierType.GENERAL, ModifierType.PREVIEW))
             return topLevelModifier;
 
         return currentLevelModifier;
+    }
+
+    @Override
+    public String toString() {
+        return String.format(
+                "%s(%s, %s, %s)",
+                getClass().getSimpleName(),
+                Representable.repr(types),
+                Representable.repr(failMessage),
+                Representable.repr(action)
+        );
+    }
+
+    public static class Builder {
+        private final HashSet<@NotNull ModifierType> types = new HashSet<>();
+        private Exception failMessage = null;
+        private ModifierAction action = null;
+
+        public Builder() {}
+        
+        public @NotNull Builder general() {
+            checkBasicTypes();
+            
+            types.add(ModifierType.GENERAL);
+            
+            return this;
+        }
+        
+        public @NotNull Builder peek() {
+            checkBasicTypes();
+            
+            types.add(ModifierType.PEEK);
+            
+            return this;
+        }
+        
+        public @NotNull Builder fail(@NotNull Exception message) {
+            checkBasicTypes();
+            
+            types.add(ModifierType.FAIL);
+            failMessage = message;
+            
+            return this;
+        }
+
+        public @NotNull Builder syntaxFail(@NotNull String message) {
+            return fail(new SyntaxError(message));
+        }
+
+        public @NotNull Builder preview() {
+            if (types.contains(ModifierType.PREVIEW))
+                throw new IllegalStateException();
+
+            types.add(ModifierType.PREVIEW);
+
+            return this;
+        }
+
+        public @NotNull Builder depended() {
+            if (types.contains(ModifierType.DEPENDED))
+                throw new IllegalStateException();
+
+            types.add(ModifierType.DEPENDED);
+
+            return this;
+        }
+
+        public @NotNull Builder action(@NotNull ModifierAction action) {
+            if (this.action != null)
+                throw new IllegalStateException();
+
+            types.add(ModifierType.ACTION);
+            this.action = action;
+
+            return this;
+        }
+
+        public @NotNull Builder remove(@NotNull ModifierType type) {
+            if (!types.contains(type))
+                throw new IllegalStateException();
+
+            types.remove(type);
+
+            if (type == ModifierType.ACTION)
+                action = null;
+
+            if (type == ModifierType.FAIL)
+                failMessage = null;
+
+            return this;
+        }
+
+        public @NotNull Builder removeBasicType() {
+            types.remove(ModifierType.PEEK);
+            types.remove(ModifierType.GENERAL);
+            types.remove(ModifierType.FAIL);
+            failMessage = null;
+
+            return this;
+        }
+
+        public @NotNull NodeModifier build() {
+            if (!hasAtLeastOneBasicType())
+                throw new IllegalStateException();
+
+            if (types.contains(ModifierType.PEEK) && types.contains(ModifierType.PREVIEW))
+                throw new IllegalStateException();
+
+            return new NodeModifier(types, failMessage, action);
+        }
+
+        private boolean hasAtLeastOneBasicType() {
+            return Lists.containsAny(types, ModifierType.GENERAL, ModifierType.PEEK, ModifierType.FAIL);
+        }
+        
+        private void checkBasicTypes() {
+            if (hasAtLeastOneBasicType())
+                throw new IllegalStateException();
+        }
+
+        public static @NotNull Builder of(@NotNull NodeModifier nodeModifier) {
+            final var builder = new Builder();
+            builder.types.addAll(nodeModifier.types);
+            builder.action = nodeModifier.action;
+            builder.failMessage = nodeModifier.failMessage;
+
+            return builder;
+        }
     }
 }

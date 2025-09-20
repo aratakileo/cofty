@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 public interface Representable {
     @NotNull String toReprString();
@@ -34,8 +35,12 @@ public interface Representable {
         return value == null ? "null" : value.toReprString();
     }
 
-    static @NotNull String repr(@NotNull Exception exception) {
-        return String.format("new %s(%s)", exception.getClass().getSimpleName(), repr(exception.getMessage()));
+    static @NotNull String repr(@Nullable Exception exception) {
+        return exception == null ? "null" : String.format(
+                "new %s(%s)",
+                exception.getClass().getSimpleName(),
+                repr(exception.getMessage())
+        );
     }
 
     static <T> @NotNull String repr(@Nullable ArrayList<T> arrayList) {
@@ -46,6 +51,17 @@ public interface Representable {
                 "%s.arrayListOf(%s)",
                 Lists.class.getSimpleName(),
                 String.join(", ", arrayList.stream().map(Representable::repr).toList())
+        );
+    }
+
+    static <T> @NotNull String repr(@Nullable HashSet<T> set) {
+        if (set == null)
+            return "null";
+
+        return String.format(
+                "%s.hashSetOf(%s)",
+                Lists.class.getSimpleName(),
+                String.join(", ", set.stream().map(Representable::repr).toList())
         );
     }
 

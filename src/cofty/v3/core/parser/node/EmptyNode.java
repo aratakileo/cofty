@@ -2,6 +2,7 @@ package cofty.v3.core.parser.node;
 
 import cofty.core.parser.ParseContext;
 import cofty.type.Representable;
+import cofty.v3.core.parser.node.modifier.ModifierType;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,11 +38,11 @@ public abstract class EmptyNode implements ParserNode, Representable {
             return true;
         }
 
-        if (!topLevelModifier.isGeneral() || topLevelModifier.isPreviewAnchor()) return false;
+        if (!topLevelModifier.is(ModifierType.GENERAL) || topLevelModifier.is(ModifierType.PREVIEW)) return false;
 
-        if (modifier.isFail())
+        if (modifier.is(ModifierType.FAIL))
             context.CRITICAL_MESSAGES.putErr(modifier.failMessageOrThrow());
-        else if (modifier.isGeneral())
+        else if (modifier.is(ModifierType.GENERAL))
             context.next();
 
         return false;

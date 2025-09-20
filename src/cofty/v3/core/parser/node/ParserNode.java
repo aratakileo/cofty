@@ -3,6 +3,7 @@ package cofty.v3.core.parser.node;
 import cofty.core.lexer.token.ITokenType;
 import cofty.core.parser.ParseContext;
 import cofty.type.exception.InvalidParserNodeStateInQueue;
+import cofty.v3.core.parser.node.modifier.ModifierType;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,20 +21,19 @@ public interface ParserNode {
     boolean proceed(@NotNull ParseContext context, @NotNull NodeModifier topLevelModifier);
 
     default boolean proceedQueue(@NotNull ParseContext context, @NotNull NodeModifier queueModifier) {
-        if (queueModifier.isPrevNodeDepended() || queueModifier.isAction()) throw new IllegalStateException();
+        if (queueModifier.isAny(ModifierType.ACTION, ModifierType.DEPENDED)) throw new IllegalStateException();
 
         var node = this;
         var prevNode = this;
-        var cursorStart = context.cursorStart();
+        var failMessageCursorStart = context.nonNewLineCursorOrPrev().start;
         var ignoreDependedNodes = false;
         var isInDependedQueue = false;
 
-        if (queueModifier.isSnapshotMaker())
-            context.createIndexSnapshot();
+        if (queueModifier.isAny(ModifierType.PREVIEW, ModifierType.PEEK)) context.createIndexSnapshot();
 
         while (node != null) {
             if (ignoreDependedNodes) {
-                if (node.modifier().isPrevNodeDepended()) {
+                if (node.modifier().is(ModifierType.DEPENDED)) {
                     prevNode = node;
                     node = node.next();
                     continue;
@@ -42,32 +42,34 @@ public interface ParserNode {
                 ignoreDependedNodes = false;
             }
 
-            if (isInDependedQueue && !node.modifier().isPrevNodeDepended())
+            if (isInDependedQueue && !node.modifier().is(ModifierType.DEPENDED))
                 isInDependedQueue = false;
 
-            if (node.modifier().isPrevNodeDepended()
-                    && !prevNode.modifier().isPrevNodeDepended()
-                    && !prevNode.modifier().isPeek()) throw new InvalidParserNodeStateInQueue();
+            if (node.modifier().is(ModifierType.DEPENDED) && !prevNode.modifier().isAny(
+                    ModifierType.DEPENDED,
+                    ModifierType.PEEK
+            )) throw new InvalidParserNodeStateInQueue();
 
-            var isIndexSnapshotForNode = !queueModifier.isSnapshotMaker() && node.modifier().isPeek();
+            var isIndexSnapshotForNode = !queueModifier.isAny(ModifierType.PREVIEW, ModifierType.PEEK)
+                    && node.modifier().is(ModifierType.PEEK);
 
-            if (isIndexSnapshotForNode)
-                context.createIndexSnapshot();
+            if (isIndexSnapshotForNode) context.createIndexSnapshot();
 
             var isResultProceeded = node.proceed(context, queueModifier);
-            var isPreviewFinished = node.modifier().isPreviewAnchor()
-                    && queueModifier.isPreviewAnchor()
+            var isPreviewFinished = node.modifier().is(ModifierType.PREVIEW)
+                    && queueModifier.is(ModifierType.PREVIEW)
                     && isResultProceeded;
 
             if (!isResultProceeded && isIndexSnapshotForNode || isPreviewFinished) context.rollbackIndex();
-            if (isResultProceeded && isIndexSnapshotForNode) context.resetIndexSnapshot();
-            if (isPreviewFinished) return true;
-            if (node.modifier().isPeek() && !isResultProceeded) ignoreDependedNodes = true;
+            if (isResultProceeded && isIndexSnapshotForNode) context.removeIndexSnapshot();
 
-            if (node.modifier().isPeek()
+            if (isPreviewFinished) return true;
+            if (node.modifier().is(ModifierType.PEEK) && !isResultProceeded) ignoreDependedNodes = true;
+
+            if (node.modifier().is(ModifierType.PEEK)
                     && isResultProceeded
                     && node.next() != null
-                    && node.nextOrThrow().modifier().isPrevNodeDepended()) isInDependedQueue = true;
+                    && node.nextOrThrow().modifier().is(ModifierType.DEPENDED)) isInDependedQueue = true;
 
             if (isResultProceeded || isIndexSnapshotForNode) {
                 prevNode = node;
@@ -75,14 +77,14 @@ public interface ParserNode {
                 continue;
             }
 
-            if (queueModifier.isSnapshotMaker() || queueModifier.isPreviewAnchor()) context.rollbackIndex();
-            if (queueModifier.isPreviewAnchor()) return false;
+            if (queueModifier.isAny(ModifierType.PEEK, ModifierType.PREVIEW)) context.rollbackIndex();
+            if (queueModifier.is(ModifierType.PREVIEW)) return false;
 
-            if (queueModifier.isGeneral() && !node.modifier().isFail()) {
-                var errorCursorStart = context.cursorStart();
+            if (queueModifier.is(ModifierType.GENERAL) && !node.modifier().is(ModifierType.FAIL)) {
+                var errorCursorStart = context.nonNewLineCursorOrPrev().start;
 
-                while (node != null && !node.modifier().isFail()) {
-                    if (isInDependedQueue && !node.modifier().isPrevNodeDepended())
+                while (node != null && !node.modifier().is(ModifierType.FAIL)) {
+                    if (isInDependedQueue && !node.modifier().is(ModifierType.DEPENDED))
                         throw new InvalidParserNodeStateInQueue("a closing fail modifier was expected for depended queue");
 
                     node = node.next();
@@ -93,36 +95,37 @@ public interface ParserNode {
                 context.CRITICAL_MESSAGES.putErr(node.modifier().failMessageOrThrow(), errorCursorStart);
             }
 
-            if (queueModifier.isFail())
-                context.CRITICAL_MESSAGES.putErr(queueModifier.failMessageOrThrow(), cursorStart);
-
+            if (queueModifier.is(ModifierType.FAIL)) context.CRITICAL_MESSAGES.putErr(
+                    queueModifier.failMessageOrThrow(),
+                    failMessageCursorStart
+            );
             return false;
         }
 
-        if (!context.hasCurrent()) {
-            if (queueModifier.isPreviewAnchor())
-                throw new InvalidParserNodeStateInQueue("Expected that at least one node in the queue contains a preview anchor modifier");
+//        if (!context.hasCurrent()) {
+//            if (queueModifier.is(ModifierType.PREVIEW))
+//                throw new InvalidParserNodeStateInQueue("Expected that at least one node in the queue contains a preview anchor modifier");
+//
+//            return true;
+//        }
 
-            return true;
-        }
+        if (queueModifier.isAny(ModifierType.PREVIEW, ModifierType.PEEK)) context.removeIndexSnapshot();
+        if (queueModifier.is(ModifierType.PREVIEW)) return false;
 
-        if (queueModifier.isSnapshotMaker()) context.resetIndexSnapshot();
-        if (queueModifier.isPreviewAnchor()) return false;
+//        if (queueModifier.is(ModifierType.FAIL))
+//            context.CRITICAL_MESSAGES.putErr(queueModifier.failMessageOrThrow(), cursorStart);
+//        else if (prevNode.modifier().is(ModifierType.FAIL))
+//            context.CRITICAL_MESSAGES.putErrAfterToken(
+//                    prevNode.modifier().failMessageOrThrow(),
+//                    context.currentOrThrow()
+//            );
+//        else throw new InvalidParserNodeStateInQueue();
 
-        if (queueModifier.isFail())
-            context.CRITICAL_MESSAGES.putErr(queueModifier.failMessageOrThrow(), cursorStart);
-        else if (prevNode.modifier().isFail())
-            context.CRITICAL_MESSAGES.putErrAfterToken(
-                    prevNode.modifier().failMessageOrThrow(),
-                    context.currentOrThrow()
-            );
-        else throw new InvalidParserNodeStateInQueue();
-
-        return false;
+        return true;
     }
 
     default boolean previewQueue(@NotNull ParseContext context) {
-        return proceedQueue(context, NodeModifier.previewAnchorGeneral());
+        return proceedQueue(context, NodeModifier.previewAnchorAndGeneral());
     }
 
     <E extends ParserNode> @NotNull E then(@NotNull E next);

@@ -1,8 +1,6 @@
 package cofty.v3.core.parser.ast;
 
-import cofty.core.parser.ParseContext;
 import cofty.core.lexer.token.*;
-import cofty.type.exception.SyntaxError;
 import cofty.v3.core.parser.node.ParserNode;
 import cofty.v3.core.parser.node.TokenTypeNode;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
@@ -50,32 +48,33 @@ public class InitVarObject implements AstObject {
 
         (node = ParserNode.token(
                 Keyword.LET,
-                NodeModifier.previewAnchor(NodeModifier.syntaxFail("expected `let` keyword")))
-        ).thenToken(Keyword.MUT, NodeModifier.peekAndAction(this::setMutable))
-                .thenToken(TokenType.ID, NodeModifier.syntaxFailAndAction(this::setName, "expected variable name"))
-                .thenToken(Separator.COLON, NodeModifier.peek())
-                .thenToken(TokenType.ID, NodeModifier.dependedActionOrSyntaxFail(this::setExplicitlySpecifiedType, "expected type declaration"))
-                .thenToken(Operator.ASSIGN, NodeModifier.peek())
-                .thenToken(TokenType.INT, NodeModifier.dependedActionOrSyntaxFail(this::setValue, "expected variable value"));
+                NodeModifier.builder().preview().syntaxFail("expected `let` keyword").build())
+        ).thenToken(Keyword.MUT, NodeModifier.builder().peek().action(this::setMutable).build())
+                .thenToken(
+                        TokenType.ID,
+                        NodeModifier.builder()
+                                .syntaxFail("expected variable name")
+                                .action(this::setName)
+                                .build()
+                ).thenToken(Separator.COLON, NodeModifier.peek())
+                .thenToken(
+                        TokenType.ID,
+                        NodeModifier.builder()
+                                .depended()
+                                .syntaxFail("expected type declaration")
+                                .action(this::setExplicitlySpecifiedType)
+                                .build()
+                ).thenToken(Operator.ASSIGN, NodeModifier.peek())
+                .thenToken(
+                        TokenType.INT,
+                        NodeModifier.builder()
+                                .depended()
+                                .syntaxFail("expected variable value")
+                                .action(this::setValue)
+                                .build()
+                );
 
         return node;
-    }
-
-    @Override
-    public boolean parse(@NotNull ParseContext context) {
-        var isSuccessfullyParsed = AstObject.super.parse(context);
-
-        if (!isSuccessfullyParsed) return false;
-
-        if (explicitlySpecifiedType == null && value == null) {
-            context.NON_CRITICAL_MESSAGES.putErrAfterToken(
-                    new SyntaxError("expected a variable value or an explicitly specified type"),
-                    name
-            );
-            return false;
-        }
-
-        return true;
     }
 
     @Override
