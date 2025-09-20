@@ -14,10 +14,8 @@ public class ParserMessagesChannel extends AssociatedMessagesChannel {
     public void putErr(@NotNull Exception err) {
         final var token = context.nonNewLineCursorOrPrev();
 
-        if (context.hasNonNewLineCurrent())
-            putErrAfterToken(err, token);
-        else
-            putErr(err, token);
+        if (context.hasNonNewLineCurrent()) putErr(err, token);
+        else putErrAfterToken(err, token);
     }
 
     public void putErr(@NotNull Exception err, int cursorStart) {

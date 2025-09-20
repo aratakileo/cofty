@@ -7,10 +7,10 @@ import cofty.v3.core.parser.node.modifier.ModifierType;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 
-public class TokenTypeNode extends EmptyNode {
+public class TokenNode extends EmptyNode {
     public final ITokenType tokenType;
 
-    public TokenTypeNode(@NotNull ITokenType tokenType, @NotNull NodeModifier modifier) {
+    public TokenNode(@NotNull ITokenType tokenType, @NotNull NodeModifier modifier) {
         super(modifier);
         this.tokenType = tokenType;
     }
@@ -23,7 +23,7 @@ public class TokenTypeNode extends EmptyNode {
                 topLevelModifier
         );
 
-        if (proceeded && modifier.is(ModifierType.ACTION) && !modifier.is(ModifierType.PREVIEW))
+        if (proceeded && modifier.is(ModifierType.ACTION) && !topLevelModifier.is(ModifierType.PREVIEW))
             modifier.actionOrThrow().apply(context.peekPrevOrThrow());
 
         return proceeded;

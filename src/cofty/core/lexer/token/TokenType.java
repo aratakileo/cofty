@@ -15,6 +15,7 @@ public enum TokenType implements Representable, ITokenType {
     SEP,
     SKIP,
     NEWLINE,
+    BRACKETS,
     MISMATCH;
 
     public static @NotNull ITokenType valueOf(@NotNull MatchResult matchResult) {
@@ -28,6 +29,7 @@ public enum TokenType implements Representable, ITokenType {
                     case OP -> Operator.of(matched);
                     case SEP -> Separator.of(matched);
                     case KW -> Keyword.of(matched);
+                    case BRACKETS -> Brackets.of(matched);
                     default -> tokenType;
                 };
             }
@@ -46,7 +48,7 @@ public enum TokenType implements Representable, ITokenType {
 
     @Override
     public @NotNull String toReprString() {
-        return getClass().getName() + '.' + name();
+        return getClass().getSimpleName() + '.' + name();
     }
 
     @Override

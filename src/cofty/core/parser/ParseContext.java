@@ -31,7 +31,7 @@ public class ParseContext {
     public final ParserMessagesChannel CRITICAL_MESSAGES, NON_CRITICAL_MESSAGES;
 
     private int index = 0, successfulCases = 0;
-    private ArrayList<Integer> indexSnapshotStack = new ArrayList<>();
+    private final ArrayList<Integer> indexSnapshotStack = new ArrayList<>();
 
     private boolean failed = false, elseProcessed = false;
 

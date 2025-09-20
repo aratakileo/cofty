@@ -69,6 +69,7 @@ public class Lexer {
         patterns.put(TokenType.ID, "(?!_*\\d+)[A-Za-z\\d_]+");
         patterns.put(TokenType.OP, "=");
         patterns.put(TokenType.SEP, ":|\\.");
+        patterns.put(TokenType.BRACKETS, "\\(|\\)|\\{|\\}");
 
         // [ \t]* - to avoid NEWLINE token splitting
         patterns.put(TokenType.NEWLINE, "([ \t]*\n[ \t]*)+");

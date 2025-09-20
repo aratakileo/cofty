@@ -2,7 +2,7 @@ package cofty.v3.core.parser.ast;
 
 import cofty.core.lexer.token.*;
 import cofty.v3.core.parser.node.ParserNode;
-import cofty.v3.core.parser.node.TokenTypeNode;
+import cofty.v3.core.parser.node.TokenNode;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +44,7 @@ public class InitVarObject implements AstObject {
 
     @Override
     public @NotNull ParserNode parserNode() {
-        TokenTypeNode node;
+        var node = (TokenNode)null;
 
         (node = ParserNode.token(
                 Keyword.LET,
@@ -79,9 +79,10 @@ public class InitVarObject implements AstObject {
 
     @Override
     public String toString() {
-        return "InitVarData{" +
+        return "InitVarObject{" +
                 "name=" + name +
                 ", mutable=" + mutable +
+                ", explicitlySpecifiedType=" + explicitlySpecifiedType +
                 ", value=" + value +
                 '}';
     }

@@ -14,18 +14,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class AnyOfNodeQueue extends EmptyNode {
+public class RepeatableQueueNode extends EmptyNode {
     private final List<@NotNull AstObjectInitializer> astObjectInitializers;
-    private final ParserNode separator;
+    private final ParserNode separator, stopper;
 
-    public AnyOfNodeQueue(
+    public RepeatableQueueNode(
             @NotNull List<@NotNull AstObjectInitializer> astObjectInitializers,
             @NotNull NodeModifier modifier,
-            @Nullable ParserNode separator
+            @Nullable ParserNode separator,
+            @Nullable ParserNode stopper
     ) {
         super(modifier);
         this.astObjectInitializers = astObjectInitializers;
         this.separator = separator;
+        this.stopper = stopper;
     }
 
     @Override
@@ -40,6 +42,8 @@ public class AnyOfNodeQueue extends EmptyNode {
             context.createIndexSnapshot();
 
         root: while (context.hasCurrent()) {
+            if (stopper != null && stopper.previewQueue(context)) break;
+
             var nodeIsTriedToProceed = false;
 
             for (var i = 0; i < astObjectInitializers.size(); i++) {
@@ -73,9 +77,6 @@ public class AnyOfNodeQueue extends EmptyNode {
             }
 
             if (!nodeIsTriedToProceed) {
-                if (!topLevelModifier.isAny(ModifierType.PREVIEW, ModifierType.PEEK))
-                    context.CRITICAL_MESSAGES.putErr(new SyntaxError("invalid syntax"));
-
                 result = false;
                 break;
             }
@@ -104,7 +105,7 @@ public class AnyOfNodeQueue extends EmptyNode {
         if (topLevelModifier.is(ModifierType.PREVIEW))
             context.rollbackIndex();
 
-        if (result && modifier.is(ModifierType.ACTION) && !modifier.is(ModifierType.PREVIEW))
+        if (result && modifier.is(ModifierType.ACTION) && !topLevelModifier.is(ModifierType.PREVIEW))
             modifier.actionOrThrow().apply(astObjects.stream().toList());
 
         return result;
@@ -123,12 +124,12 @@ public class AnyOfNodeQueue extends EmptyNode {
 
     public static class Builder {
         private final List<@NotNull AstObjectInitializer> astObjectInitializers = new ArrayList<>();
-        private ParserNode separator = null;
+        private ParserNode separator = null, stopper = null;
 
         private final NodeModifier modifier;
-        private final Consumer<AnyOfNodeQueue> onBuild;
+        private final Consumer<RepeatableQueueNode> onBuild;
 
-        public Builder(@NotNull NodeModifier modifier, @Nullable Consumer<AnyOfNodeQueue> onBuild) {
+        public Builder(@NotNull NodeModifier modifier, @Nullable Consumer<RepeatableQueueNode> onBuild) {
             this.modifier = modifier;
             this.onBuild = onBuild;
         }
@@ -148,8 +149,13 @@ public class AnyOfNodeQueue extends EmptyNode {
             return this;
         }
 
-        public @NotNull AnyOfNodeQueue build() {
-            final var result = new AnyOfNodeQueue(astObjectInitializers, modifier, separator);
+        public @NotNull Builder setStopper(@NotNull ParserNode stopper) {
+            this.stopper = stopper;
+            return this;
+        }
+
+        public @NotNull RepeatableQueueNode build() {
+            final var result = new RepeatableQueueNode(astObjectInitializers, modifier, separator, stopper);
 
             if (onBuild != null)
                 onBuild.accept(result);

@@ -48,7 +48,7 @@ public class Token implements AstValue {
                 "type=" + type +
                 ", content=" + Representable.repr(content) +
                 ", position=[" + start +
-                ":" + end +
+                "-" + end +
                 "]}";
     }
 }

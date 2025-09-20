@@ -24,7 +24,7 @@ public interface ParserNode {
         if (queueModifier.isAny(ModifierType.ACTION, ModifierType.DEPENDED)) throw new IllegalStateException();
 
         var node = this;
-        var prevNode = this;
+        var prevNode = (ParserNode)null;
         var failMessageCursorStart = context.nonNewLineCursorOrPrev().start;
         var ignoreDependedNodes = false;
         var isInDependedQueue = false;
@@ -90,7 +90,9 @@ public interface ParserNode {
                     node = node.next();
                 }
 
-                if (node == null) throw new InvalidParserNodeStateInQueue();
+//                if (node == null) throw new InvalidParserNodeStateInQueue();
+
+                if (node == null) return false;
 
                 context.CRITICAL_MESSAGES.putErr(node.modifier().failMessageOrThrow(), errorCursorStart);
             }
@@ -125,28 +127,32 @@ public interface ParserNode {
     }
 
     default boolean previewQueue(@NotNull ParseContext context) {
-        return proceedQueue(context, NodeModifier.previewAnchorAndGeneral());
+        return proceedQueue(context, NodeModifier.previewAndGeneral());
     }
 
     <E extends ParserNode> @NotNull E then(@NotNull E next);
 
-    default @NotNull TokenTypeNode thenToken(@NotNull ITokenType type, @NotNull NodeModifier modifier) {
+    default @NotNull TokenNode thenToken(@NotNull ITokenType type) {
+        return then(ParserNode.token(type, NodeModifier.general()));
+    }
+
+    default @NotNull TokenNode thenToken(@NotNull ITokenType type, @NotNull NodeModifier modifier) {
         return then(ParserNode.token(type, modifier));
     }
 
-    default @NotNull AnyOfNodeQueue.Builder thenAnyOfBuilder(@NotNull NodeModifier modifier) {
-        return new AnyOfNodeQueue.Builder(modifier, this::then);
+    default @NotNull RepeatableQueueNode.Builder thenAnyOfBuilder(@NotNull NodeModifier modifier) {
+        return new RepeatableQueueNode.Builder(modifier, this::then);
     }
 
-    static @NotNull TokenTypeNode token(@NotNull ITokenType tokenType) {
-        return new TokenTypeNode(tokenType, NodeModifier.general());
+    static @NotNull TokenNode token(@NotNull ITokenType tokenType) {
+        return new TokenNode(tokenType, NodeModifier.general());
     }
 
-    static @NotNull TokenTypeNode token(@NotNull ITokenType tokenType, @NotNull NodeModifier modifier) {
-        return new TokenTypeNode(tokenType, modifier);
+    static @NotNull TokenNode token(@NotNull ITokenType tokenType, @NotNull NodeModifier modifier) {
+        return new TokenNode(tokenType, modifier);
     }
 
-    static @NotNull AnyOfNodeQueue.Builder anyOfBuilder(@NotNull NodeModifier modifier) {
-        return new AnyOfNodeQueue.Builder(modifier, null);
+    static @NotNull RepeatableQueueNode.Builder repeatableQueueBuilder(@NotNull NodeModifier modifier) {
+        return new RepeatableQueueNode.Builder(modifier, null);
     }
 }

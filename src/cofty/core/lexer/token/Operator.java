@@ -24,7 +24,7 @@ public enum Operator implements ITokenType, Representable {
 
     @Override
     public @NotNull String toReprString() {
-        return getClass().getName() + '.' + name();
+        return getClass().getSimpleName() + '.' + name();
     }
 
     @Override

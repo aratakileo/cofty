@@ -1,8 +1,9 @@
 package cofty.core.lexer.token;
 
+import cofty.type.Representable;
 import org.jetbrains.annotations.NotNull;
 
-public enum Separator implements ITokenType {
+public enum Separator implements ITokenType, Representable {
     DOT("."),
     COLON(":");
 
@@ -20,6 +21,11 @@ public enum Separator implements ITokenType {
     @Override
     public @NotNull String content() {
         return sep;
+    }
+
+    @Override
+    public @NotNull String toReprString() {
+        return getClass().getSimpleName() + '.' + name();
     }
 
     public static @NotNull Separator of(@NotNull String sep) {

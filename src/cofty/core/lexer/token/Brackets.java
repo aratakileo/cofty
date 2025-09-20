@@ -1,0 +1,45 @@
+package cofty.core.lexer.token;
+
+import cofty.type.Representable;
+import org.jetbrains.annotations.NotNull;
+
+public enum Brackets implements ITokenType, Representable {
+    ROUND_LEFT("("),
+    ROUND_RIGHT(")"),
+    CURVE_LEFT("{"),
+    CURVE_RIGHT("}");
+
+    public final String bracket;
+
+    Brackets(@NotNull String bracket) {
+        this.bracket = bracket;
+    }
+
+    @Override
+    public @NotNull TokenType type() {
+        return TokenType.BRACKETS;
+    }
+
+    @Override
+    public @NotNull String content() {
+        return bracket;
+    }
+
+    @Override
+    public @NotNull String toReprString() {
+        return getClass().getSimpleName() + '.' + name();
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s(%s)", toReprString(), Representable.repr(bracket));
+    }
+
+    public static @NotNull Brackets of(@NotNull String op) {
+        for (final var _op: values())
+            if (_op.bracket.equals(op))
+                return _op;
+
+        throw new IllegalStateException(String.format("unsupportable brackets `%s`", op));
+    }
+}

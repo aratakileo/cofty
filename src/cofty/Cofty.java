@@ -1,19 +1,12 @@
 package cofty;
 
 import cofty.core.lexer.Lexer;
-import cofty.core.lexer.token.TokenType;
 import cofty.core.message.MessageHandler;
 import cofty.core.parser.ParseContext;
 import cofty.type.Representable;
 import cofty.type.TextContent;
 import cofty.util.Strings;
-import cofty.v3.core.parser.ast.AstObject;
-import cofty.v3.core.parser.ast.InitVarObject;
-import cofty.v3.core.parser.node.ParserNode;
-import cofty.v3.core.parser.node.modifier.NodeModifier;
-
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
+import cofty.v3.core.parser.ast.BodyObject;
 
 public class Cofty {
     public static void main(String[] args) {
@@ -48,22 +41,16 @@ public class Cofty {
 //            Strings.println("Ast object after parse:", astObject);
 //        }
 
-        AtomicReference<List<AstObject>> astObjects = new AtomicReference<>();
+        final var bodyObject = new BodyObject(true);
 
-        var rootNode = ParserNode.anyOfBuilder(
-                    NodeModifier.builder().general().astObjectsAction(astObjects::set).build()
-                ).add(InitVarObject::new)
-                .setSeparator(ParserNode.token(TokenType.NEWLINE, NodeModifier.previewAnchorAndGeneral()))
-                .build();
-
-        var isPreviewSucceed = rootNode.proceed(parseContext, NodeModifier.previewAnchorAndGeneral());
+        var isPreviewSucceed = bodyObject.preview(parseContext);
         Strings.println("Is preview succeeded:", isPreviewSucceed);
         Strings.println("Snapshots stack size:", parseContext.snapshotStackSize());
         Strings.println("Cursor after preview:", parseContext.cursor());
 
         if (isPreviewSucceed) {
-            Strings.println("Is proceeded:", rootNode.proceed(parseContext, NodeModifier.general()));
-            Strings.println("Ast objects after parse:", Representable.repr(astObjects.get()));
+            Strings.println("Is proceeded:", bodyObject.parse(parseContext));
+            Strings.println("Ast objects after parse:", bodyObject);
         }
 
         messages.print();

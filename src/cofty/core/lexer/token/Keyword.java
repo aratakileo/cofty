@@ -19,7 +19,7 @@ public enum Keyword implements ITokenType, Representable {
 
     @Override
     public @NotNull String toReprString() {
-        return getClass().getName() + '.' + name();
+        return getClass().getSimpleName() + '.' + name();
     }
 
     public static @NotNull Keyword of(@NotNull String kw) {
