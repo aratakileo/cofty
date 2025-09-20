@@ -1,15 +1,19 @@
 package cofty;
 
+import cofty.core.lexer.Lexer;
 import cofty.core.lexer.token.TokenType;
 import cofty.core.message.MessageHandler;
 import cofty.core.parser.ParseContext;
-import cofty.core.lexer.Lexer;
 import cofty.type.Representable;
 import cofty.type.TextContent;
 import cofty.util.Strings;
+import cofty.v3.core.parser.ast.AstObject;
 import cofty.v3.core.parser.ast.InitVarObject;
 import cofty.v3.core.parser.node.ParserNode;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Cofty {
     public static void main(String[] args) {
@@ -33,7 +37,7 @@ public class Cofty {
 //        System.out.println(parseResult.map(BodyAst::toString).orElse(""));
 
         // v3
-        var astObject = new InitVarObject();
+//        var astObject = new InitVarObject();
 //        var isPreviewSucceed = astObject.preview(parseContext);
 //
 //        Strings.println("Is preview succeeded:", isPreviewSucceed);
@@ -44,8 +48,11 @@ public class Cofty {
 //            Strings.println("Ast object after parse:", astObject);
 //        }
 
-        var rootNode = ParserNode.anyOfBuilder(NodeModifier.general())
-                .add(astObject.parserNode())
+        AtomicReference<List<AstObject>> astObjects = new AtomicReference<>();
+
+        var rootNode = ParserNode.anyOfBuilder(
+                    NodeModifier.builder().general().astObjectsAction(astObjects::set).build()
+                ).add(InitVarObject::new)
                 .setSeparator(ParserNode.token(TokenType.NEWLINE, NodeModifier.previewAnchorAndGeneral()))
                 .build();
 
@@ -56,7 +63,7 @@ public class Cofty {
 
         if (isPreviewSucceed) {
             Strings.println("Is proceeded:", rootNode.proceed(parseContext, NodeModifier.general()));
-            Strings.println("Ast object after parse:", astObject);
+            Strings.println("Ast objects after parse:", Representable.repr(astObjects.get()));
         }
 
         messages.print();

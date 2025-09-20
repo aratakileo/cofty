@@ -1,14 +1,17 @@
 package cofty.v3.core.parser.node.modifier;
 
+import cofty.core.lexer.token.Token;
 import cofty.type.Representable;
 import cofty.type.exception.SyntaxError;
 import cofty.util.Lists;
+import cofty.v3.core.parser.ast.AstObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public final class NodeModifier {
     private final HashSet<@NotNull ModifierType> types;
@@ -86,7 +89,10 @@ public final class NodeModifier {
             @NotNull NodeModifier topLevelModifier,
             @NotNull NodeModifier currentLevelModifier
     ) {
-        if (!topLevelModifier.isAny(ModifierType.GENERAL, ModifierType.PREVIEW))
+        if (
+                !topLevelModifier.isAny(ModifierType.GENERAL, ModifierType.PREVIEW)
+                        || currentLevelModifier.is(ModifierType.ACTION)
+        )
             return topLevelModifier;
 
         return currentLevelModifier;
@@ -157,14 +163,31 @@ public final class NodeModifier {
             return this;
         }
 
-        public @NotNull Builder action(@NotNull ModifierAction action) {
-            if (this.action != null)
-                throw new IllegalStateException();
+        public @NotNull Builder tokenAction(@NotNull Consumer<Token> action) {
+            return action(new ModifierAction() {
+                @Override
+                public void apply(@NotNull Token token) {
+                    action.accept(token);
+                }
+            });
+        }
 
-            types.add(ModifierType.ACTION);
-            this.action = action;
+        public @NotNull Builder astObjectAction(@NotNull Consumer<AstObject> action) {
+            return action(new ModifierAction() {
+                @Override
+                public void apply(@NotNull AstObject astObject) {
+                    action.accept(astObject);
+                }
+            });
+        }
 
-            return this;
+        public @NotNull Builder astObjectsAction(@NotNull Consumer<List<AstObject>> action) {
+            return action(new ModifierAction() {
+                @Override
+                public void apply(@NotNull List<AstObject> astObjects) {
+                    action.accept(astObjects);
+                }
+            });
         }
 
         public @NotNull Builder remove(@NotNull ModifierType type) {
@@ -199,6 +222,16 @@ public final class NodeModifier {
                 throw new IllegalStateException();
 
             return new NodeModifier(types, failMessage, action);
+        }
+
+        private @NotNull Builder action(@NotNull ModifierAction action) {
+            if (this.action != null)
+                throw new IllegalStateException();
+
+            types.add(ModifierType.ACTION);
+            this.action = action;
+
+            return this;
         }
 
         private boolean hasAtLeastOneBasicType() {

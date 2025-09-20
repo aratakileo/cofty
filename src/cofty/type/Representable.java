@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 public interface Representable {
     @NotNull String toReprString();
@@ -50,6 +51,16 @@ public interface Representable {
         return String.format(
                 "%s.arrayListOf(%s)",
                 Lists.class.getSimpleName(),
+                String.join(", ", arrayList.stream().map(Representable::repr).toList())
+        );
+    }
+
+    static <T> @NotNull String repr(@Nullable List<T> arrayList) {
+        if (arrayList == null)
+            return "null";
+
+        return String.format(
+                "List.of(%s)",
                 String.join(", ", arrayList.stream().map(Representable::repr).toList())
         );
     }

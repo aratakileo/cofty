@@ -49,12 +49,12 @@ public class InitVarObject implements AstObject {
         (node = ParserNode.token(
                 Keyword.LET,
                 NodeModifier.builder().preview().syntaxFail("expected `let` keyword").build())
-        ).thenToken(Keyword.MUT, NodeModifier.builder().peek().action(this::setMutable).build())
+        ).thenToken(Keyword.MUT, NodeModifier.builder().peek().tokenAction(this::setMutable).build())
                 .thenToken(
                         TokenType.ID,
                         NodeModifier.builder()
                                 .syntaxFail("expected variable name")
-                                .action(this::setName)
+                                .tokenAction(this::setName)
                                 .build()
                 ).thenToken(Separator.COLON, NodeModifier.peek())
                 .thenToken(
@@ -62,7 +62,7 @@ public class InitVarObject implements AstObject {
                         NodeModifier.builder()
                                 .depended()
                                 .syntaxFail("expected type declaration")
-                                .action(this::setExplicitlySpecifiedType)
+                                .tokenAction(this::setExplicitlySpecifiedType)
                                 .build()
                 ).thenToken(Operator.ASSIGN, NodeModifier.peek())
                 .thenToken(
@@ -70,7 +70,7 @@ public class InitVarObject implements AstObject {
                         NodeModifier.builder()
                                 .depended()
                                 .syntaxFail("expected variable value")
-                                .action(this::setValue)
+                                .tokenAction(this::setValue)
                                 .build()
                 );
 

@@ -23,8 +23,8 @@ public class TokenTypeNode extends EmptyNode {
                 topLevelModifier
         );
 
-        if (proceeded && modifier.is(ModifierType.ACTION) && !modifier().is(ModifierType.PREVIEW))
-            modifier.actionOrThrow().applyToken(context.peekOrThrow(-1));
+        if (proceeded && modifier.is(ModifierType.ACTION) && !modifier.is(ModifierType.PREVIEW))
+            modifier.actionOrThrow().apply(context.peekPrevOrThrow());
 
         return proceeded;
     }

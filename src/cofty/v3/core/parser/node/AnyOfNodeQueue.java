@@ -3,34 +3,36 @@ package cofty.v3.core.parser.node;
 import cofty.core.parser.ParseContext;
 import cofty.type.Representable;
 import cofty.type.exception.SyntaxError;
+import cofty.v3.core.parser.ast.AstObject;
 import cofty.v3.core.parser.node.modifier.ModifierType;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
 
-/**
- * TODO: THIS ONLY AN ALPHA VERSION
- */
 public class AnyOfNodeQueue extends EmptyNode {
-    private final List<@NotNull ParserNode> nodes;
+    private final List<@NotNull AstObjectInitializer> astObjectInitializers;
     private final ParserNode separator;
 
     public AnyOfNodeQueue(
-            @NotNull List<@NotNull ParserNode> nodes,
+            @NotNull List<@NotNull AstObjectInitializer> astObjectInitializers,
             @NotNull NodeModifier modifier,
             @Nullable ParserNode separator
     ) {
         super(modifier);
-        this.nodes = nodes;
+        this.astObjectInitializers = astObjectInitializers;
         this.separator = separator;
     }
 
     @Override
     public boolean proceed(@NotNull ParseContext context, @NotNull NodeModifier topLevelModifier) {
+        final var astObjects = new ArrayList<AstObject>();
+        final var astObjectsCache = new HashMap<Integer, AstObject>();
+
         var result = true;
         var separatorWasNotProceed = false;
 
@@ -40,7 +42,16 @@ public class AnyOfNodeQueue extends EmptyNode {
         root: while (context.hasCurrent()) {
             var nodeIsTriedToProceed = false;
 
-            for (final var node : nodes)
+            for (var i = 0; i < astObjectInitializers.size(); i++) {
+                var astObject = (AstObject)null;
+
+                if (astObjectsCache.containsKey(i)) {
+                    astObject = astObjectsCache.get(i);
+                    astObjectsCache.remove(i);
+                } else astObject = astObjectInitializers.get(i).init();
+
+                final var node = astObject.parserNode();
+
                 if (node.previewQueue(context)) {
                     if (topLevelModifier.is(ModifierType.PREVIEW)) break root;
 
@@ -52,9 +63,14 @@ public class AnyOfNodeQueue extends EmptyNode {
 
                     nodeIsTriedToProceed = true;
 
-                    node.proceedQueue(context, NodeModifier.prioritize(topLevelModifier, modifier));
+                    if (!node.proceedQueue(context, NodeModifier.prioritize(topLevelModifier, modifier)))
+                        result = false;
+
+                    astObjects.add(astObject);
+
                     break;
-                }
+                } else astObjectsCache.put(i, astObject);
+            }
 
             if (!nodeIsTriedToProceed) {
                 if (!topLevelModifier.isAny(ModifierType.PREVIEW, ModifierType.PEEK))
@@ -88,6 +104,9 @@ public class AnyOfNodeQueue extends EmptyNode {
         if (topLevelModifier.is(ModifierType.PREVIEW))
             context.rollbackIndex();
 
+        if (result && modifier.is(ModifierType.ACTION) && !modifier.is(ModifierType.PREVIEW))
+            modifier.actionOrThrow().apply(astObjects.stream().toList());
+
         return result;
     }
 
@@ -96,14 +115,14 @@ public class AnyOfNodeQueue extends EmptyNode {
         return String.format(
                 "new %s(%s, %s, %s)",
                 getClass().getSimpleName(),
-                Representable.repr(nodes),
+                Representable.repr(astObjectInitializers),
                 Representable.repr(modifier),
                 Representable.repr(separator)
         );
     }
 
     public static class Builder {
-        private final ArrayList<@NotNull ParserNode> nodes = new ArrayList<>();
+        private final List<@NotNull AstObjectInitializer> astObjectInitializers = new ArrayList<>();
         private ParserNode separator = null;
 
         private final NodeModifier modifier;
@@ -114,13 +133,13 @@ public class AnyOfNodeQueue extends EmptyNode {
             this.onBuild = onBuild;
         }
 
-        public @NotNull Builder add(@NotNull ParserNode node) {
-            nodes.add(node);
+        public @NotNull Builder add(@NotNull AstObjectInitializer astObjectInitializer) {
+            astObjectInitializers.add(astObjectInitializer);
             return this;
         }
 
-        public @NotNull Builder add(@NotNull ParserNode @NotNull... nodes) {
-            this.nodes.addAll(List.of(nodes));
+        public @NotNull Builder add(@NotNull AstObjectInitializer @NotNull... astObjectInitializers) {
+            this.astObjectInitializers.addAll(List.of(astObjectInitializers));
             return this;
         }
 
@@ -130,12 +149,17 @@ public class AnyOfNodeQueue extends EmptyNode {
         }
 
         public @NotNull AnyOfNodeQueue build() {
-            final var result = new AnyOfNodeQueue(nodes, modifier, separator);
+            final var result = new AnyOfNodeQueue(astObjectInitializers, modifier, separator);
 
             if (onBuild != null)
                 onBuild.accept(result);
 
             return result;
         }
+    }
+
+    @FunctionalInterface
+    public interface AstObjectInitializer {
+        @NotNull AstObject init();
     }
 }
