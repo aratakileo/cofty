@@ -65,7 +65,7 @@ public class Lexer {
         final var patterns = new LinkedHashMap<TokenType, String>();
         patterns.put(TokenType.DOUBLE, "_*\\d+[\\d_]*(?:\\.[\\d_]*|[dD])");
         patterns.put(TokenType.INT, "_*\\d+[\\d_]*");
-        patterns.put(TokenType.KW, "let|mut|fn");
+        patterns.put(TokenType.KW, "let|mut|fn|return");
         patterns.put(TokenType.ID, "(?!_*\\d+)[A-Za-z\\d_]+");
         patterns.put(TokenType.OP, "=");
         patterns.put(TokenType.SEP, ":|\\.|,|->");

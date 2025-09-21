@@ -48,6 +48,10 @@ public class InitFuncObject implements AstObject {
         return args;
     }
 
+    public @NotNull BodyObject body() {
+        return body;
+    }
+
     @Override
     public @NotNull ParserNode parserNode() {
         var node = (TokenNode)null;

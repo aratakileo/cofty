@@ -6,7 +6,8 @@ import org.jetbrains.annotations.NotNull;
 public enum Keyword implements ITokenType, Representable {
     LET,
     MUT,
-    FN;
+    FN,
+    RETURN;
 
     @Override
     public @NotNull TokenType type() {

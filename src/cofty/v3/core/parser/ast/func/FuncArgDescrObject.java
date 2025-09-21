@@ -34,7 +34,7 @@ public class FuncArgDescrObject implements AstObject {
         return name;
     }
 
-    public @Nullable ValueExpressionObject value() {
+    public @NotNull ValueExpressionObject value() {
         return value;
     }
 

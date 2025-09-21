@@ -5,6 +5,7 @@ import cofty.core.lexer.token.TokenType;
 import cofty.type.Representable;
 import cofty.v3.core.parser.ast.func.CallFuncObject;
 import cofty.v3.core.parser.ast.func.InitFuncObject;
+import cofty.v3.core.parser.ast.func.ReturnExpressionObject;
 import cofty.v3.core.parser.node.ParserNode;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
@@ -32,18 +33,24 @@ public class BodyObject implements AstObject {
     @Override
     public @NotNull ParserNode parserNode() {
         final var builder = ParserNode.repeatableQueueBuilder(
-                    NodeModifier.builder()
-                            .preview()
-                            .astObjectsAction(this::setObjects)
-                            .syntaxFail("invalid syntax")
-                            .build()
-                ).setSeparator(ParserNode.token(
-                        TokenType.NEWLINE,
-                        NodeModifier.builder()
-                                .syntaxFail("expected the new expression would start on a new line")
-                                .preview()
-                                .build()
-                )).add(InitVarObject::new, SetVarObject::new, InitFuncObject::new, CallFuncObject::new);
+                NodeModifier.builder()
+                        .preview()
+                        .astObjectsAction(this::setObjects)
+                        .syntaxFail("invalid syntax")
+                        .build()
+        ).setSeparator(ParserNode.token(
+                TokenType.NEWLINE,
+                NodeModifier.builder()
+                        .syntaxFail("expected the new expression would start on a new line")
+                        .preview()
+                        .build()
+        )).add(
+                InitVarObject::new,
+                SetVarObject::new,
+                InitFuncObject::new,
+                CallFuncObject::new,
+                ReturnExpressionObject::new
+        );
 
         if (!isRootBody) builder.setStopper(ParserNode.token(Brackets.CURVE_RIGHT, NodeModifier.previewAndGeneral()));
 
