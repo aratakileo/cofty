@@ -22,7 +22,7 @@ public class TokenNode extends EmptyNode {
         if (context.currentOrThrow().type.equals(TokenType.NEWLINE)) {
             if (tokenType.equals(TokenType.NEWLINE)) return true;
             if (!context.hasNext()) return false;
-            context.goNext();
+            context.skipNewLine();
         }
 
         return context.currentOrThrow().type.equals(tokenType);

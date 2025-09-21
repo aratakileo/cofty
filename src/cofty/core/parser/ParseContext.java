@@ -34,7 +34,7 @@ public class ParseContext implements QueueIterator<Token> {
     private int index = 0, successfulCases = 0;
     private final ArrayList<Integer> indexSnapshotStack = new ArrayList<>();
 
-    private boolean failed = false, elseProcessed = false;
+    private boolean failed = false, elseProcessed = false, isNewLineSkipped = false;
 
     private ParseContext(@NotNull ParseContext parent) {
         this(parent.tokens, parent.text, new MessageHandler(), parent);
@@ -151,6 +151,7 @@ public class ParseContext implements QueueIterator<Token> {
 
     public void rollbackIndex() {
         index = indexSnapshotStack.removeLast();
+        isNewLineSkipped = false;
     }
 
     public @NotNull ParseContext finishTransaction(boolean mayIgnoreFail) {
@@ -186,7 +187,7 @@ public class ParseContext implements QueueIterator<Token> {
     }
 
     public boolean hasNonNewLineCurrent() {
-        return hasCurrent() && !currentOrThrow().type.equals(TokenType.NEWLINE);
+        return hasCurrent() && !currentOrThrow().type.equals(TokenType.NEWLINE) && !isNewLineSkipped;
     }
 
     @Override
@@ -204,12 +205,22 @@ public class ParseContext implements QueueIterator<Token> {
         return tokens.get(index + 1);
     }
 
+    public void skipNewLine() {
+        if (!hasCurrent() || !currentOrThrow().type.equals(TokenType.NEWLINE))
+            throw new IllegalStateException();
+
+        goNext();
+
+        isNewLineSkipped = true;
+    }
+
     @Override
     public @Nullable Token goNext() {
         if (!hasCurrent())
             return null;
 
         index++;
+        isNewLineSkipped = false;
 
         return hasCurrent() ? tokens.get(index) : null;
     }
@@ -219,6 +230,8 @@ public class ParseContext implements QueueIterator<Token> {
     }
 
     public @NotNull Token nonNewLineCursorOrPrev() {
+        if (isNewLineSkipped) return peekOrThrow(-2);
+
         return hasNonNewLineCurrent() ? currentOrThrow() : peekPrevOrThrow();
     }
 
