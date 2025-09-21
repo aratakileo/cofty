@@ -3,6 +3,7 @@ package cofty.v3.core.parser.ast;
 import cofty.core.lexer.token.Brackets;
 import cofty.core.lexer.token.TokenType;
 import cofty.type.Representable;
+import cofty.v3.core.parser.ast.func.CallFuncObject;
 import cofty.v3.core.parser.ast.func.InitFuncObject;
 import cofty.v3.core.parser.node.ParserNode;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
@@ -42,7 +43,7 @@ public class BodyObject implements AstObject {
                                 .syntaxFail("expected the new expression would start on a new line")
                                 .preview()
                                 .build()
-                )).add(InitVarObject::new, SetVarObject::new, InitFuncObject::new);
+                )).add(InitVarObject::new, SetVarObject::new, InitFuncObject::new, CallFuncObject::new);
 
         if (!isRootBody) builder.setStopper(ParserNode.token(Brackets.CURVE_RIGHT, NodeModifier.previewAndGeneral()));
 

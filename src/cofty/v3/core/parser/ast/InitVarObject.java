@@ -1,6 +1,7 @@
 package cofty.v3.core.parser.ast;
 
 import cofty.core.lexer.token.*;
+import cofty.v3.core.parser.ast.value.ValueExpressionObject;
 import cofty.v3.core.parser.node.ParserNode;
 import cofty.v3.core.parser.node.TokenNode;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
@@ -8,7 +9,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class InitVarObject implements AstObject {
-    private Token name = null, mutable = null, explicitlySpecifiedType = null, value = null;
+    private Token name = null, mutable = null, explicitlySpecifiedType = null;
+
+    private final ValueExpressionObject value = new ValueExpressionObject();
 
     private void setMutable(@NotNull Token mutable) {
         this.mutable = mutable;
@@ -16,10 +19,6 @@ public class InitVarObject implements AstObject {
 
     private void setName(@NotNull Token name) {
         this.name = name;
-    }
-
-    private void setValue(@NotNull Token value) {
-        this.value = value;
     }
 
     private void setExplicitlySpecifiedType(@NotNull Token explicitlySpecifiedType) {
@@ -34,7 +33,7 @@ public class InitVarObject implements AstObject {
         return name;
     }
 
-    public @Nullable Token value() {
+    public @Nullable ValueExpressionObject value() {
         return value;
     }
 
@@ -65,12 +64,11 @@ public class InitVarObject implements AstObject {
                                 .tokenAction(this::setExplicitlySpecifiedType)
                                 .build()
                 ).thenToken(Operator.ASSIGN, NodeModifier.peek())
-                .thenToken(
-                        TokenType.INT,
+                .then(
+                        value.parserNode(),
                         NodeModifier.builder()
                                 .depended()
                                 .syntaxFail("expected a variable value")
-                                .tokenAction(this::setValue)
                                 .build()
                 );
 

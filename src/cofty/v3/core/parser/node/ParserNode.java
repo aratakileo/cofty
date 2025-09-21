@@ -32,8 +32,8 @@ public interface ParserNode {
 
     <E extends ParserNode> @NotNull E then(@NotNull E next);
 
-    default @NotNull TokenNode thenToken(@NotNull ITokenType type) {
-        return then(ParserNode.token(type, NodeModifier.general()));
+    default @NotNull ContainerNode then(@NotNull ParserNode node, @NotNull NodeModifier modifier) {
+        return then(ParserNode.contain(node, modifier));
     }
 
     default @NotNull TokenNode thenToken(@NotNull ITokenType type, @NotNull NodeModifier modifier) {
@@ -44,8 +44,8 @@ public interface ParserNode {
         return new RepeatableQueueNode.Builder(modifier, this::then);
     }
 
-    static @NotNull TokenNode token(@NotNull ITokenType tokenType) {
-        return new TokenNode(tokenType, NodeModifier.general());
+    static @NotNull ContainerNode contain(@NotNull ParserNode containable, @NotNull NodeModifier modifier) {
+        return new ContainerNode(containable, modifier);
     }
 
     static @NotNull TokenNode token(@NotNull ITokenType tokenType, @NotNull NodeModifier modifier) {

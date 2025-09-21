@@ -13,24 +13,20 @@ public class NodeQueueIterator implements QueueIterator<ParserNode> {
     public final NodeModifier modifier;
     public final ParserNode first;
 
-    private final int failMessageCursorStart;
-
     private ParserNode current, prev = null;
-    private boolean snapshotMade = false, ignoreDepended = false, inDependedQueue = false;
+    private boolean snapshotMade = false, ignoreDepended = false;
 
     public NodeQueueIterator(
             @NotNull ParseContext context,
             @NotNull NodeModifier modifier,
             @NotNull ParserNode first
     ) {
-        if (modifier.isAny(ModifierType.ACTION, ModifierType.DEPENDED)) throw new IllegalStateException();
+        if (modifier.is(ModifierType.ACTION)) throw new IllegalStateException();
 
         this.context = context;
         this.modifier = modifier;
         this.first = first;
         this.current = first;
-
-        failMessageCursorStart = context.nonNewLineCursorOrPrev().start;
     }
 
     @Override
@@ -103,7 +99,6 @@ public class NodeQueueIterator implements QueueIterator<ParserNode> {
     }
 
     private void preprocessDependedStaff() {
-        if (!currentOrThrow().modifier().is(ModifierType.DEPENDED)) inDependedQueue = false;
         if (
                 currentOrThrow().modifier().is(ModifierType.DEPENDED)
                         && !currentOrThrow().modifier().isAny(ModifierType.DEPENDED, ModifierType.PEEK)
@@ -135,10 +130,7 @@ public class NodeQueueIterator implements QueueIterator<ParserNode> {
                 else rollbackContextSnapshot();
             }
 
-            if (isCurrentPeek()) {
-                if (!isNodeProceed) ignoreDepended = true;
-                else if (hasNext() && nextOrThrow().modifier().is(ModifierType.DEPENDED)) inDependedQueue = true;
-            }
+            if (isCurrentPeek() && !isNodeProceed) ignoreDepended = true;
 
             if (!isNodeProceed && !isCurrentPeek()) break;
 

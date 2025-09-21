@@ -1,8 +1,6 @@
 package cofty.v3.core.parser.node;
 
-import cofty.core.parser.ParseContext;
 import cofty.type.Representable;
-import cofty.v3.core.parser.node.modifier.ModifierType;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -91,7 +91,7 @@ public final class NodeModifier {
     ) {
         if (
                 !topLevelModifier.isAny(ModifierType.GENERAL, ModifierType.PREVIEW)
-                        || currentLevelModifier.is(ModifierType.ACTION)
+                        || currentLevelModifier.isAny(ModifierType.ACTION)
         )
             return topLevelModifier;
 
