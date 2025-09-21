@@ -5,7 +5,9 @@ import org.jetbrains.annotations.NotNull;
 
 public enum Separator implements ITokenType, Representable {
     DOT("."),
-    COLON(":");
+    COLON(":"),
+    COMMA(","),
+    ARROW("->");
 
     public final String sep;
 

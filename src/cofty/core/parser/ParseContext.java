@@ -5,6 +5,7 @@ import cofty.core.lexer.token.TokenType;
 import cofty.core.message.MessageBuilder;
 import cofty.core.message.MessageHandler;
 import cofty.core.message.channel.ParserMessagesChannel;
+import cofty.type.QueueIterator;
 import cofty.type.TextContent;
 import cofty.type.exception.SyntaxError;
 import cofty.v2.core.ast.AstValue;
@@ -21,7 +22,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class ParseContext {
+public class ParseContext implements QueueIterator<Token> {
     private final ParseContext parent;
 
     public final List<Token> tokens;
@@ -113,7 +114,7 @@ public class ParseContext {
             return Optional.empty();
         }
 
-        next();
+        goNext();
         successfulCases++;
 
         return result;
@@ -141,7 +142,7 @@ public class ParseContext {
     }
 
     public void removeIndexSnapshot() {
-        indexSnapshotStack.removeFirst();
+        indexSnapshotStack.removeLast();
     }
 
     public void createIndexSnapshot() {
@@ -149,7 +150,7 @@ public class ParseContext {
     }
 
     public void rollbackIndex() {
-        index = indexSnapshotStack.removeFirst();
+        index = indexSnapshotStack.removeLast();
     }
 
     public @NotNull ParseContext finishTransaction(boolean mayIgnoreFail) {
@@ -174,10 +175,12 @@ public class ParseContext {
         return finishTransaction(false);
     }
 
+    @Override
     public boolean hasNext() {
         return index < tokens.size() - 1;
     }
 
+    @Override
     public boolean hasCurrent() {
         return index < tokens.size();
     }
@@ -186,21 +189,23 @@ public class ParseContext {
         return hasCurrent() && !currentOrThrow().type.equals(TokenType.NEWLINE);
     }
 
-    public @NotNull Token currentOrThrow() {
-        if (!hasCurrent())
-            throw new RuntimeException("has no current token");
-
+    @Override
+    public @Nullable Token current() {
         return tokens.get(index);
     }
 
-    public @NotNull Token nextOrThrow() {
-        if (!hasNext())
-            throw new RuntimeException("has no next token");
-
-        return tokens.get(++index);
+    @Override
+    public @Nullable Token prev() {
+        return tokens.get(index - 1);
     }
 
+    @Override
     public @Nullable Token next() {
+        return tokens.get(index + 1);
+    }
+
+    @Override
+    public @Nullable Token goNext() {
         if (!hasCurrent())
             return null;
 

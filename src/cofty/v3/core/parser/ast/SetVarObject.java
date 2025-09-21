@@ -39,7 +39,7 @@ public class SetVarObject implements AstObject {
                         TokenType.INT,
                         NodeModifier.builder()
                                 .tokenAction(this::setValue)
-                                .syntaxFail("expected variable value")
+                                .syntaxFail("expected a variable value")
                                 .build()
                 );
 

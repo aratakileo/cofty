@@ -17,16 +17,19 @@ import java.util.function.Consumer;
 public class RepeatableQueueNode extends EmptyNode {
     private final List<@NotNull AstObjectInitializer> astObjectInitializers;
     private final ParserNode separator, stopper;
+    private final Exception nonOneAtTimeSeparatorException;
 
     public RepeatableQueueNode(
             @NotNull List<@NotNull AstObjectInitializer> astObjectInitializers,
             @NotNull NodeModifier modifier,
             @Nullable ParserNode separator,
+            @Nullable Exception nonOneAtTimeSeparatorException,
             @Nullable ParserNode stopper
     ) {
         super(modifier);
         this.astObjectInitializers = astObjectInitializers;
         this.separator = separator;
+        this.nonOneAtTimeSeparatorException = nonOneAtTimeSeparatorException;
         this.stopper = stopper;
     }
 
@@ -37,12 +40,16 @@ public class RepeatableQueueNode extends EmptyNode {
 
         var result = true;
         var separatorWasNotProceed = false;
+        var queueElementHasBeenFailed = false;
 
         if (topLevelModifier.is(ModifierType.PREVIEW))
             context.createIndexSnapshot();
 
         root: while (context.hasCurrent()) {
-            if (stopper != null && stopper.previewQueue(context)) break;
+            if (
+                    stopper != null && stopper.previewQueue(context)
+                            || queueElementHasBeenFailed && separatorWasNotProceed
+            ) break;
 
             var nodeIsTriedToProceed = false;
 
@@ -60,15 +67,22 @@ public class RepeatableQueueNode extends EmptyNode {
                     if (topLevelModifier.is(ModifierType.PREVIEW)) break root;
 
                     if (separatorWasNotProceed) {
-                        context.CRITICAL_MESSAGES.putErr(new SyntaxError("invalid syntax"));
+                        context.CRITICAL_MESSAGES.putErr(
+                                separator.modifier().is(ModifierType.FAIL)
+                                        ? separator.modifier().failMessageOrThrow()
+                                        : new SyntaxError("invalid syntax")
+                        );
+
                         result = false;
                         break root;
                     }
 
                     nodeIsTriedToProceed = true;
 
-                    if (!node.proceedQueue(context, NodeModifier.prioritize(topLevelModifier, modifier)))
+                    if (!node.proceedQueue(context, NodeModifier.prioritize(topLevelModifier, modifier))) {
+                        queueElementHasBeenFailed = true;
                         result = false;
+                    }
 
                     astObjects.add(astObject);
 
@@ -77,7 +91,12 @@ public class RepeatableQueueNode extends EmptyNode {
             }
 
             if (!nodeIsTriedToProceed) {
-                result = false;
+                if (!separatorWasNotProceed) {
+                    if (modifier.is(ModifierType.FAIL))
+                        context.CRITICAL_MESSAGES.putErr(modifier.failMessageOrThrow());
+
+                    result = false;
+                }
                 break;
             }
 
@@ -91,6 +110,13 @@ public class RepeatableQueueNode extends EmptyNode {
                         separatorWasNotProceed = true;
 
                     break;
+                }
+
+                if (nonOneAtTimeSeparatorException != null && !isFirstSeparatorScan) {
+                    context.CRITICAL_MESSAGES.putErr(nonOneAtTimeSeparatorException);
+
+                    result = false;
+                    break root;
                 }
 
                 isFirstSeparatorScan = false;
@@ -125,6 +151,7 @@ public class RepeatableQueueNode extends EmptyNode {
     public static class Builder {
         private final List<@NotNull AstObjectInitializer> astObjectInitializers = new ArrayList<>();
         private ParserNode separator = null, stopper = null;
+        private Exception nonOneAtTimeSeparatorException = null;
 
         private final NodeModifier modifier;
         private final Consumer<RepeatableQueueNode> onBuild;
@@ -140,6 +167,8 @@ public class RepeatableQueueNode extends EmptyNode {
         }
 
         public @NotNull Builder add(@NotNull AstObjectInitializer @NotNull... astObjectInitializers) {
+            if (astObjectInitializers.length == 0) throw new IllegalStateException();
+
             this.astObjectInitializers.addAll(List.of(astObjectInitializers));
             return this;
         }
@@ -149,13 +178,24 @@ public class RepeatableQueueNode extends EmptyNode {
             return this;
         }
 
+        public @NotNull Builder makeSeparatorOnlyOneAtTime(@NotNull Exception nonOneAtTimeSeparatorException) {
+            this.nonOneAtTimeSeparatorException = nonOneAtTimeSeparatorException;
+            return this;
+        }
+
         public @NotNull Builder setStopper(@NotNull ParserNode stopper) {
             this.stopper = stopper;
             return this;
         }
 
         public @NotNull RepeatableQueueNode build() {
-            final var result = new RepeatableQueueNode(astObjectInitializers, modifier, separator, stopper);
+            final var result = new RepeatableQueueNode(
+                    astObjectInitializers,
+                    modifier,
+                    separator,
+                    nonOneAtTimeSeparatorException,
+                    stopper
+            );
 
             if (onBuild != null)
                 onBuild.accept(result);

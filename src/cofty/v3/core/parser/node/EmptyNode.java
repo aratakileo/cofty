@@ -32,22 +32,6 @@ public abstract class EmptyNode implements ParserNode, Representable {
         return next;
     }
 
-    protected boolean postProceed(boolean proceed, @NotNull ParseContext context, @NotNull NodeModifier topLevelModifier) {
-        if (proceed) {
-            context.next();
-            return true;
-        }
-
-        if (!topLevelModifier.is(ModifierType.GENERAL) || topLevelModifier.is(ModifierType.PREVIEW)) return false;
-
-        if (modifier.is(ModifierType.FAIL))
-            context.CRITICAL_MESSAGES.putErr(modifier.failMessageOrThrow());
-        else if (modifier.is(ModifierType.GENERAL))
-            context.next();
-
-        return false;
-    }
-
     @Override
     public String toString() {
         return toReprString();
