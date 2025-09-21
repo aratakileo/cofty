@@ -132,7 +132,7 @@ public class ParseContext implements QueueIterator<Token> {
         CRITICAL_MESSAGES.put(
                 hasCurrent() && !currentOrThrow().type.equals(TokenType.NEWLINE)
                         ? MessageBuilder.err(text, currentOrThrow(), err)
-                        : MessageBuilder.errAfter(text, peekPrevOrThrow(), err)
+                        : MessageBuilder.errAfter(text, prevOrThrow(), err)
         );
         return this;
     }
@@ -226,13 +226,13 @@ public class ParseContext implements QueueIterator<Token> {
     }
 
     public @NotNull Token cursor() {
-        return hasCurrent() ? currentOrThrow() : peekPrevOrThrow();
+        return hasCurrent() ? currentOrThrow() : prevOrThrow();
     }
 
     public @NotNull Token nonNewLineCursorOrPrev() {
         if (isNewLineSkipped) return peekOrThrow(-2);
 
-        return hasNonNewLineCurrent() ? currentOrThrow() : peekPrevOrThrow();
+        return hasNonNewLineCurrent() ? currentOrThrow() : prevOrThrow();
     }
 
     public @Nullable Token peek(int step) {
@@ -245,13 +245,6 @@ public class ParseContext implements QueueIterator<Token> {
 
     public boolean peek(int step, @NotNull Function<Token, Boolean> peeker) {
         return index + step < tokens.size() && peeker.apply(tokens.get(index + step));
-    }
-
-    public @NotNull Token peekPrevOrThrow() {
-        if (index == 0)
-            throw new RuntimeException("has no prev token");
-
-        return tokens.get(index - 1);
     }
 
     public @NotNull ParseContext startTransaction() {
