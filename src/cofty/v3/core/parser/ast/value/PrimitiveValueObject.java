@@ -26,7 +26,7 @@ public class PrimitiveValueObject implements AstObject {
                 NodeModifier.builder()
                         .general()
                         .preview()
-                        .tokenAction(this::setValue)
+                        .tokenConsumer(this::setValue)
                         .build()
         );
     }

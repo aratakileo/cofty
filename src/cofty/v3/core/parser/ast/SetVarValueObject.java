@@ -11,7 +11,7 @@ import cofty.v3.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SetVarObject implements AstObject {
+public class SetVarValueObject implements AstObject {
     private Token name = null;
 
     private final ValueExpressionObject value = new ValueExpressionObject();
@@ -32,7 +32,7 @@ public class SetVarObject implements AstObject {
     public @NotNull ParserNode parserNode() {
         var node = (TokenNode)null;
 
-        (node = ParserNode.token(TokenType.ID, NodeModifier.builder().general().tokenAction(this::setName).build()))
+        (node = ParserNode.token(TokenType.ID, NodeModifier.builder().general().tokenConsumer(this::setName).build()))
                 .thenToken(Operator.ASSIGN, NodeModifier.previewAndGeneral())
                 .then(
                         value.parserNode(),
@@ -46,7 +46,7 @@ public class SetVarObject implements AstObject {
 
     @Override
     public String toString() {
-        return "SetVarObject{" +
+        return "SetVarValueObject{" +
                 "name=" + Representable.repr(name) +
                 ", value=" + value +
                 '}';

@@ -132,7 +132,7 @@ public class RepeatableQueueNode extends EmptyNode {
             context.rollbackIndex();
 
         if (result && modifier.is(ModifierType.ACTION) && !topLevelModifier.is(ModifierType.PREVIEW))
-            modifier.actionOrThrow().apply(astObjects.stream().toList());
+            modifier.actionOrThrow().consume(astObjects.stream().toList());
 
         return result;
     }

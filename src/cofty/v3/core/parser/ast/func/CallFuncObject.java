@@ -43,9 +43,9 @@ public class CallFuncObject implements AstObject {
     public @NotNull ParserNode parserNode() {
         var node = (TokenNode)null;
 
-        (node = ParserNode.token(TokenType.ID, NodeModifier.builder().general().tokenAction(this::setName).build()))
+        (node = ParserNode.token(TokenType.ID, NodeModifier.builder().general().tokenConsumer(this::setName).build()))
                 .thenToken(Brackets.ROUND_LEFT, NodeModifier.previewAndGeneral())
-                .thenRepeatableQueueBuilder(NodeModifier.builder().peek().astObjectsAction(this::setArgs).build())
+                .thenRepeatableQueueBuilder(NodeModifier.builder().peek().astObjectsConsumer(this::setArgs).build())
                     .setSeparator(ParserNode.token(
                             Separator.COMMA,
                             NodeModifier.builder().syntaxFail("expected a comma separator").preview().build()

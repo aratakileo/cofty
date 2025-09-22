@@ -57,7 +57,7 @@ public class TokenNode extends EmptyNode {
         );
 
         if (proceeded && modifier.is(ModifierType.ACTION) && !topLevelModifier.is(ModifierType.PREVIEW))
-            modifier.actionOrThrow().apply(context.prevOrThrow());
+            modifier.actionOrThrow().consume(context.prevOrThrow());
 
         return proceeded;
     }

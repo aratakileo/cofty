@@ -6,16 +6,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public interface ModifierAction {
-    default void apply(@NotNull Token token) {
+public interface ModifierConsumer {
+    default void consume(@NotNull Token token) {
         throw new RuntimeException("unacceptable type of consumption");
     }
 
-    default void apply(@NotNull AstObject astObject) {
+    default void consume(@NotNull AstObject astObject) {
         throw new RuntimeException("unacceptable type of consumption");
     }
 
-    default void apply(@NotNull List<AstObject> astObjects) {
+    default void consume(@NotNull List<AstObject> astObjects) {
         throw new RuntimeException("unacceptable type of consumption");
     }
 }

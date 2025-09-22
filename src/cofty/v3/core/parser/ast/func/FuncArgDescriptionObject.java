@@ -1,6 +1,7 @@
-package cofty.v3.core.parser.ast;
+package cofty.v3.core.parser.ast.func;
 
 import cofty.core.lexer.token.*;
+import cofty.v3.core.parser.ast.AstObject;
 import cofty.v3.core.parser.ast.value.ValueExpressionObject;
 import cofty.v3.core.parser.node.ParserNode;
 import cofty.v3.core.parser.node.TokenNode;
@@ -8,7 +9,7 @@ import cofty.v3.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class InitVarObject implements AstObject {
+public class FuncArgDescriptionObject implements AstObject {
     private Token name = null, mutable = null, explicitlySpecifiedType = null;
 
     private final ValueExpressionObject value = new ValueExpressionObject();
@@ -45,30 +46,28 @@ public class InitVarObject implements AstObject {
     public @NotNull ParserNode parserNode() {
         var node = (TokenNode)null;
 
-        (node = ParserNode.token(
-                Keyword.LET,
-                NodeModifier.previewAndGeneral())
-        ).thenToken(Keyword.MUT, NodeModifier.builder().peek().tokenAction(this::setMutable).build())
+        (node = ParserNode.token(Keyword.MUT, NodeModifier.builder().peek().tokenConsumer(this::setMutable).build()))
                 .thenToken(
                         TokenType.ID,
                         NodeModifier.builder()
-                                .syntaxFail("expected a variable name")
-                                .tokenAction(this::setName)
+                                .syntaxFail("expected an argument name")
+                                .preview()
+                                .tokenConsumer(this::setName)
                                 .build()
                 ).thenToken(Separator.COLON, NodeModifier.peek())
                 .thenToken(
                         TokenType.ID,
                         NodeModifier.builder()
                                 .depended()
-                                .syntaxFail("expected a variable value type")
-                                .tokenAction(this::setExplicitlySpecifiedType)
+                                .syntaxFail("expected an argument value type")
+                                .tokenConsumer(this::setExplicitlySpecifiedType)
                                 .build()
                 ).thenToken(Operator.ASSIGN, NodeModifier.peek())
                 .then(
                         value.parserNode(),
                         NodeModifier.builder()
                                 .depended()
-                                .syntaxFail("expected a variable value")
+                                .syntaxFail("expected an argument value")
                                 .build()
                 );
 
@@ -77,7 +76,7 @@ public class InitVarObject implements AstObject {
 
     @Override
     public String toString() {
-        return "InitVarObject{" +
+        return "FuncArgDescriptionObject{" +
                 "name=" + name +
                 ", mutable=" + mutable +
                 ", explicitlySpecifiedType=" + explicitlySpecifiedType +

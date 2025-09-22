@@ -17,16 +17,16 @@ public final class NodeModifier {
     private final HashSet<@NotNull ModifierType> types;
     
     public final Exception failMessage;
-    public final ModifierAction action;
+    public final ModifierConsumer modifierConsumer;
 
     private NodeModifier(
             @NotNull HashSet<@NotNull ModifierType> types, 
             @Nullable Exception failMessage, 
-            @Nullable ModifierAction action
+            @Nullable ModifierConsumer modifierConsumer
     ) {
         this.types = new HashSet<>(types);
         this.failMessage = failMessage;
-        this.action = action;
+        this.modifierConsumer = modifierConsumer;
     }
     
     public boolean is(@NotNull ModifierType type) {
@@ -53,8 +53,8 @@ public final class NodeModifier {
         return Objects.requireNonNull(failMessage);
     }
 
-    public @NotNull ModifierAction actionOrThrow() {
-        return Objects.requireNonNull(action);
+    public @NotNull ModifierConsumer actionOrThrow() {
+        return Objects.requireNonNull(modifierConsumer);
     }
 
     public static @NotNull NodeModifier fail(@NotNull Exception message) {
@@ -105,14 +105,14 @@ public final class NodeModifier {
                 getClass().getSimpleName(),
                 Representable.repr(types),
                 Representable.repr(failMessage),
-                Representable.repr(action)
+                Representable.repr(modifierConsumer)
         );
     }
 
     public static class Builder {
         private final HashSet<@NotNull ModifierType> types = new HashSet<>();
         private Exception failMessage = null;
-        private ModifierAction action = null;
+        private ModifierConsumer modifierConsumer = null;
 
         public Builder() {}
         
@@ -163,28 +163,28 @@ public final class NodeModifier {
             return this;
         }
 
-        public @NotNull Builder tokenAction(@NotNull Consumer<Token> action) {
-            return action(new ModifierAction() {
+        public @NotNull Builder tokenConsumer(@NotNull Consumer<Token> action) {
+            return action(new ModifierConsumer() {
                 @Override
-                public void apply(@NotNull Token token) {
+                public void consume(@NotNull Token token) {
                     action.accept(token);
                 }
             });
         }
 
-        public @NotNull Builder astObjectAction(@NotNull Consumer<AstObject> action) {
-            return action(new ModifierAction() {
+        public @NotNull Builder astObjectConsumer(@NotNull Consumer<AstObject> action) {
+            return action(new ModifierConsumer() {
                 @Override
-                public void apply(@NotNull AstObject astObject) {
+                public void consume(@NotNull AstObject astObject) {
                     action.accept(astObject);
                 }
             });
         }
 
-        public @NotNull Builder astObjectsAction(@NotNull Consumer<List<AstObject>> action) {
-            return action(new ModifierAction() {
+        public @NotNull Builder astObjectsConsumer(@NotNull Consumer<List<AstObject>> action) {
+            return action(new ModifierConsumer() {
                 @Override
-                public void apply(@NotNull List<AstObject> astObjects) {
+                public void consume(@NotNull List<AstObject> astObjects) {
                     action.accept(astObjects);
                 }
             });
@@ -197,7 +197,7 @@ public final class NodeModifier {
             types.remove(type);
 
             if (type == ModifierType.ACTION)
-                action = null;
+                modifierConsumer = null;
 
             if (type == ModifierType.FAIL)
                 failMessage = null;
@@ -221,15 +221,15 @@ public final class NodeModifier {
             if (types.contains(ModifierType.PEEK) && types.contains(ModifierType.PREVIEW))
                 throw new IllegalStateException();
 
-            return new NodeModifier(types, failMessage, action);
+            return new NodeModifier(types, failMessage, modifierConsumer);
         }
 
-        private @NotNull Builder action(@NotNull ModifierAction action) {
-            if (this.action != null)
+        private @NotNull Builder action(@NotNull ModifierConsumer action) {
+            if (this.modifierConsumer != null)
                 throw new IllegalStateException();
 
             types.add(ModifierType.ACTION);
-            this.action = action;
+            this.modifierConsumer = action;
 
             return this;
         }
@@ -246,7 +246,7 @@ public final class NodeModifier {
         public static @NotNull Builder of(@NotNull NodeModifier nodeModifier) {
             final var builder = new Builder();
             builder.types.addAll(nodeModifier.types);
-            builder.action = nodeModifier.action;
+            builder.modifierConsumer = nodeModifier.modifierConsumer;
             builder.failMessage = nodeModifier.failMessage;
 
             return builder;

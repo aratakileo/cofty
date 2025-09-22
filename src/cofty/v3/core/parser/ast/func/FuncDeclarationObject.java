@@ -14,10 +14,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class InitFuncObject implements AstObject {
+public class FuncDeclarationObject implements AstObject {
     private Token name = null, returnableValueType = null;
 
-    private List<@NotNull FuncArgDescrObject> args = null;
+    private List<@NotNull FuncArgDescriptionObject> args = null;
 
     private final BodyObject body = new BodyObject(false);
 
@@ -31,7 +31,7 @@ public class InitFuncObject implements AstObject {
 
     private void setArgs(@NotNull List<AstObject> args) {
         for (final var arg: args)
-            if (!(arg instanceof FuncArgDescrObject)) throw new IllegalStateException();
+            if (!(arg instanceof FuncArgDescriptionObject)) throw new IllegalStateException();
 
         this.args = Cast.unsafe(args);
     }
@@ -44,7 +44,7 @@ public class InitFuncObject implements AstObject {
         return returnableValueType;
     }
 
-    public @Nullable List<@NotNull FuncArgDescrObject> args() {
+    public @Nullable List<@NotNull FuncArgDescriptionObject> args() {
         return args;
     }
 
@@ -61,7 +61,7 @@ public class InitFuncObject implements AstObject {
                         TokenType.ID,
                         NodeModifier.builder()
                                 .syntaxFail("expected a function name")
-                                .tokenAction(this::setName)
+                                .tokenConsumer(this::setName)
                                 .build()
                 ).thenToken(
                         Brackets.ROUND_LEFT,
@@ -69,7 +69,7 @@ public class InitFuncObject implements AstObject {
                 )
                 .thenRepeatableQueueBuilder(
                         NodeModifier.builder()
-                                .astObjectsAction(this::setArgs)
+                                .astObjectsConsumer(this::setArgs)
                                 .syntaxFail("invalid syntax")
                                 .build()
                 ).setSeparator(ParserNode.token(
@@ -77,7 +77,7 @@ public class InitFuncObject implements AstObject {
                         NodeModifier.builder().syntaxFail("expected a comma separator").preview().build()
                 )).makeSeparatorOnlyOneAtTime(new SyntaxError("duplicate comma"))
                 .setStopper(ParserNode.token(Brackets.ROUND_RIGHT, NodeModifier.previewAndGeneral()))
-                    .add(FuncArgDescrObject::new)
+                    .add(FuncArgDescriptionObject::new)
                     .build()
                 .thenToken(Brackets.ROUND_RIGHT, NodeModifier.syntaxFail("expected an end of function arguments description"))
                 .thenToken(Separator.ARROW, NodeModifier.peek())
@@ -86,7 +86,7 @@ public class InitFuncObject implements AstObject {
                         NodeModifier.builder()
                                 .depended()
                                 .syntaxFail("expected a function returnable type")
-                                .tokenAction(this::setReturnableValueType)
+                                .tokenConsumer(this::setReturnableValueType)
                                 .build()
                 ).thenToken(Brackets.CURVE_LEFT, NodeModifier.syntaxFail("expected a function body"))
                 .then(body.parserNode())
@@ -97,7 +97,7 @@ public class InitFuncObject implements AstObject {
 
     @Override
     public String toString() {
-        return "InitFuncObject{" +
+        return "FuncDeclarationObject{" +
                 "name=" + Representable.repr(name) +
                 ", returnableValueType=" + returnableValueType +
                 ", args=" + Representable.repr(args) +
