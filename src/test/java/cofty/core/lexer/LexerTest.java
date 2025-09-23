@@ -12,42 +12,42 @@ class LexerTest {
         final var lexer = lexerOfText("1 2. s_3 let = . ( \n");
         final var tokens = lexer.parse();
 
-        Assertions.assertEquals(tokens.size(), 8);
+        Assertions.assertEquals(8, tokens.size());
     }
 
     @Test
     void isIntegerParsedValid() {
-        Assertions.assertEquals(firstToken("_1_4").type, TokenType.INT);
+        Assertions.assertEquals(TokenType.INT, firstToken("_1_4").type);
     }
 
     @Test
     void isDoubleParsedValid() {
-        Assertions.assertEquals(firstToken("1.").type, TokenType.DOUBLE);
+        Assertions.assertEquals(TokenType.DOUBLE, firstToken("1.").type);
     }
 
     @Test
     void isIdParsedValid() {
-        Assertions.assertEquals(firstToken("s_3").type, TokenType.ID);
+        Assertions.assertEquals(TokenType.ID, firstToken("s_3").type);
     }
 
     @Test
     void isKeywordParsedValid() {
-        Assertions.assertEquals(firstToken("fn").type, Keyword.FN);
+        Assertions.assertEquals(Keyword.FN, firstToken("fn").type);
     }
 
     @Test
     void isOperatorParsedValid() {
-        Assertions.assertEquals(firstToken("=").type, Operator.ASSIGN);
+        Assertions.assertEquals(Operator.ASSIGN, firstToken("=").type);
     }
 
     @Test
     void isSeparatorParsedValid() {
-        Assertions.assertEquals(firstToken("->").type, Separator.ARROW);
+        Assertions.assertEquals(Separator.ARROW, firstToken("->").type);
     }
 
     @Test
     void isBracketParsedValid() {
-        Assertions.assertEquals(firstToken("}").type, Brackets.CURVE_RIGHT);
+        Assertions.assertEquals(Brackets.CURVE_RIGHT, firstToken("}").type);
     }
 
     @Test
@@ -55,8 +55,16 @@ class LexerTest {
         final var lexer = lexerOfText("  \n     \n  ");
         final var tokens = lexer.parse();
 
-        Assertions.assertEquals(tokens.size(), 1);
-        Assertions.assertEquals(tokens.get(0).type, TokenType.NEWLINE);
+        Assertions.assertEquals(
+                1,
+                tokens.size(),
+                "the result of two new lines and spaces should be one new line token");
+
+        Assertions.assertEquals(
+                TokenType.NEWLINE,
+                tokens.get(0).type,
+                "the resulted token type should be " + TokenType.NEWLINE.toReprString()
+        );
     }
 
     private Lexer lexerOfText(String text) {

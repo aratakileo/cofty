@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class FuncDeclarationObject implements AstObject {
-    private Token name = null, returnableValueType = null;
+    private Token name = null, returnableType = null;
 
     private List<@NotNull FuncArgDescriptionObject> args = null;
 
@@ -25,8 +25,8 @@ public class FuncDeclarationObject implements AstObject {
         this.name = name;
     }
 
-    private void setReturnableValueType(@NotNull Token returnableValueType) {
-        this.returnableValueType = returnableValueType;
+    private void setReturnableType(@NotNull Token returnableType) {
+        this.returnableType = returnableType;
     }
 
     private void setArgs(@NotNull List<AstObject> args) {
@@ -40,8 +40,8 @@ public class FuncDeclarationObject implements AstObject {
         return name;
     }
 
-    public @Nullable Token returnableValueType() {
-        return returnableValueType;
+    public @Nullable Token returnableType() {
+        return returnableType;
     }
 
     public @Nullable List<@NotNull FuncArgDescriptionObject> args() {
@@ -86,7 +86,7 @@ public class FuncDeclarationObject implements AstObject {
                         NodeModifier.builder()
                                 .depended()
                                 .syntaxFail("expected a function returnable type")
-                                .tokenConsumer(this::setReturnableValueType)
+                                .tokenConsumer(this::setReturnableType)
                                 .build()
                 ).thenToken(Brackets.CURVE_LEFT, NodeModifier.syntaxFail("expected a function body"))
                 .then(body.parserNode())
@@ -99,7 +99,7 @@ public class FuncDeclarationObject implements AstObject {
     public String toString() {
         return "FuncDeclarationObject{" +
                 "name=" + Representable.repr(name) +
-                ", returnableValueType=" + returnableValueType +
+                ", returnableType=" + returnableType +
                 ", args=" + Representable.repr(args) +
                 ", body=" + body +
                 '}';

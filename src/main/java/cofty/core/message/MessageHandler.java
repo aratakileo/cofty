@@ -11,6 +11,10 @@ public class MessageHandler {
         return CRITICAL.count() != 0;
     }
 
+    public int count() {
+        return CRITICAL.count() + NON_CRITICAL.count();
+    }
+
     public void print() {
         CRITICAL.print();
         NON_CRITICAL.print();

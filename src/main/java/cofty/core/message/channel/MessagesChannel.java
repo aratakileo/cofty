@@ -5,6 +5,7 @@ import cofty.core.message.MessageType;
 import cofty.core.parser.ParseContext;
 import cofty.type.TextContent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -38,5 +39,9 @@ public class MessagesChannel {
 
     public @NotNull ParserMessagesChannel associate(@NotNull ParseContext context) {
         return new ParserMessagesChannel(context, this);
+    }
+
+    public @Nullable Message get(int index) {
+        return messages.get(index);
     }
 }

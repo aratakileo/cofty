@@ -12,14 +12,15 @@ public class ContainerNode extends EmptyNode {
     public ContainerNode(@NotNull ParserNode node, @NotNull NodeModifier modifier) {
         super(modifier);
         this.node = node;
+
+        if (modifier.is(ModifierType.ACTION)) throw new IllegalStateException();
     }
 
     @Override
     public boolean proceed(@NotNull ParseContext context, @NotNull NodeModifier topLevelModifier) {
         final var isNodeProceeded = node.proceedQueue(context, NodeModifier.prioritize(topLevelModifier, modifier));
 
-        if (topLevelModifier.is(ModifierType.PREVIEW, ModifierType.PEEK)) return isNodeProceeded;
-        if (modifier.is(ModifierType.ACTION)) throw new IllegalStateException();
+        if (isNodeProceeded) return true;
         if (modifier.is(ModifierType.FAIL)) context.CRITICAL_MESSAGES.putErr(modifier.failMessageOrThrow());
 
         return false;

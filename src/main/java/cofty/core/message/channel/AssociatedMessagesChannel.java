@@ -6,6 +6,7 @@ import cofty.core.message.MessageBuilder;
 import cofty.core.message.MessageType;
 import cofty.type.TextContent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class AssociatedMessagesChannel {
     public final TextContent text;
@@ -66,5 +67,9 @@ public class AssociatedMessagesChannel {
         channel.put(
                 new MessageBuilder(messageType, text).setContent(msg).fillCursor(cursorStart, cursorEnd).build()
         );
+    }
+
+    public @Nullable Message get(int index) {
+        return channel.get(index);
     }
 }
