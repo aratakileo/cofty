@@ -1,5 +1,6 @@
 package cofty.v3.core.parser.ast.value;
 
+import cofty.core.lexer.token.Keyword;
 import cofty.core.lexer.token.Token;
 import cofty.core.lexer.token.TokenType;
 import cofty.v3.core.parser.ast.AstObject;
@@ -7,6 +8,8 @@ import cofty.v3.core.parser.node.ParserNode;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.stream.Stream;
 
 public class PrimitiveValueObject implements AstObject {
     private Token value = null;
@@ -21,14 +24,25 @@ public class PrimitiveValueObject implements AstObject {
 
     @Override
     public @NotNull ParserNode parserNode() {
-        return ParserNode.token(
+        final var nodes = Stream.of(
                 TokenType.INT,
-                NodeModifier.builder()
-                        .general()
-                        .preview()
-                        .tokenConsumer(this::setValue)
-                        .build()
-        );
+                TokenType.ID,
+                TokenType.DOUBLE,
+                TokenType.STR,
+                Keyword.TRUE,
+                Keyword.FALSE
+        ).map(
+                type -> ParserNode.token(
+                        type,
+                        NodeModifier.builder()
+                                .general()
+                                .preview()
+                                .tokenConsumer(this::setValue)
+                                .build()
+                )
+        ).toList();
+
+        return ParserNode.anyOf(NodeModifier.previewAndGeneral(), nodes);
     }
 
     @Override

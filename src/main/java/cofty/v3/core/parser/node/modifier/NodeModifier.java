@@ -90,8 +90,8 @@ public final class NodeModifier {
             @NotNull NodeModifier currentLevelModifier
     ) {
         if (
-                !topLevelModifier.isAny(ModifierType.GENERAL, ModifierType.PREVIEW)
-                        || currentLevelModifier.isAny(ModifierType.ACTION)
+                !topLevelModifier.is(ModifierType.GENERAL)
+                        || currentLevelModifier.isAny(ModifierType.ACTION, ModifierType.PREVIEW)
         )
             return topLevelModifier;
 

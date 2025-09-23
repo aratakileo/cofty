@@ -7,6 +7,8 @@ public enum Keyword implements ITokenType, Representable {
     LET,
     MUT,
     FN,
+    TRUE,
+    FALSE,
     RETURN;
 
     @Override

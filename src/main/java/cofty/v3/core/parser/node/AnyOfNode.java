@@ -1,0 +1,41 @@
+package cofty.v3.core.parser.node;
+
+import cofty.core.parser.ParseContext;
+import cofty.type.Representable;
+import cofty.v3.core.parser.node.modifier.ModifierType;
+import cofty.v3.core.parser.node.modifier.NodeModifier;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+
+public class AnyOfNode extends EmptyNode {
+    private final List<ParserNode> nodes;
+
+    public AnyOfNode(@NotNull List<ParserNode> nodes, @NotNull NodeModifier modifier) {
+        super(modifier);
+        this.nodes = nodes;
+
+        if (modifier.is(ModifierType.ACTION)) throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean proceed(@NotNull ParseContext context, @NotNull NodeModifier topLevelModifier) {
+        for (final var node: nodes) {
+            if (!node.previewQueue(context)) continue;
+            if (node.proceedQueue(context, NodeModifier.prioritize(topLevelModifier, modifier))) return true;
+        }
+
+        if (modifier.is(ModifierType.FAIL)) context.CRITICAL_MESSAGES.putErr(modifier.failMessageOrThrow());
+        return false;
+    }
+
+    @Override
+    public @NotNull String toReprString() {
+        return String.format(
+                "%s.anyOf(%s, %s)",
+                ParserNode.class.getSimpleName(),
+                Representable.repr(nodes),
+                Representable.repr(modifier)
+        );
+    }
+}

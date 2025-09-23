@@ -9,6 +9,7 @@ import java.util.regex.MatchResult;
 public enum TokenType implements Representable, ITokenType {
     DOUBLE,
     INT,
+    STR,
     OP,
     ID,
     KW,

@@ -9,10 +9,10 @@ import org.junit.jupiter.api.Test;
 class LexerTest {
     @Test
     void allValidTokensParse() {
-        final var lexer = lexerOfText("1 2. s_3 let = . ( \n");
+        final var lexer = lexerOfText("1 2. s_3 let = . ( \n 'Hello world!\\n'");
         final var tokens = lexer.parse();
 
-        Assertions.assertEquals(8, tokens.size());
+        Assertions.assertEquals(9, tokens.size());
     }
 
     @Test
@@ -23,6 +23,11 @@ class LexerTest {
     @Test
     void isDoubleParsedValid() {
         Assertions.assertEquals(TokenType.DOUBLE, firstToken("1.").type);
+    }
+
+    @Test
+    void isStrParsedValid() {
+        Assertions.assertEquals(TokenType.STR, firstToken("'Hello world!\\n'").type);
     }
 
     @Test
