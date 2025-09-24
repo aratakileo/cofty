@@ -22,6 +22,7 @@ public class AnyOfNode extends EmptyNode {
     public boolean proceed(@NotNull ParseContext context, @NotNull NodeModifier topLevelModifier) {
         for (final var node: nodes) {
             if (!node.previewQueue(context)) continue;
+            if (topLevelModifier.is(ModifierType.PREVIEW)) return true;
             if (node.proceedQueue(context, NodeModifier.prioritize(topLevelModifier, modifier))) return true;
         }
 

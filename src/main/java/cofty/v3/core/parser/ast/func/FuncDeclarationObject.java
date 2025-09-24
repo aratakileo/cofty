@@ -6,6 +6,7 @@ import cofty.type.exception.SyntaxError;
 import cofty.util.Cast;
 import cofty.v3.core.parser.ast.AstObject;
 import cofty.v3.core.parser.ast.BodyObject;
+import cofty.v3.core.parser.ast.VarDeclarationObject;
 import cofty.v3.core.parser.node.ParserNode;
 import cofty.v3.core.parser.node.TokenNode;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
@@ -17,7 +18,7 @@ import java.util.List;
 public class FuncDeclarationObject implements AstObject {
     private Token name = null, returnableType = null;
 
-    private List<@NotNull FuncArgDescriptionObject> args = null;
+    private List<@NotNull VarDeclarationObject> args = null;
 
     private final BodyObject body = new BodyObject(false);
 
@@ -31,7 +32,7 @@ public class FuncDeclarationObject implements AstObject {
 
     private void setArgs(@NotNull List<AstObject> args) {
         for (final var arg: args)
-            if (!(arg instanceof FuncArgDescriptionObject)) throw new IllegalStateException();
+            if (!(arg instanceof VarDeclarationObject)) throw new IllegalStateException();
 
         this.args = Cast.unsafe(args);
     }
@@ -44,7 +45,7 @@ public class FuncDeclarationObject implements AstObject {
         return returnableType;
     }
 
-    public @Nullable List<@NotNull FuncArgDescriptionObject> args() {
+    public @Nullable List<@NotNull VarDeclarationObject> args() {
         return args;
     }
 
@@ -77,10 +78,12 @@ public class FuncDeclarationObject implements AstObject {
                         NodeModifier.builder().syntaxFail("expected a comma separator").preview().build()
                 )).makeSeparatorOnlyOneAtTime(new SyntaxError("duplicate comma"))
                 .setStopper(ParserNode.token(Brackets.ROUND_RIGHT, NodeModifier.previewAndGeneral()))
-                    .add(FuncArgDescriptionObject::new)
+                    .add(() -> new VarDeclarationObject(true))
                     .build()
-                .thenToken(Brackets.ROUND_RIGHT, NodeModifier.syntaxFail("expected an end of function arguments description"))
-                .thenToken(Separator.ARROW, NodeModifier.peek())
+                .thenToken(
+                        Brackets.ROUND_RIGHT,
+                        NodeModifier.syntaxFail("expected an end of function arguments description")
+                ).thenToken(Separator.ARROW, NodeModifier.peek())
                 .thenToken(
                         TokenType.ID,
                         NodeModifier.builder()

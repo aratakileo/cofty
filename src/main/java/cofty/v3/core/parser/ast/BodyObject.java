@@ -45,7 +45,7 @@ public class BodyObject implements AstObject {
                         .preview()
                         .build()
         )).add(
-                VarDeclarationObject::new,
+                () -> new VarDeclarationObject(false),
                 SetVarValueObject::new,
                 FuncDeclarationObject::new,
                 CallFuncObject::new,
