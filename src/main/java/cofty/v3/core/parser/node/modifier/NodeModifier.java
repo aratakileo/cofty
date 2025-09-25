@@ -218,9 +218,6 @@ public final class NodeModifier {
             if (!hasAtLeastOneBasicType())
                 throw new IllegalStateException();
 
-            if (types.contains(ModifierType.PEEK) && types.contains(ModifierType.PREVIEW))
-                throw new IllegalStateException();
-
             return new NodeModifier(types, failMessage, modifierConsumer);
         }
 

@@ -1,0 +1,50 @@
+package cofty.v3.core.parser.ast;
+
+import cofty.core.lexer.token.Modifier;
+import cofty.core.lexer.token.Token;
+import cofty.type.Representable;
+import cofty.v3.core.parser.node.ParserNode;
+import cofty.v3.core.parser.node.modifier.NodeModifier;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
+
+public class ModifiersObject implements AstObject {
+    private final ArrayList<@NotNull Token> modifiers = new ArrayList<>();
+
+    private void addModifier(@NotNull Token modifier) {
+        modifiers.add(modifier);
+    }
+
+    public @NotNull List<@NotNull Token> modifiers() {
+        return modifiers.stream().toList();
+    }
+
+    @Override
+    public @NotNull ParserNode parserNode() {
+        final var nodes = Stream.of(
+                Modifier.PUB,
+                Modifier.PRIV
+        ).map(
+                type -> ParserNode.token(
+                        type,
+                        NodeModifier.builder()
+                                .general()
+                                .preview()
+                                .tokenConsumer(this::addModifier)
+                                .build()
+                )
+        ).toList();
+
+        return ParserNode.repeatableAnyOf(NodeModifier.builder().preview().peek().build(), nodes);
+    }
+
+    @Override
+    public String toString() {
+        return "ModifiersObject{" +
+                "modifiers=" + Representable.repr(modifiers) +
+                '}';
+    }
+}

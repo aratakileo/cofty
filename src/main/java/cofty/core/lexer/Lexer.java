@@ -1,5 +1,7 @@
 package cofty.core.lexer;
 
+import cofty.core.lexer.token.Keyword;
+import cofty.core.lexer.token.Modifier;
 import cofty.core.message.MessageBuilder;
 import cofty.core.message.MessageHandler;
 import cofty.core.lexer.token.Token;
@@ -9,6 +11,7 @@ import cofty.type.exception.SyntaxError;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -62,11 +65,21 @@ public class Lexer {
     static {
         var patternTexts = new ArrayList<String>();
 
+        final var keywordsRegex = String.join(
+                "|",
+                Arrays.stream(Keyword.values()).map(val -> val.name().toLowerCase()).toList()
+        );
+
+        final var modifiersRegex = String.join(
+                "|",
+                Arrays.stream(Modifier.values()).map(val -> val.name().toLowerCase()).toList()
+        );
+
         final var patterns = new LinkedHashMap<TokenType, String>();
         patterns.put(TokenType.STR, "'(?:\\\\.|[^'])*'|\"(?:\\\\.|[^\"])*\"");
         patterns.put(TokenType.DOUBLE, "_*\\d+[\\d_]*(?:\\.[\\d_]*|[dD])");
         patterns.put(TokenType.INT, "_*\\d+[\\d_]*");
-        patterns.put(TokenType.KW, "let|mut|fn|return|true|false");
+        patterns.put(TokenType.KW, keywordsRegex + '|' + modifiersRegex);
         patterns.put(TokenType.ID, "(?!_*\\d+)[A-Za-z\\d_]+");
         patterns.put(TokenType.OP, "=");
         patterns.put(TokenType.SEP, ":|\\.|,|->");

@@ -6,6 +6,7 @@ import cofty.type.exception.SyntaxError;
 import cofty.util.Cast;
 import cofty.v3.core.parser.ast.AstObject;
 import cofty.v3.core.parser.ast.BodyObject;
+import cofty.v3.core.parser.ast.ModifiersObject;
 import cofty.v3.core.parser.ast.VarDeclarationObject;
 import cofty.v3.core.parser.node.ParserNode;
 import cofty.v3.core.parser.node.TokenNode;
@@ -17,9 +18,9 @@ import java.util.List;
 
 public class FuncDeclarationObject implements AstObject {
     private Token name = null, returnableType = null;
-
     private List<@NotNull VarDeclarationObject> args = null;
 
+    private final ModifiersObject modifiers = new ModifiersObject();
     private final BodyObject body = new BodyObject(false);
 
     private void setName(@NotNull Token name) {
@@ -41,6 +42,10 @@ public class FuncDeclarationObject implements AstObject {
         return name;
     }
 
+    public @NotNull ModifiersObject modifiers() {
+        return modifiers;
+    }
+
     public @Nullable Token returnableType() {
         return returnableType;
     }
@@ -55,9 +60,10 @@ public class FuncDeclarationObject implements AstObject {
 
     @Override
     public @NotNull ParserNode parserNode() {
-        var node = (TokenNode)null;
+        var node = (ParserNode) null;
 
-        (node = ParserNode.token(Keyword.FN, NodeModifier.previewAndGeneral()))
+        (node = modifiers.parserNode())
+                .thenToken(Keyword.FN, NodeModifier.previewAndGeneral())
                 .thenToken(
                         TokenType.ID,
                         NodeModifier.builder()
@@ -73,11 +79,12 @@ public class FuncDeclarationObject implements AstObject {
                                 .astObjectsConsumer(this::setArgs)
                                 .syntaxFail("invalid syntax")
                                 .build()
-                ).setSeparator(ParserNode.token(
-                        Separator.COMMA,
-                        NodeModifier.builder().syntaxFail("expected a comma separator").preview().build()
-                )).makeSeparatorOnlyOneAtTime(new SyntaxError("duplicate comma"))
-                .setStopper(ParserNode.token(Brackets.ROUND_RIGHT, NodeModifier.previewAndGeneral()))
+                )
+                    .setSeparator(ParserNode.token(
+                            Separator.COMMA,
+                            NodeModifier.builder().syntaxFail("expected a comma separator").preview().build()
+                    )).makeSeparatorOnlyOneAtTime(new SyntaxError("duplicate comma"))
+                    .setStopper(ParserNode.token(Brackets.ROUND_RIGHT, NodeModifier.previewAndGeneral()))
                     .add(() -> new VarDeclarationObject(true))
                     .build()
                 .thenToken(
@@ -102,6 +109,7 @@ public class FuncDeclarationObject implements AstObject {
     public String toString() {
         return "FuncDeclarationObject{" +
                 "name=" + Representable.repr(name) +
+                ", modifiers=" + modifiers +
                 ", returnableType=" + returnableType +
                 ", args=" + Representable.repr(args) +
                 ", body=" + body +
