@@ -12,10 +12,12 @@ public class VarDeclarationObject implements AstObject {
 
     private Token name = null, mutable = null, explicitlySpecifiedType = null;
 
+    private final ModifiersObject modifiers;
     private final ValueExpressionObject value = new ValueExpressionObject();
 
     public VarDeclarationObject(boolean isFunctionArgument) {
         this.isFunctionArgument = isFunctionArgument;
+        this.modifiers = isFunctionArgument ? null : new ModifiersObject();
     }
 
     private void setMutable(@NotNull Token mutable) {
@@ -30,20 +32,24 @@ public class VarDeclarationObject implements AstObject {
         this.explicitlySpecifiedType = explicitlySpecifiedType;
     }
 
-    public @Nullable Token mutable() {
-        return mutable;
-    }
-
     public @Nullable Token name() {
         return name;
     }
 
-    public @NotNull ValueExpressionObject value() {
-        return value;
+    public @Nullable Token mutable() {
+        return mutable;
     }
 
     public @Nullable Token explicitlySpecifiedType() {
         return explicitlySpecifiedType;
+    }
+
+    public @Nullable ModifiersObject modifiers() {
+        return modifiers;
+    }
+
+    public @NotNull ValueExpressionObject value() {
+        return value;
     }
 
     private @NotNull ParserNode typeDeclarationNode(@NotNull NodeModifier firstModifier) {
@@ -74,10 +80,7 @@ public class VarDeclarationObject implements AstObject {
                 NodeModifier.builder().peek().tokenConsumer(this::setMutable).build()
         );
 
-        final var node = isFunctionArgument ? mutNode : ParserNode.token(
-                Keyword.LET,
-                NodeModifier.previewAndGeneral()
-        ).and(mutNode);
+        final var node = isFunctionArgument ? mutNode : modifiers.parserNode();
 
         final var variableNameNodeModifierBuilder = NodeModifier.builder()
                 .syntaxFail("expected %s name".formatted(isFunctionArgument ? "an argument" : "a variable"))
@@ -85,8 +88,9 @@ public class VarDeclarationObject implements AstObject {
 
         if (isFunctionArgument)
             variableNameNodeModifierBuilder.preview();
+        else node.thenToken(Keyword.LET, NodeModifier.previewAndGeneral()).then(mutNode);
 
-        (isFunctionArgument ? node : node.nextOrThrow()).thenToken(
+        (isFunctionArgument ? node : node.nextOrThrow().nextOrThrow()).thenToken(
                 TokenType.ID,
                 variableNameNodeModifierBuilder.build()
         ).thenAnyOf(
@@ -104,6 +108,7 @@ public class VarDeclarationObject implements AstObject {
                 "name=" + name +
                 ", mutable=" + mutable +
                 ", explicitlySpecifiedType=" + explicitlySpecifiedType +
+                ", modifiers=" + modifiers +
                 ", value=" + value +
                 '}';
     }

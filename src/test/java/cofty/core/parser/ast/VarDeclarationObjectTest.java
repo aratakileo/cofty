@@ -9,12 +9,12 @@ import org.junit.jupiter.api.Test;
 class VarDeclarationObjectTest {
     @Test
     void validFullGeneral() {
-        final var context = Utils.parseContextOf("let mut num: int = _3_000_000");
+        final var context = Utils.parseContextOf("pub let mut num: int = _3_000_000");
         final var astObject = new VarDeclarationObject(false);
 
         Assertions.assertTrue(
                 astObject.parserNode().proceedQueue(context, NodeModifier.general()),
-                "`let num: int = _3_000_000` should be proceeded"
+                "`pub let num: int = _3_000_000` should be proceeded"
         );
 
         Assertions.assertEquals(
@@ -25,6 +25,14 @@ class VarDeclarationObjectTest {
 
         Assertions.assertNotNull(astObject.name(), "the proceeded variable name shouldn't be null");
         Assertions.assertNotNull(astObject.value(), "the proceeded variable value shouldn't be null");
+        Assertions.assertNotNull(astObject.value().value().value(), "the proceeded variable value shouldn't be null");
+        Assertions.assertNotNull(astObject.modifiers(), "the proceeded variable modifiers shouldn't be null");
+
+        Assertions.assertEquals(
+                1,
+                astObject.modifiers().modifiers().size(),
+                "there should be 1 modifier"
+        );
 
         Assertions.assertNotNull(
                 astObject.mutable(),
@@ -43,8 +51,6 @@ class VarDeclarationObjectTest {
                 astObject.explicitlySpecifiedType().content,
                 "the variable explicitly specified value type should be `int`"
         );
-
-        Assertions.assertNotNull(astObject.value().value().value(), "the variable value shouldn't be null");
 
         Assertions.assertEquals(
                 "_3_000_000",
@@ -71,6 +77,7 @@ class VarDeclarationObjectTest {
 
         Assertions.assertNotNull(astObject.name(), "the proceeded function argument name shouldn't be null");
         Assertions.assertNotNull(astObject.value(), "the proceeded function argument value shouldn't be null");
+        Assertions.assertNull(astObject.modifiers(), "the proceeded function argument modifiers should be null");
 
         Assertions.assertNotNull(
                 astObject.mutable(),
