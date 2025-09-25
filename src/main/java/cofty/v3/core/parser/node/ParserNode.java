@@ -61,6 +61,10 @@ public interface ParserNode {
         return then(ParserNode.anyOf(modifier, nodes));
     }
 
+    default @NotNull RepeatedAnyOf thenRepeatedAnyOf(@NotNull NodeModifier modifier, @NotNull ParserNode @NotNull... nodes) {
+        return then(ParserNode.repeatedAnyOf(modifier, nodes));
+    }
+
     default @NotNull RepeatableQueueNode.Builder thenRepeatableQueueBuilder(@NotNull NodeModifier modifier) {
         return new RepeatableQueueNode.Builder(modifier, this::then);
     }
@@ -95,10 +99,21 @@ public interface ParserNode {
         return new AnyOfNode(List.of(nodes), modifier);
     }
 
+    static @NotNull RepeatedAnyOf repeatedAnyOf(@NotNull NodeModifier modifier, @NotNull ParserNode @NotNull... nodes) {
+        return new RepeatedAnyOf(List.of(nodes), modifier);
+    }
+
     static <T extends ParserNode> @NotNull AnyOfNode anyOf(
             @NotNull NodeModifier modifier,
             @NotNull List<@NotNull T> nodes
     ) {
         return new AnyOfNode(Cast.unsafe(nodes), modifier);
+    }
+
+    static <T extends ParserNode> @NotNull RepeatedAnyOf repeatableAnyOf(
+            @NotNull NodeModifier modifier,
+            @NotNull List<@NotNull T> nodes
+    ) {
+        return new RepeatedAnyOf(Cast.unsafe(nodes), modifier);
     }
 }
