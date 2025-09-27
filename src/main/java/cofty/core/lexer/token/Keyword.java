@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 public enum Keyword implements ITokenType, Representable {
     LET,
     MUT,
+    CLS,
     FN,
     IF,
     ELIF,
