@@ -1,6 +1,7 @@
 package cofty.core.parser.ast;
 
 import cofty.Utils;
+import cofty.core.lexer.token.Brackets;
 import cofty.v3.core.parser.ast.BodyObject;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
 import org.junit.jupiter.api.Assertions;
@@ -8,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 class BodyObjectTest {
     @Test
-    void validRootBody() {
+    void validBody() {
         final var context = Utils.parseContextOf(
                         """
                         let num = 10
@@ -19,7 +20,7 @@ class BodyObjectTest {
                         """
         );
 
-        final var astObject = new BodyObject(true);
+        final var astObject = new BodyObject();
 
         Assertions.assertTrue(
                 astObject.parserNode().proceedQueue(context, NodeModifier.general()),
@@ -40,7 +41,7 @@ class BodyObjectTest {
     }
 
     @Test
-    void validNonRootBody() {
+    void validBodyWithStopper() {
         final var context = Utils.parseContextOf(
                         """
                         let num = 10
@@ -54,10 +55,10 @@ class BodyObjectTest {
                         """
         );
 
-        final var astObject = new BodyObject(false);
+        final var astObject = new BodyObject();
 
         Assertions.assertTrue(
-                astObject.parserNode().proceedQueue(context, NodeModifier.general()),
+                astObject.parserNode(Brackets.CURVE_CLOSE).proceedQueue(context, NodeModifier.general()),
                 "non-root body expressions should be proceeded"
         );
 
@@ -78,7 +79,7 @@ class BodyObjectTest {
     void twoExpressionsOnOneLineFail() {
         final var context = Utils.parseContextOf("let num = 10 fn test() -> nil {}");
 
-        final var astObject = new BodyObject(true);
+        final var astObject = new BodyObject();
 
         Assertions.assertFalse(
                 astObject.parserNode().proceedQueue(context, NodeModifier.general()),

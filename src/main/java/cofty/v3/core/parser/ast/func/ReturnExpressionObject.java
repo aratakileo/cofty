@@ -19,7 +19,7 @@ public class ReturnExpressionObject implements AstObject {
     public @NotNull ParserNode parserNode() {
         var node = (TokenNode)null;
 
-        (node = ParserNode.token(Keyword.RETURN, NodeModifier.previewAndGeneral()))
+        (node = ParserNode.token(Keyword.RETURN, NodeModifier.generalAndPreview()))
                 .then(
                         value.parserNode(),
                         NodeModifier.builder()

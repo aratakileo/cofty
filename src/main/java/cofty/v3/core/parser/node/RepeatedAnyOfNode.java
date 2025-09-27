@@ -8,10 +8,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class RepeatedAnyOf extends EmptyNode {
+public class RepeatedAnyOfNode extends EmptyNode {
     private final List<ParserNode> nodes;
 
-    public RepeatedAnyOf(@NotNull List<ParserNode> nodes, @NotNull NodeModifier modifier) {
+    public RepeatedAnyOfNode(@NotNull List<ParserNode> nodes, @NotNull NodeModifier modifier) {
         super(modifier);
         this.nodes = nodes;
 

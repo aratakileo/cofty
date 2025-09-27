@@ -42,7 +42,7 @@ public class PrimitiveValueObject implements AstObject {
                 )
         ).toList();
 
-        return ParserNode.anyOf(NodeModifier.previewAndGeneral(), nodes);
+        return ParserNode.anyOf(NodeModifier.generalAndPreview(), nodes);
     }
 
     @Override

@@ -24,6 +24,7 @@ public class AnyOfNode extends EmptyNode {
             if (!node.previewQueue(context)) continue;
             if (topLevelModifier.is(ModifierType.PREVIEW)) return true;
             if (node.proceedQueue(context, NodeModifier.prioritize(topLevelModifier, modifier))) return true;
+            break;
         }
 
         if (modifier.is(ModifierType.FAIL)) context.CRITICAL_MESSAGES.putErr(modifier.failMessageOrThrow());

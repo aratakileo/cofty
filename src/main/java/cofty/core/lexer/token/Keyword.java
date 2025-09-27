@@ -7,6 +7,9 @@ public enum Keyword implements ITokenType, Representable {
     LET,
     MUT,
     FN,
+    IF,
+    ELIF,
+    ELSE,
     TRUE,
     FALSE,
     RETURN;

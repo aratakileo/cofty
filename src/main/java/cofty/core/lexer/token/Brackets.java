@@ -4,10 +4,10 @@ import cofty.type.Representable;
 import org.jetbrains.annotations.NotNull;
 
 public enum Brackets implements ITokenType, Representable {
-    ROUND_LEFT("("),
-    ROUND_RIGHT(")"),
-    CURVE_LEFT("{"),
-    CURVE_RIGHT("}");
+    ROUND_OPEN("("),
+    ROUND_CLOSE(")"),
+    CURVE_OPEN("{"),
+    CURVE_CLOSE("}");
 
     public final String bracket;
 

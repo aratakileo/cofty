@@ -29,7 +29,7 @@ public interface ParserNode {
     }
 
     default boolean previewQueue(@NotNull ParseContext context) {
-        return queueIterator(context, NodeModifier.previewAndGeneral()).proceed();
+        return queueIterator(context, NodeModifier.generalAndPreview()).proceed();
     }
 
     <E extends ParserNode> @NotNull E then(@NotNull E next);
@@ -61,7 +61,7 @@ public interface ParserNode {
         return then(ParserNode.anyOf(modifier, nodes));
     }
 
-    default @NotNull RepeatedAnyOf thenRepeatedAnyOf(@NotNull NodeModifier modifier, @NotNull ParserNode @NotNull... nodes) {
+    default @NotNull RepeatedAnyOfNode thenRepeatedAnyOf(@NotNull NodeModifier modifier, @NotNull ParserNode @NotNull... nodes) {
         return then(ParserNode.repeatedAnyOf(modifier, nodes));
     }
 
@@ -77,6 +77,11 @@ public interface ParserNode {
 
         if (nextOrThrow().next() == null) {
             nextOrThrow().then(parserNode);
+            return this;
+        }
+
+        if (nextOrThrow().nextOrThrow().next() == null) {
+            nextOrThrow().nextOrThrow().then(parserNode);
             return this;
         }
 
@@ -99,8 +104,8 @@ public interface ParserNode {
         return new AnyOfNode(List.of(nodes), modifier);
     }
 
-    static @NotNull RepeatedAnyOf repeatedAnyOf(@NotNull NodeModifier modifier, @NotNull ParserNode @NotNull... nodes) {
-        return new RepeatedAnyOf(List.of(nodes), modifier);
+    static @NotNull RepeatedAnyOfNode repeatedAnyOf(@NotNull NodeModifier modifier, @NotNull ParserNode @NotNull... nodes) {
+        return new RepeatedAnyOfNode(List.of(nodes), modifier);
     }
 
     static <T extends ParserNode> @NotNull AnyOfNode anyOf(
@@ -110,10 +115,10 @@ public interface ParserNode {
         return new AnyOfNode(Cast.unsafe(nodes), modifier);
     }
 
-    static <T extends ParserNode> @NotNull RepeatedAnyOf repeatableAnyOf(
+    static <T extends ParserNode> @NotNull RepeatedAnyOfNode repeatableAnyOf(
             @NotNull NodeModifier modifier,
             @NotNull List<@NotNull T> nodes
     ) {
-        return new RepeatedAnyOf(Cast.unsafe(nodes), modifier);
+        return new RepeatedAnyOfNode(Cast.unsafe(nodes), modifier);
     }
 }

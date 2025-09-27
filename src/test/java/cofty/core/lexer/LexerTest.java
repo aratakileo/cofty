@@ -52,7 +52,7 @@ class LexerTest {
 
     @Test
     void isBracketParsedValid() {
-        Assertions.assertEquals(Brackets.CURVE_RIGHT, firstToken("}").type);
+        Assertions.assertEquals(Brackets.CURVE_CLOSE, firstToken("}").type);
     }
 
     @Test

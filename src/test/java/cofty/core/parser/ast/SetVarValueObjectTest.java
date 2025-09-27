@@ -43,7 +43,7 @@ class SetVarValueObjectTest {
         final var astObject = new SetVarValueObject();
 
         Assertions.assertTrue(
-                astObject.parserNode().proceedQueue(context, NodeModifier.previewAndGeneral()),
+                astObject.parserNode().proceedQueue(context, NodeModifier.generalAndPreview()),
                 "`num =` should be proceeded with preview modifier"
         );
     }

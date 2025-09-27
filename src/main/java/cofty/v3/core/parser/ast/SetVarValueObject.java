@@ -33,7 +33,7 @@ public class SetVarValueObject implements AstObject {
         var node = (TokenNode)null;
 
         (node = ParserNode.token(TokenType.ID, NodeModifier.builder().general().tokenConsumer(this::setName).build()))
-                .thenToken(Operator.ASSIGN, NodeModifier.previewAndGeneral())
+                .thenToken(Operator.ASSIGN, NodeModifier.generalAndPreview())
                 .then(
                         value.parserNode(),
                         NodeModifier.builder()

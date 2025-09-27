@@ -65,7 +65,7 @@ public final class NodeModifier {
         return fail(new SyntaxError(message));
     }
 
-    public static @NotNull NodeModifier previewAndGeneral() {
+    public static @NotNull NodeModifier generalAndPreview() {
         return new NodeModifier(
                 Lists.hashSetOf(ModifierType.GENERAL, ModifierType.PREVIEW),
                 null,

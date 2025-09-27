@@ -21,7 +21,7 @@ public class Cofty {
 
         Strings.println(Representable.repr(parsedTokens));
 
-        final var bodyObject = new BodyObject(true);
+        final var bodyObject = new BodyObject();
 
         var isPreviewSucceed = bodyObject.preview(parseContext);
         Strings.println("Is preview succeeded:", isPreviewSucceed);

@@ -88,15 +88,15 @@ public class VarDeclarationObject implements AstObject {
 
         if (isFunctionArgument)
             variableNameNodeModifierBuilder.preview();
-        else node.thenToken(Keyword.LET, NodeModifier.previewAndGeneral()).then(mutNode);
+        else node.thenToken(Keyword.LET, NodeModifier.generalAndPreview()).then(mutNode);
 
         (isFunctionArgument ? node : node.nextOrThrow().nextOrThrow()).thenToken(
                 TokenType.ID,
                 variableNameNodeModifierBuilder.build()
         ).thenAnyOf(
                 NodeModifier.syntaxFail("expected explicit type declaration or value assignment"),
-                typeDeclarationNode(NodeModifier.previewAndGeneral()).joinWith(valueNode(NodeModifier.peek())),
-                typeDeclarationNode(NodeModifier.peek()).joinWith(valueNode(NodeModifier.previewAndGeneral()))
+                typeDeclarationNode(NodeModifier.generalAndPreview()).joinWith(valueNode(NodeModifier.peek())),
+                typeDeclarationNode(NodeModifier.peek()).joinWith(valueNode(NodeModifier.generalAndPreview()))
         );
 
         return node;

@@ -17,20 +17,22 @@ import java.util.function.Consumer;
 public class RepeatableQueueNode extends EmptyNode {
     private final List<@NotNull AstObjectInitializer> astObjectInitializers;
     private final ParserNode separator, stopper;
-    private final Exception nonOneAtTimeSeparatorException;
+    private final Exception nonOneAtTimeSeparatorException, emptyBodyException;
 
     public RepeatableQueueNode(
             @NotNull List<@NotNull AstObjectInitializer> astObjectInitializers,
             @NotNull NodeModifier modifier,
             @Nullable ParserNode separator,
             @Nullable Exception nonOneAtTimeSeparatorException,
-            @Nullable ParserNode stopper
+            @Nullable ParserNode stopper,
+            @Nullable Exception emptyBodyException
     ) {
         super(modifier);
         this.astObjectInitializers = astObjectInitializers;
         this.separator = separator;
         this.nonOneAtTimeSeparatorException = nonOneAtTimeSeparatorException;
         this.stopper = stopper;
+        this.emptyBodyException = emptyBodyException;
     }
 
     @Override
@@ -41,6 +43,7 @@ public class RepeatableQueueNode extends EmptyNode {
         var result = true;
         var separatorWasNotProceed = false;
         var queueElementHasBeenFailed = false;
+        var anyNodeHasBeenProceeded = false;
 
         if (topLevelModifier.is(ModifierType.PREVIEW))
             context.createIndexSnapshot();
@@ -51,7 +54,7 @@ public class RepeatableQueueNode extends EmptyNode {
                             || queueElementHasBeenFailed && separatorWasNotProceed
             ) break;
 
-            var nodeIsTriedToProceed = false;
+            var noNodePreviewed = false;
 
             for (var i = 0; i < astObjectInitializers.size(); i++) {
                 var astObject = (AstObject)null;
@@ -64,7 +67,10 @@ public class RepeatableQueueNode extends EmptyNode {
                 final var node = astObject.parserNode();
 
                 if (node.previewQueue(context)) {
-                    if (topLevelModifier.is(ModifierType.PREVIEW)) break root;
+                    if (topLevelModifier.is(ModifierType.PREVIEW)) {
+                        anyNodeHasBeenProceeded = true;
+                        break root;
+                    }
 
                     if (separatorWasNotProceed) {
                         context.CRITICAL_MESSAGES.putErr(
@@ -77,30 +83,21 @@ public class RepeatableQueueNode extends EmptyNode {
                         break root;
                     }
 
-                    nodeIsTriedToProceed = true;
-
                     if (!node.proceedQueue(context, NodeModifier.prioritize(topLevelModifier, modifier))) {
                         queueElementHasBeenFailed = true;
                         result = false;
-                    }
+                    } else anyNodeHasBeenProceeded = true;
 
                     astObjects.add(astObject);
 
                     break;
                 } else astObjectsCache.put(i, astObject);
+
+                if (i == astObjectInitializers.size() - 1) noNodePreviewed = true;
             }
 
-            if (!nodeIsTriedToProceed) {
-                if (!separatorWasNotProceed) {
-                    if (modifier.is(ModifierType.FAIL))
-                        context.CRITICAL_MESSAGES.putErr(modifier.failMessageOrThrow());
-
-                    result = false;
-                }
-                break;
-            }
-
-            if (!context.hasCurrent()) break;
+            if (noNodePreviewed || !context.hasCurrent()) break;
+            if (stopper != null && stopper.previewQueue(context)) break;
 
             var isFirstSeparatorScan = true;
 
@@ -131,6 +128,11 @@ public class RepeatableQueueNode extends EmptyNode {
         if (topLevelModifier.is(ModifierType.PREVIEW))
             context.rollbackIndex();
 
+        if (result && emptyBodyException != null && !anyNodeHasBeenProceeded) {
+            context.CRITICAL_MESSAGES.putErr(emptyBodyException);
+            return false;
+        }
+
         if (result && modifier.is(ModifierType.ACTION) && !topLevelModifier.is(ModifierType.PREVIEW))
             modifier.actionOrThrow().consume(astObjects.stream().toList());
 
@@ -151,7 +153,7 @@ public class RepeatableQueueNode extends EmptyNode {
     public static class Builder {
         private final List<@NotNull AstObjectInitializer> astObjectInitializers = new ArrayList<>();
         private ParserNode separator = null, stopper = null;
-        private Exception nonOneAtTimeSeparatorException = null;
+        private Exception nonOneAtTimeSeparatorException = null, emptyBodyException = null;
 
         private final NodeModifier modifier;
         private final Consumer<RepeatableQueueNode> onBuild;
@@ -188,13 +190,19 @@ public class RepeatableQueueNode extends EmptyNode {
             return this;
         }
 
+        public @NotNull Builder setEmptyBodyException(@Nullable Exception emptyBodyException) {
+            this.emptyBodyException = emptyBodyException;
+            return this;
+        }
+
         public @NotNull RepeatableQueueNode build() {
             final var result = new RepeatableQueueNode(
                     astObjectInitializers,
                     modifier,
                     separator,
                     nonOneAtTimeSeparatorException,
-                    stopper
+                    stopper,
+                    emptyBodyException
             );
 
             if (onBuild != null)

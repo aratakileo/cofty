@@ -44,16 +44,16 @@ public class CallFuncObject implements AstObject {
         var node = (TokenNode)null;
 
         (node = ParserNode.token(TokenType.ID, NodeModifier.builder().general().tokenConsumer(this::setName).build()))
-                .thenToken(Brackets.ROUND_LEFT, NodeModifier.previewAndGeneral())
+                .thenToken(Brackets.ROUND_OPEN, NodeModifier.generalAndPreview())
                 .thenRepeatableQueueBuilder(NodeModifier.builder().peek().astObjectsConsumer(this::setArgs).build())
                     .setSeparator(ParserNode.token(
                             Separator.COMMA,
                             NodeModifier.builder().syntaxFail("expected a comma separator").preview().build()
                     )).makeSeparatorOnlyOneAtTime(new SyntaxError("duplicate comma"))
-                    .setStopper(ParserNode.token(Brackets.ROUND_RIGHT, NodeModifier.previewAndGeneral()))
+                    .setStopper(ParserNode.token(Brackets.ROUND_CLOSE, NodeModifier.generalAndPreview()))
                     .add(ValueExpressionObject::new)
                     .build()
-                .thenToken(Brackets.ROUND_RIGHT, NodeModifier.syntaxFail("expected an end of function arguments description"));
+                .thenToken(Brackets.ROUND_CLOSE, NodeModifier.syntaxFail("expected an end of function arguments description"));
 
         return node;
     }

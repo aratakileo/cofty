@@ -141,7 +141,7 @@ class VarDeclarationObjectTest {
         final var astObject = new VarDeclarationObject(false);
 
         Assertions.assertTrue(
-                astObject.parserNode().proceedQueue(context, NodeModifier.previewAndGeneral()),
+                astObject.parserNode().proceedQueue(context, NodeModifier.generalAndPreview()),
                 "`let` should be proceeded with preview modifier"
         );
     }

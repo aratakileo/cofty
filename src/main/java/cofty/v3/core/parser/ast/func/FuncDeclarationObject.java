@@ -9,7 +9,6 @@ import cofty.v3.core.parser.ast.BodyObject;
 import cofty.v3.core.parser.ast.ModifiersObject;
 import cofty.v3.core.parser.ast.VarDeclarationObject;
 import cofty.v3.core.parser.node.ParserNode;
-import cofty.v3.core.parser.node.TokenNode;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +20,7 @@ public class FuncDeclarationObject implements AstObject {
     private List<@NotNull VarDeclarationObject> args = null;
 
     private final ModifiersObject modifiers = new ModifiersObject();
-    private final BodyObject body = new BodyObject(false);
+    private final BodyObject body = new BodyObject();
 
     private void setName(@NotNull Token name) {
         this.name = name;
@@ -63,7 +62,7 @@ public class FuncDeclarationObject implements AstObject {
         var node = (ParserNode) null;
 
         (node = modifiers.parserNode())
-                .thenToken(Keyword.FN, NodeModifier.previewAndGeneral())
+                .thenToken(Keyword.FN, NodeModifier.generalAndPreview())
                 .thenToken(
                         TokenType.ID,
                         NodeModifier.builder()
@@ -71,7 +70,7 @@ public class FuncDeclarationObject implements AstObject {
                                 .tokenConsumer(this::setName)
                                 .build()
                 ).thenToken(
-                        Brackets.ROUND_LEFT,
+                        Brackets.ROUND_OPEN,
                         NodeModifier.syntaxFail("expected a function arguments description")
                 )
                 .thenRepeatableQueueBuilder(
@@ -84,11 +83,11 @@ public class FuncDeclarationObject implements AstObject {
                             Separator.COMMA,
                             NodeModifier.builder().syntaxFail("expected a comma separator").preview().build()
                     )).makeSeparatorOnlyOneAtTime(new SyntaxError("duplicate comma"))
-                    .setStopper(ParserNode.token(Brackets.ROUND_RIGHT, NodeModifier.previewAndGeneral()))
+                    .setStopper(ParserNode.token(Brackets.ROUND_CLOSE, NodeModifier.generalAndPreview()))
                     .add(() -> new VarDeclarationObject(true))
                     .build()
                 .thenToken(
-                        Brackets.ROUND_RIGHT,
+                        Brackets.ROUND_CLOSE,
                         NodeModifier.syntaxFail("expected an end of function arguments description")
                 ).thenToken(Separator.ARROW, NodeModifier.peek())
                 .thenToken(
@@ -98,9 +97,10 @@ public class FuncDeclarationObject implements AstObject {
                                 .syntaxFail("expected a function returnable type")
                                 .tokenConsumer(this::setReturnableType)
                                 .build()
-                ).thenToken(Brackets.CURVE_LEFT, NodeModifier.syntaxFail("expected a function body"))
-                .then(body.parserNode())
-                .thenToken(Brackets.CURVE_RIGHT, NodeModifier.syntaxFail("expected an end of function body description"));
+                ).then(body.multilineSubbody(
+                        NodeModifier.syntaxFail("expected a function body"),
+                        NodeModifier.syntaxFail("expected an end of function body description")
+                ));
 
         return node;
     }
