@@ -33,12 +33,13 @@ public class ModifiersObject implements AstObject {
                         NodeModifier.builder()
                                 .general()
                                 .preview()
+                                .setShadowPreview(true)
                                 .tokenConsumer(this::addModifier)
                                 .build()
                 )
         ).toList();
 
-        return ParserNode.repeatableAnyOf(NodeModifier.builder().preview().peek().build(), nodes);
+        return ParserNode.repeatableAnyOf(NodeModifier.builder().peek().build(), nodes);
     }
 
     @Override

@@ -3,6 +3,7 @@ package cofty.v3.core.parser.node;
 import cofty.core.lexer.token.ITokenType;
 import cofty.core.parser.ParseContext;
 import cofty.util.Cast;
+import cofty.v3.core.parser.node.modifier.ModifierType;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,8 +29,11 @@ public interface ParserNode {
         return queueIterator(context, queueModifier).proceed();
     }
 
-    default boolean previewQueue(@NotNull ParseContext context) {
-        return queueIterator(context, NodeModifier.generalAndPreview()).proceed();
+    default boolean previewQueue(@NotNull ParseContext context, @NotNull NodeModifier topLevelModifier) {
+        return queueIterator(
+                context,
+                topLevelModifier.is(ModifierType.PREVIEW) ? topLevelModifier : NodeModifier.generalAndPreview()
+        ).proceed();
     }
 
     <E extends ParserNode> @NotNull E then(@NotNull E next);

@@ -137,12 +137,12 @@ class VarDeclarationObjectTest {
 
     @Test
     void validPreview() {
-        final var context = Utils.parseContextOf("let");
+        final var context = Utils.parseContextOf("pub let");
         final var astObject = new VarDeclarationObject(false);
 
         Assertions.assertTrue(
                 astObject.parserNode().proceedQueue(context, NodeModifier.generalAndPreview()),
-                "`let` should be proceeded with preview modifier"
+                "`pub let` should be previewed"
         );
     }
 }

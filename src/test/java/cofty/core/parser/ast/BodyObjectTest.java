@@ -12,11 +12,13 @@ class BodyObjectTest {
     void validBody() {
         final var context = Utils.parseContextOf(
                         """
-                        let num = 10
+                        pub let num = 10
                         num = 100
-                        fn test() -> nil {}
+                        priv fn test() -> nil {}
                         test()
                         return 45
+                        if true {}
+                        priv cls Test {}
                         """
         );
 
@@ -34,7 +36,7 @@ class BodyObjectTest {
         );
 
         Assertions.assertEquals(
-                5,
+                7,
                 astObject.objects().size(),
                 "there should be 5 ast objects of body"
         );

@@ -50,7 +50,7 @@ public class RepeatableQueueNode extends EmptyNode {
 
         root: while (context.hasCurrent()) {
             if (
-                    stopper != null && stopper.previewQueue(context)
+                    stopper != null && stopper.previewQueue(context, topLevelModifier)
                             || queueElementHasBeenFailed && separatorWasNotProceed
             ) break;
 
@@ -66,7 +66,7 @@ public class RepeatableQueueNode extends EmptyNode {
 
                 final var node = astObject.parserNode();
 
-                if (node.previewQueue(context)) {
+                if (node.previewQueue(context, topLevelModifier)) {
                     if (topLevelModifier.is(ModifierType.PREVIEW)) {
                         anyNodeHasBeenProceeded = true;
                         break root;
@@ -97,12 +97,12 @@ public class RepeatableQueueNode extends EmptyNode {
             }
 
             if (noNodePreviewed || !context.hasCurrent()) break;
-            if (stopper != null && stopper.previewQueue(context)) break;
+            if (stopper != null && stopper.previewQueue(context, topLevelModifier)) break;
 
             var isFirstSeparatorScan = true;
 
             while (separator != null && context.hasCurrent()) {
-                if (!separator.previewQueue(context)) {
+                if (!separator.previewQueue(context, topLevelModifier)) {
                     if (isFirstSeparatorScan)
                         separatorWasNotProceed = true;
 

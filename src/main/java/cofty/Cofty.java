@@ -7,6 +7,7 @@ import cofty.type.Representable;
 import cofty.type.TextContent;
 import cofty.util.Strings;
 import cofty.v3.core.parser.ast.BodyObject;
+import cofty.v3.core.parser.node.modifier.NodeModifier;
 
 public class Cofty {
     public static void main(String[] args) {
@@ -23,7 +24,7 @@ public class Cofty {
 
         final var bodyObject = new BodyObject();
 
-        var isPreviewSucceed = bodyObject.preview(parseContext);
+        var isPreviewSucceed = bodyObject.parserNode().previewQueue(parseContext, NodeModifier.generalAndPreview());
         Strings.println("Is preview succeeded:", isPreviewSucceed);
         Strings.println("Snapshots stack size:", parseContext.snapshotStackSize());
         Strings.println("Cursor after preview:", parseContext.cursor());

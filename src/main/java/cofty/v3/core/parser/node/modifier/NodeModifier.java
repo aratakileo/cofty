@@ -18,15 +18,17 @@ public final class NodeModifier {
     
     public final Exception failMessage;
     public final ModifierConsumer modifierConsumer;
+    public final boolean shadowPreview;
 
     private NodeModifier(
             @NotNull HashSet<@NotNull ModifierType> types, 
             @Nullable Exception failMessage, 
-            @Nullable ModifierConsumer modifierConsumer
-    ) {
+            @Nullable ModifierConsumer modifierConsumer,
+            boolean shadowPreview) {
         this.types = new HashSet<>(types);
         this.failMessage = failMessage;
         this.modifierConsumer = modifierConsumer;
+        this.shadowPreview = shadowPreview;
     }
     
     public boolean is(@NotNull ModifierType type) {
@@ -58,7 +60,7 @@ public final class NodeModifier {
     }
 
     public static @NotNull NodeModifier fail(@NotNull Exception message) {
-        return new NodeModifier(Lists.hashSetOf(ModifierType.FAIL), message, null);
+        return new NodeModifier(Lists.hashSetOf(ModifierType.FAIL), message, null, false);
     }
 
     public static @NotNull NodeModifier syntaxFail(@NotNull String message) {
@@ -69,16 +71,24 @@ public final class NodeModifier {
         return new NodeModifier(
                 Lists.hashSetOf(ModifierType.GENERAL, ModifierType.PREVIEW),
                 null,
-                null
-        );
+                null,
+                false);
+    }
+
+    public static @NotNull NodeModifier generalAndPreview(boolean isShadow) {
+        return new NodeModifier(
+                Lists.hashSetOf(ModifierType.GENERAL, ModifierType.PREVIEW),
+                null,
+                null,
+                isShadow);
     }
 
     public static @NotNull NodeModifier general() {
-        return new NodeModifier(Lists.hashSetOf(ModifierType.GENERAL), null, null);
+        return new NodeModifier(Lists.hashSetOf(ModifierType.GENERAL), null, null, false);
     }
 
     public static @NotNull NodeModifier peek() {
-        return new NodeModifier(Lists.hashSetOf(ModifierType.PEEK), null, null);
+        return new NodeModifier(Lists.hashSetOf(ModifierType.PEEK), null, null, false);
     }
 
     public static @NotNull Builder builder() {
@@ -113,6 +123,7 @@ public final class NodeModifier {
         private final HashSet<@NotNull ModifierType> types = new HashSet<>();
         private Exception failMessage = null;
         private ModifierConsumer modifierConsumer = null;
+        private boolean shadowPreview = false;
 
         public Builder() {}
         
@@ -190,6 +201,11 @@ public final class NodeModifier {
             });
         }
 
+        public @NotNull Builder setShadowPreview(boolean shadowPreview) {
+            this.shadowPreview = shadowPreview;
+            return this;
+        }
+
         public @NotNull Builder remove(@NotNull ModifierType type) {
             if (!types.contains(type))
                 throw new IllegalStateException();
@@ -218,7 +234,7 @@ public final class NodeModifier {
             if (!hasAtLeastOneBasicType())
                 throw new IllegalStateException();
 
-            return new NodeModifier(types, failMessage, modifierConsumer);
+            return new NodeModifier(types, failMessage, modifierConsumer, shadowPreview);
         }
 
         private @NotNull Builder action(@NotNull ModifierConsumer action) {

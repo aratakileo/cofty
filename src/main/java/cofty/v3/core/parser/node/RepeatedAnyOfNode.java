@@ -24,7 +24,7 @@ public class RepeatedAnyOfNode extends EmptyNode {
 
         root: while (true) {
             for (final var node : nodes) {
-                if (!node.previewQueue(context)) continue;
+                if (!node.previewQueue(context, topLevelModifier)) continue;
                 if (topLevelModifier.is(ModifierType.PREVIEW)) return true;
                 if (node.proceedQueue(context, NodeModifier.prioritize(topLevelModifier, modifier))) {
                     isRepeatedAtLeastOnce = true;
