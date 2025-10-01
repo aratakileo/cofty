@@ -1,11 +1,16 @@
 package cofty.core.lexer.token;
 
+import cofty.type.Containable;
 import cofty.type.Representable;
 import org.jetbrains.annotations.NotNull;
 
 public enum Modifier implements ITokenType, Representable {
     PUB,
     PRIV;
+
+    public boolean isAccessModifier() {
+        return isIn(PUB, PRIV);
+    }
 
     @Override
     public @NotNull TokenType type() {

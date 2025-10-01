@@ -33,7 +33,7 @@ class ClassObjectTest {
 
         Assertions.assertEquals(
                 1,
-                astObject.modifiers().modifiers().size(),
+                astObject.modifiers().modifierTokens().size(),
                 "there should be one modifier"
         );
     }

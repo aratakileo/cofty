@@ -1,8 +1,9 @@
 package cofty.v3.core.parser.ast.value;
 
 import cofty.core.lexer.token.Keyword;
-import cofty.core.lexer.token.Token;
+import cofty.core.lexer.token.AnyToken;
 import cofty.core.lexer.token.TokenType;
+import cofty.core.lexer.token.TypedToken;
 import cofty.v3.core.parser.ast.AstObject;
 import cofty.v3.core.parser.node.ParserNode;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
@@ -12,13 +13,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.stream.Stream;
 
 public class PrimitiveValueObject implements AstObject {
-    private Token value = null;
+    private TypedToken<?> value = null;
 
-    private void setValue(@NotNull Token value) {
+    private void setValue(@NotNull TypedToken<?> value) {
         this.value = value;
     }
 
-    public @Nullable Token value() {
+    public @Nullable TypedToken<?> value() {
         return value;
     }
 

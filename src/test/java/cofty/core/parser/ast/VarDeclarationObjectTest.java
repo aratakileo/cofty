@@ -30,7 +30,7 @@ class VarDeclarationObjectTest {
 
         Assertions.assertEquals(
                 1,
-                astObject.modifiers().modifiers().size(),
+                astObject.modifiers().modifierTokens().size(),
                 "there should be 1 modifier"
         );
 
@@ -77,7 +77,7 @@ class VarDeclarationObjectTest {
 
         Assertions.assertNotNull(astObject.name(), "the proceeded function argument name shouldn't be null");
         Assertions.assertNotNull(astObject.value(), "the proceeded function argument value shouldn't be null");
-        Assertions.assertNull(astObject.modifiers(), "the proceeded function argument modifiers should be null");
+        Assertions.assertNotNull(astObject.modifiers(), "the proceeded function argument modifiers shouldn't be null");
 
         Assertions.assertNotNull(
                 astObject.mutable(),

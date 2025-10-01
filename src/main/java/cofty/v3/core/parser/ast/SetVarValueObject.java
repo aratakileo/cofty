@@ -1,8 +1,9 @@
 package cofty.v3.core.parser.ast;
 
 import cofty.core.lexer.token.Operator;
-import cofty.core.lexer.token.Token;
+import cofty.core.lexer.token.AnyToken;
 import cofty.core.lexer.token.TokenType;
+import cofty.core.lexer.token.TypedToken;
 import cofty.type.Representable;
 import cofty.v3.core.parser.ast.value.ValueExpressionObject;
 import cofty.v3.core.parser.node.ParserNode;
@@ -12,19 +13,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SetVarValueObject implements AstObject {
-    private Token name = null;
+    private TypedToken<TokenType> name = null;
 
     private final ValueExpressionObject value = new ValueExpressionObject();
 
-    private void setName(@NotNull Token name) {
-        this.name = name;
+    private void setName(@NotNull TypedToken<?> name) {
+        this.name = name.unsafeAs();
     }
 
     public @NotNull ValueExpressionObject value() {
         return value;
     }
 
-    public @Nullable Token name() {
+    public @Nullable TypedToken<TokenType> name() {
         return name;
     }
 

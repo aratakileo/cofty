@@ -7,44 +7,45 @@ import cofty.v3.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class VarDeclarationObject implements AstObject {
+public class VarDeclarationObject implements AstObject, WithModifiers {
     private final boolean isFunctionArgument;
 
-    private Token name = null, mutable = null, explicitlySpecifiedType = null;
+    private TypedToken<TokenType> name = null;
+    private TypedToken<Keyword> mutable = null;
+    private TypedToken<TokenType> explicitlySpecifiedType = null;
 
-    private final ModifiersObject modifiers;
+    private final ModifiersObject modifiers = new ModifiersObject();
     private final ValueExpressionObject value = new ValueExpressionObject();
 
     public VarDeclarationObject(boolean isFunctionArgument) {
         this.isFunctionArgument = isFunctionArgument;
-        this.modifiers = isFunctionArgument ? null : new ModifiersObject();
     }
 
-    private void setMutable(@NotNull Token mutable) {
-        this.mutable = mutable;
+    private void setMutable(@NotNull TypedToken<?> mutable) {
+        this.mutable = mutable.unsafeAs();
     }
 
-    private void setName(@NotNull Token name) {
-        this.name = name;
+    private void setName(@NotNull TypedToken<?> name) {
+        this.name = name.unsafeAs();
     }
 
-    private void setExplicitlySpecifiedType(@NotNull Token explicitlySpecifiedType) {
-        this.explicitlySpecifiedType = explicitlySpecifiedType;
+    private void setExplicitlySpecifiedType(@NotNull TypedToken<?> explicitlySpecifiedType) {
+        this.explicitlySpecifiedType = explicitlySpecifiedType.unsafeAs();
     }
 
-    public @Nullable Token name() {
+    public @Nullable TypedToken<TokenType> name() {
         return name;
     }
 
-    public @Nullable Token mutable() {
+    public @Nullable TypedToken<Keyword> mutable() {
         return mutable;
     }
 
-    public @Nullable Token explicitlySpecifiedType() {
+    public @Nullable TypedToken<TokenType> explicitlySpecifiedType() {
         return explicitlySpecifiedType;
     }
 
-    public @Nullable ModifiersObject modifiers() {
+    public @NotNull ModifiersObject modifiers() {
         return modifiers;
     }
 

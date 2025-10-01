@@ -1,6 +1,7 @@
 package cofty.v3.core.parser.node.modifier;
 
-import cofty.core.lexer.token.Token;
+import cofty.core.lexer.token.AnyToken;
+import cofty.core.lexer.token.TypedToken;
 import cofty.type.Representable;
 import cofty.type.exception.SyntaxError;
 import cofty.util.Lists;
@@ -174,10 +175,10 @@ public final class NodeModifier {
             return this;
         }
 
-        public @NotNull Builder tokenConsumer(@NotNull Consumer<Token> action) {
+        public @NotNull Builder tokenConsumer(@NotNull Consumer<TypedToken<?>> action) {
             return action(new ModifierConsumer() {
                 @Override
-                public void consume(@NotNull Token token) {
+                public void consume(@NotNull TypedToken<?> token) {
                     action.accept(token);
                 }
             });

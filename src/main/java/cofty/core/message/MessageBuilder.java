@@ -1,6 +1,6 @@
 package cofty.core.message;
 
-import cofty.core.lexer.token.Token;
+import cofty.core.lexer.token.TypedToken;
 import cofty.type.Representable;
 import cofty.type.TextContent;
 import cofty.util.Strings;
@@ -44,7 +44,7 @@ public class MessageBuilder {
         throw new IllegalArgumentException("Invalid cursorStart or/and cursorEnd value(s)");
     }
 
-    public @NotNull MessageBuilder fillCursor(@NotNull Token token) {
+    public @NotNull MessageBuilder fillCursor(@NotNull TypedToken<?> token) {
         return fillCursor(token.start, token.end);
     }
 
@@ -108,7 +108,7 @@ public class MessageBuilder {
 
     public static @NotNull Message err(
             @NotNull TextContent textContent,
-            @NotNull Token token,
+            @NotNull TypedToken<?> token,
             @NotNull Exception err
     ) {
         return err(textContent, token.start, token.end, err);
@@ -128,7 +128,7 @@ public class MessageBuilder {
 
     public static @NotNull Message errAfter(
             @NotNull TextContent textContent,
-            @NotNull Token token,
+            @NotNull TypedToken<?> token,
             @NotNull Exception err
     ) {
         return new MessageBuilder(MessageType.ERROR, textContent)

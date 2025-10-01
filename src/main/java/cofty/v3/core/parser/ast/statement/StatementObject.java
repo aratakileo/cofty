@@ -5,13 +5,14 @@ import cofty.core.lexer.token.ITokenType;
 import cofty.type.exception.SyntaxError;
 import cofty.v3.core.parser.ast.AstObject;
 import cofty.v3.core.parser.ast.BodyObject;
+import cofty.v3.core.parser.ast.WithBody;
 import cofty.v3.core.parser.ast.value.ValueExpressionObject;
 import cofty.v3.core.parser.node.ParserNode;
 import cofty.v3.core.parser.node.TokenNode;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 
-public class StatementObject implements AstObject {
+public class StatementObject implements AstObject, WithBody {
     private final ITokenType statementStartKeyword;
     private final ValueExpressionObject statement = new ValueExpressionObject();
     private final BodyObject body = new BodyObject();

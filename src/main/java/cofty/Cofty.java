@@ -8,6 +8,8 @@ import cofty.type.TextContent;
 import cofty.util.Strings;
 import cofty.v3.core.parser.ast.BodyObject;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
+import cofty.v3.core.semantics.SemanticAnalyzer;
+import cofty.v3.core.semantics.SemanticsContext;
 
 public class Cofty {
     public static void main(String[] args) {
@@ -30,8 +32,17 @@ public class Cofty {
         Strings.println("Cursor after preview:", parseContext.cursor());
 
         if (isPreviewSucceed) {
-            Strings.println("Is proceeded:", bodyObject.parse(parseContext));
+            final var parsed = bodyObject.parse(parseContext);
+
+            Strings.println("Is proceeded:", parsed);
             Strings.println("Ast objects after parse:", bodyObject);
+
+            if (parsed) {
+                final var analyzerContext = new SemanticsContext(text, messages);
+                final var semanticAnalyzer = new SemanticAnalyzer(analyzerContext, bodyObject);
+
+                Strings.println("Is analyzed:", semanticAnalyzer.analyzePrimary());
+            }
         }
 
         messages.print();

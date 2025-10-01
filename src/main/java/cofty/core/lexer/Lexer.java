@@ -1,11 +1,8 @@
 package cofty.core.lexer;
 
-import cofty.core.lexer.token.Keyword;
-import cofty.core.lexer.token.Modifier;
+import cofty.core.lexer.token.*;
 import cofty.core.message.MessageBuilder;
 import cofty.core.message.MessageHandler;
-import cofty.core.lexer.token.Token;
-import cofty.core.lexer.token.TokenType;
 import cofty.type.TextContent;
 import cofty.type.exception.SyntaxError;
 import org.jetbrains.annotations.NotNull;
@@ -29,17 +26,17 @@ public class Lexer {
         this.matcher = PATTERN.matcher(text.text);
     }
 
-    public @NotNull ArrayList<Token> parse() {
-        final var tokens = new ArrayList<Token>();
-        var prevToken = (Token)null;
+    public @NotNull ArrayList<TypedToken<?>> parse() {
+        final var tokens = new ArrayList<TypedToken<?>>();
+        var prevToken = (AnyToken) null;
 
         for (final var matchResult: matcher.results().toList()) {
             final var tokenType = TokenType.valueOf(matchResult);
-            final var token = Token.build(matchResult, tokenType);
+            final var token = AnyToken.build(matchResult, tokenType);
 
             if (prevToken != null && prevToken.type.equals(TokenType.MISMATCH)) {
                 if (token.type.equals(TokenType.MISMATCH)) {
-                    prevToken = prevToken.merge(token);
+                    prevToken = (AnyToken) prevToken.merge(token);
                     continue;
                 }
 
@@ -58,7 +55,7 @@ public class Lexer {
         return tokens;
     }
 
-    private void showSyntaxError(@NotNull Token token) {
+    private void showSyntaxError(@NotNull AnyToken token) {
         messages.CRITICAL.put(MessageBuilder.err(text, token, new SyntaxError("invalid syntax")));
     }
 

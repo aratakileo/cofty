@@ -76,12 +76,12 @@ class LexerTest {
         return new Lexer(TextContent.ofInput(text), new MessageHandler());
     }
 
-    private Token firstToken(String token) {
+    private TypedToken<?> firstToken(String token) {
         final var lexer = lexerOfText(token);
         final var tokens = lexer.parse();
 
         if (tokens.size() != 1) throw new IllegalStateException();
 
-        return tokens.get(0);
+        return tokens.getFirst();
     }
 }

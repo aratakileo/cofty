@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 public class BodyObject implements AstObject {
     private List<AstObject> objects = null;
@@ -25,6 +26,10 @@ public class BodyObject implements AstObject {
 
     public @Nullable List<AstObject> objects() {
         return objects;
+    }
+
+    public @NotNull List<AstObject> objectsOrThrow() {
+        return Objects.requireNonNull(objects);
     }
 
     @Override

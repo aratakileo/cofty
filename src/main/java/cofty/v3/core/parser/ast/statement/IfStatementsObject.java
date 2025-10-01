@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 public class IfStatementsObject implements AstObject {
     private final StatementObject ifStatement = new StatementObject(Keyword.IF);
@@ -36,6 +37,10 @@ public class IfStatementsObject implements AstObject {
 
     public @Nullable List<@NotNull StatementObject> elseIfStatements() {
         return elseIfStatements;
+    }
+
+    public @NotNull List<@NotNull StatementObject> elseIfStatementsOrThrow() {
+        return Objects.requireNonNull(elseIfStatements);
     }
 
     @Override

@@ -4,10 +4,7 @@ import cofty.core.lexer.token.*;
 import cofty.type.Representable;
 import cofty.type.exception.SyntaxError;
 import cofty.util.Cast;
-import cofty.v3.core.parser.ast.AstObject;
-import cofty.v3.core.parser.ast.BodyObject;
-import cofty.v3.core.parser.ast.ModifiersObject;
-import cofty.v3.core.parser.ast.VarDeclarationObject;
+import cofty.v3.core.parser.ast.*;
 import cofty.v3.core.parser.node.ParserNode;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
@@ -15,19 +12,19 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class FuncDeclarationObject implements AstObject {
-    private Token name = null, returnableType = null;
+public class FuncDeclarationObject implements AstObject, WithBody {
+    private TypedToken<TokenType> name = null, returnableType = null;
     private List<@NotNull VarDeclarationObject> args = null;
 
     private final ModifiersObject modifiers = new ModifiersObject();
     private final BodyObject body = new BodyObject();
 
-    private void setName(@NotNull Token name) {
-        this.name = name;
+    private void setName(@NotNull TypedToken<?> name) {
+        this.name = name.unsafeAs();
     }
 
-    private void setReturnableType(@NotNull Token returnableType) {
-        this.returnableType = returnableType;
+    private void setReturnableType(@NotNull TypedToken<?> returnableType) {
+        this.returnableType = returnableType.unsafeAs();
     }
 
     private void setArgs(@NotNull List<AstObject> args) {
@@ -37,7 +34,7 @@ public class FuncDeclarationObject implements AstObject {
         this.args = Cast.unsafe(args);
     }
 
-    public @Nullable Token name() {
+    public @Nullable TypedToken<TokenType> name() {
         return name;
     }
 
@@ -45,7 +42,7 @@ public class FuncDeclarationObject implements AstObject {
         return modifiers;
     }
 
-    public @Nullable Token returnableType() {
+    public @Nullable TypedToken<TokenType> returnableType() {
         return returnableType;
     }
 

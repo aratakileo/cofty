@@ -1,9 +1,6 @@
 package cofty.v3.core.parser.ast.func;
 
-import cofty.core.lexer.token.Brackets;
-import cofty.core.lexer.token.Separator;
-import cofty.core.lexer.token.Token;
-import cofty.core.lexer.token.TokenType;
+import cofty.core.lexer.token.*;
 import cofty.type.exception.SyntaxError;
 import cofty.util.Cast;
 import cofty.v3.core.parser.ast.AstObject;
@@ -17,11 +14,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class CallFuncObject implements AstObject {
-    private Token name = null;
+    private TypedToken<TokenType> name = null;
     private List<@NotNull ValueExpressionObject> args = null;
 
-    private void setName(@NotNull Token name) {
-        this.name = name;
+    private void setName(@NotNull TypedToken<?> name) {
+        this.name = name.unsafeAs();
     }
 
     private void setArgs(@NotNull List<AstObject> args) {
@@ -31,7 +28,7 @@ public class CallFuncObject implements AstObject {
         this.args = Cast.unsafe(args);
     }
 
-    public @Nullable Token name() {
+    public @Nullable TypedToken<TokenType> name() {
         return name;
     }
 

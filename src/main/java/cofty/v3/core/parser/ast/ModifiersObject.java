@@ -1,7 +1,8 @@
 package cofty.v3.core.parser.ast;
 
 import cofty.core.lexer.token.Modifier;
-import cofty.core.lexer.token.Token;
+import cofty.core.lexer.token.AnyToken;
+import cofty.core.lexer.token.TypedToken;
 import cofty.type.Representable;
 import cofty.v3.core.parser.node.ParserNode;
 import cofty.v3.core.parser.node.modifier.NodeModifier;
@@ -12,13 +13,13 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class ModifiersObject implements AstObject {
-    private final ArrayList<@NotNull Token> modifiers = new ArrayList<>();
+    private final ArrayList<@NotNull TypedToken<Modifier>> modifiers = new ArrayList<>();
 
-    private void addModifier(@NotNull Token modifier) {
-        modifiers.add(modifier);
+    private void addModifier(@NotNull TypedToken<?> modifierToken) {
+        modifiers.add(modifierToken.unsafeAs());
     }
 
-    public @NotNull List<@NotNull Token> modifiers() {
+    public @NotNull List<@NotNull TypedToken<Modifier>> modifierTokens() {
         return modifiers.stream().toList();
     }
 

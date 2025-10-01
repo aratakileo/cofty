@@ -1,6 +1,6 @@
 package cofty.v2.core.semantics;
 
-import cofty.core.lexer.token.Token;
+import cofty.core.lexer.token.AnyToken;
 import cofty.core.lexer.token.TokenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +37,7 @@ public class Path {
         return segments.equals(ROOT.segments) ? ROOT : new Path(segments);
     }
 
-    public static @NotNull Path ofRaw(@NotNull List<Token> rawSegments) {
+    public static @NotNull Path ofRaw(@NotNull List<AnyToken> rawSegments) {
         return of(rawSegments.stream()
                 .filter(token -> token.type.equals(TokenType.ID))
                 .map(token -> token.content)

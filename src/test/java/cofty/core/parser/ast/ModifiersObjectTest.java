@@ -26,7 +26,7 @@ class ModifiersObjectTest {
 
         Assertions.assertEquals(
                 2,
-                astObject.modifiers().size(),
+                astObject.modifierTokens().size(),
                 "there should be 2 modifiers"
         );
     }

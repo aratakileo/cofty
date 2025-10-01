@@ -1,10 +1,12 @@
 package cofty.core.message.channel;
 
-import cofty.core.lexer.token.Token;
+import cofty.core.lexer.token.AnyToken;
+import cofty.core.lexer.token.TypedToken;
 import cofty.core.message.Message;
 import cofty.core.message.MessageBuilder;
 import cofty.core.message.MessageType;
 import cofty.type.TextContent;
+import cofty.type.exception.SyntaxError;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +21,7 @@ public class AssociatedMessagesChannel {
 
     public void putErrAfterToken(
             @NotNull Exception err,
-            @NotNull Token token
+            @NotNull TypedToken<?> token
     ) {
         putAfterToken(MessageType.ERROR, err, token);
     }
@@ -27,7 +29,7 @@ public class AssociatedMessagesChannel {
     public void putAfterToken(
             @NotNull MessageType messageType,
             @NotNull Exception err,
-            @NotNull Token token
+            @NotNull TypedToken<?> token
     ) {
         channel.put(
                 new MessageBuilder(messageType, text)
@@ -39,9 +41,16 @@ public class AssociatedMessagesChannel {
         );
     }
 
+    public void putSyntaxErr(
+            @NotNull String errMessage,
+            @NotNull TypedToken<?> token
+    ) {
+        put(MessageType.ERROR, new SyntaxError(errMessage), token.start, token.end);
+    }
+
     public void putErr(
             @NotNull Exception err,
-            @NotNull Token token
+            @NotNull TypedToken<?> token
     ) {
         put(MessageType.ERROR, err, token.start, token.end);
     }
