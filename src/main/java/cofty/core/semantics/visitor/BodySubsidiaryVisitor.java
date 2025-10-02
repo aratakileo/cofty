@@ -3,10 +3,9 @@ package cofty.core.semantics.visitor;
 import cofty.core.lexer.token.type.TokenType;
 import cofty.core.lexer.token.type.Modifier;
 import cofty.core.lexer.token.TypedToken;
-import cofty.core.parser.ast.AstObject;
-import cofty.core.parser.ast.WithBody;
-import cofty.core.parser.ast.WithModifiers;
+import cofty.core.parser.ast.*;
 import cofty.core.parser.ast.func.FuncDeclarationObject;
+import cofty.core.parser.ast.func.ReturnStatementObject;
 import cofty.core.parser.ast.statement.IfStatementsObject;
 import cofty.core.parser.ast.statement.StatementObject;
 import cofty.core.semantics.SemanticsContext;
@@ -28,8 +27,8 @@ public interface BodySubsidiaryVisitor {
         return true;
     }
 
-    default boolean allowSubBodies() {
-        return true;
+    default boolean allowReturnStatement() {
+        return false;
     }
 
     default boolean visitModifiers(@NotNull SemanticsContext context, @NotNull WithModifiers astObject) {
@@ -60,16 +59,36 @@ public interface BodySubsidiaryVisitor {
         return result;
     }
 
+    default boolean visitSubsididaryObject(@NotNull SemanticsContext context, @NotNull AstObject astObject) {
+        var result = true;
+
+        if (!allowReturnStatement() && astObject instanceof ReturnStatementObject returnStatementObject) {
+            context.CRITICAL.putSyntaxErr("not allowed here", returnStatementObject.anchor());
+            result = false;
+        }
+
+        if (allowFunctionsOrClasses()) return result;
+
+        if (!(astObject instanceof ClassDeclarationObject) && !(astObject instanceof FuncDeclarationObject))
+            return result;
+
+        context.CRITICAL.putSyntaxErr("not allowed here", ((WithAnchor<?>) astObject).anchor());
+        return false;
+
+    }
+
     default boolean visitIfStatementBodies(@NotNull SemanticsContext context, @NotNull IfStatementsObject astObject) {
-        var result = visitBodyObjects(context, astObject.ifStatement().body().objectsOrThrow());
+        var result = SUB_BODY.visitBodyObjects(context, astObject.ifStatement().body().objectsOrThrow());
 
         if (astObject.elseIfStatements() != null)
             for (final var statementObject: astObject.elseIfStatementsOrThrow())
-                if (!visitBodyObjects(context, statementObject.body().objectsOrThrow()))
+                if (!SUB_BODY.visitBodyObjects(context, statementObject.body().objectsOrThrow()))
                     result = false;
 
-        if (astObject.elseBody().objects() != null && !visitBodyObjects(context, astObject.elseBody().objectsOrThrow()))
-            result = false;
+        if (
+                astObject.elseBody().objects() != null
+                        && !ELSE_BODY.visitBodyObjects(context, astObject.elseBody().objectsOrThrow())
+        ) result = false;
 
         return result;
     }
@@ -85,6 +104,9 @@ public interface BodySubsidiaryVisitor {
 
         for (final var subAstObject: objects) {
             if (subAstObject instanceof WithModifiers withModifiers && !visitModifiers(context, withModifiers))
+                result = false;
+
+            if (!visitSubsididaryObject(context, subAstObject))
                 result = false;
 
             if (subAstObject instanceof WithBody withBody) {
@@ -130,10 +152,10 @@ public interface BodySubsidiaryVisitor {
 
     static BodySubsidiaryVisitor by(@NotNull WithBody astObjectWithBody) {
         if (astObjectWithBody instanceof FuncDeclarationObject)
-            return SUB_BODY;
+            return FUNCTION_BODY;
 
         if (astObjectWithBody instanceof StatementObject)
-            return CLASS_BODY;
+            return SUB_BODY;
 
         return ROOT_BODY;
     }
@@ -144,5 +166,6 @@ public interface BodySubsidiaryVisitor {
 
     BodySubsidiaryVisitor ROOT_BODY = new BodySubsidiaryVisitor() {};
     SubBodyVisitor SUB_BODY = new SubBodyVisitor();
-    ClassVisitor CLASS_BODY = new ClassVisitor();
+    ElseBodyVisitor ELSE_BODY = new ElseBodyVisitor();
+    FunctionBodyVisitor FUNCTION_BODY = new FunctionBodyVisitor();
 }

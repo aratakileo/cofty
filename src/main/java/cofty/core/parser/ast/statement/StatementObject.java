@@ -1,7 +1,9 @@
 package cofty.core.parser.ast.statement;
 
+import cofty.core.lexer.token.TypedToken;
 import cofty.core.lexer.token.type.Brackets;
 import cofty.core.lexer.token.type.TokenType;
+import cofty.core.parser.ast.WithAnchor;
 import cofty.type.exception.SyntaxError;
 import cofty.core.parser.ast.AstObject;
 import cofty.core.parser.ast.BodyObject;
@@ -12,16 +14,27 @@ import cofty.core.parser.node.TokenNode;
 import cofty.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 
-public class StatementObject implements AstObject, WithBody {
-    private final TokenType statementStartKeyword;
+public class StatementObject<T extends TokenType> implements AstObject, WithBody, WithAnchor<T> {
+    private final T statementStartKeyword;
     private final ValueExpressionObject statement = new ValueExpressionObject();
     private final BodyObject body = new BodyObject();
 
-    public StatementObject(@NotNull TokenType statementStartKeyword) {
+    private TypedToken<T> anchor = null;
+
+    public StatementObject(@NotNull T statementStartKeyword) {
         this.statementStartKeyword = statementStartKeyword;
     }
 
-    public @NotNull TokenType statementStartKeyword() {
+    private void setAnchor(@NotNull TypedToken<?> anchor) {
+        this.anchor = anchor.strictAs();
+    }
+
+    @Override
+    public @NotNull TypedToken<T> anchor() {
+        return anchor;
+    }
+
+    public @NotNull T statementStartKeyword() {
         return statementStartKeyword;
     }
 
@@ -57,8 +70,10 @@ public class StatementObject implements AstObject, WithBody {
 
         var node = (TokenNode)null;
 
-        (node = ParserNode.token(statementStartKeyword, NodeModifier.generalAndPreview()))
-                .thenAnyOf(
+        (node = ParserNode.token(
+                statementStartKeyword,
+                NodeModifier.builder().general().preview().tokenConsumer(this::setAnchor).build()
+        )).thenAnyOf(
                         NodeModifier.general(),
                         statementExpressionWithParenthesis().joinWith(body.multilineOrSingleLineSubbody(
                                 new SyntaxError("expected a statement body description"),

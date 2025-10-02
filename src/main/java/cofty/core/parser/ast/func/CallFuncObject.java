@@ -21,7 +21,7 @@ public class CallFuncObject implements AstObject {
     private List<@NotNull ValueExpressionObject> args = null;
 
     private void setName(@NotNull TypedToken<?> name) {
-        this.name = name.unsafeAs();
+        this.name = name.strictAs();
     }
 
     private void setArgs(@NotNull List<AstObject> args) {

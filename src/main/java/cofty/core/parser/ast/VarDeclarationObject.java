@@ -26,15 +26,15 @@ public class VarDeclarationObject implements AstObject, WithModifiers {
     }
 
     private void setMutable(@NotNull TypedToken<?> mutable) {
-        this.mutable = mutable.unsafeAs();
+        this.mutable = mutable.strictAs();
     }
 
     private void setName(@NotNull TypedToken<?> name) {
-        this.name = name.unsafeAs();
+        this.name = name.strictAs();
     }
 
     private void setExplicitlySpecifiedType(@NotNull TypedToken<?> explicitlySpecifiedType) {
-        this.explicitlySpecifiedType = explicitlySpecifiedType.unsafeAs();
+        this.explicitlySpecifiedType = explicitlySpecifiedType.strictAs();
     }
 
     public @Nullable TypedToken<Simple> name() {

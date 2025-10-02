@@ -17,7 +17,7 @@ public class SetVarValueObject implements AstObject {
     private final ValueExpressionObject value = new ValueExpressionObject();
 
     private void setName(@NotNull TypedToken<?> name) {
-        this.name = name.unsafeAs();
+        this.name = name.strictAs();
     }
 
     public @NotNull ValueExpressionObject value() {

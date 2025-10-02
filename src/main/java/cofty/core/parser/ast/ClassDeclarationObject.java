@@ -8,14 +8,24 @@ import cofty.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ClassObject implements AstObject, WithModifiers, WithBody {
+public class ClassDeclarationObject implements AstObject, WithModifiers, WithBody, WithAnchor<Keyword> {
+    private TypedToken<Keyword> anchor = null;
     private TypedToken<Simple> name = null;
 
     private final ModifiersObject modifiers = new ModifiersObject();
     private final BodyObject body = new BodyObject();
 
+    private void setAnchor(@NotNull TypedToken<?> anchor) {
+        this.anchor = anchor.strictAs();
+    }
+
     private void setName(@NotNull TypedToken<?> name) {
-        this.name = name.unsafeAs();
+        this.name = name.strictAs();
+    }
+
+    @Override
+    public @NotNull TypedToken<Keyword> anchor() {
+        return anchor;
     }
 
     public @Nullable TypedToken<Simple> name() {
@@ -35,8 +45,10 @@ public class ClassObject implements AstObject, WithModifiers, WithBody {
         var node = (ParserNode)null;
 
         (node = modifiers.parserNode())
-                .thenToken(Keyword.CLASS, NodeModifier.generalAndPreview())
                 .thenToken(
+                        Keyword.CLASS,
+                        NodeModifier.builder().general().preview().tokenConsumer(this::setAnchor).build()
+                ).thenToken(
                         Simple.WORD,
                         NodeModifier.builder().syntaxFail("expected a class name").tokenConsumer(this::setName).build()
                 ).then(body.multilineSubbody(
@@ -49,7 +61,7 @@ public class ClassObject implements AstObject, WithModifiers, WithBody {
 
     @Override
     public String toString() {
-        return "ClassObject{" +
+        return "ClassDeclarationObject{" +
                 "name=" + name +
                 ", modifiers=" + modifiers +
                 ", body=" + body +

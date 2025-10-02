@@ -10,7 +10,7 @@ class StatementObjectTest {
     @Test
     void validNoParenthesisIfStatement() {
         final var context = Utils.parseContextOf("if true {}");
-        final var astObject = new StatementObject(Keyword.IF);
+        final var astObject = new StatementObject<>(Keyword.IF);
 
         Assertions.assertTrue(
                 astObject.parserNode().proceedQueue(context, NodeModifier.general()),
@@ -32,7 +32,7 @@ class StatementObjectTest {
     @Test
     void validIfStatementSingleLineBody() {
         final var context = Utils.parseContextOf("if (true) num = 0\nnum = 1");
-        final var astObject = new StatementObject(Keyword.IF);
+        final var astObject = new StatementObject<>(Keyword.IF);
 
         Assertions.assertTrue(
                 astObject.parserNode().proceedQueue(context, NodeModifier.general()),

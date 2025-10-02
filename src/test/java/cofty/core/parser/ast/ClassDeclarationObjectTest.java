@@ -5,11 +5,11 @@ import cofty.core.parser.node.modifier.NodeModifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-class ClassObjectTest {
+class ClassDeclarationObjectTest {
     @Test
     void validNoBody() {
         final var context = Utils.parseContextOf("public class Test {}");
-        final var astObject = new ClassObject();
+        final var astObject = new ClassDeclarationObject();
 
         Assertions.assertTrue(
                 astObject.parserNode().proceedQueue(context, NodeModifier.general()),
@@ -22,6 +22,7 @@ class ClassObjectTest {
                 "there shouldn't be any error or warning messages"
         );
 
+        Assertions.assertNotNull(astObject.anchor(), "the proceeded class keyword token shouldn't be null");
         Assertions.assertNotNull(astObject.name(), "the proceeded class name shouldn't be null");
 
         Assertions.assertEquals(

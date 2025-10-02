@@ -16,19 +16,24 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class FuncDeclarationObject implements AstObject, WithBody {
+public class FuncDeclarationObject implements AstObject, WithBody, WithAnchor<Keyword> {
+    private TypedToken<Keyword> anchor = null;
     private TypedToken<Simple> name = null, returnableType = null;
     private List<@NotNull VarDeclarationObject> args = null;
 
     private final ModifiersObject modifiers = new ModifiersObject();
     private final BodyObject body = new BodyObject();
 
+    private void setAnchor(@NotNull TypedToken<?> anchor) {
+        this.anchor = anchor.strictAs();
+    }
+
     private void setName(@NotNull TypedToken<?> name) {
-        this.name = name.unsafeAs();
+        this.name = name.strictAs();
     }
 
     private void setReturnableType(@NotNull TypedToken<?> returnableType) {
-        this.returnableType = returnableType.unsafeAs();
+        this.returnableType = returnableType.strictAs();
     }
 
     private void setArgs(@NotNull List<AstObject> args) {
@@ -36,6 +41,11 @@ public class FuncDeclarationObject implements AstObject, WithBody {
             if (!(arg instanceof VarDeclarationObject)) throw new IllegalStateException();
 
         this.args = Cast.unsafe(args);
+    }
+
+    @Override
+    public @NotNull TypedToken<Keyword> anchor() {
+        return anchor;
     }
 
     public @Nullable TypedToken<Simple> name() {
@@ -63,8 +73,10 @@ public class FuncDeclarationObject implements AstObject, WithBody {
         var node = (ParserNode) null;
 
         (node = modifiers.parserNode())
-                .thenToken(Keyword.FUN, NodeModifier.generalAndPreview())
                 .thenToken(
+                        Keyword.FUN,
+                        NodeModifier.builder().general().preview().tokenConsumer(this::setAnchor).build()
+                ).thenToken(
                         Simple.WORD,
                         NodeModifier.builder()
                                 .syntaxFail("expected a function name")

@@ -1,6 +1,8 @@
 package cofty.core.parser.ast.statement;
 
+import cofty.core.lexer.token.TypedToken;
 import cofty.core.lexer.token.type.Keyword;
+import cofty.core.parser.ast.WithAnchor;
 import cofty.type.Representable;
 import cofty.type.exception.SyntaxError;
 import cofty.util.Cast;
@@ -14,11 +16,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
-public class IfStatementsObject implements AstObject {
-    private final StatementObject ifStatement = new StatementObject(Keyword.IF);
+public class IfStatementsObject implements AstObject, WithAnchor<Keyword> {
+    private final StatementObject<Keyword> ifStatement = new StatementObject<>(Keyword.IF);
     private final BodyObject elseBody = new BodyObject();
 
-    private List<@NotNull StatementObject> elseIfStatements = null;
+    private List<@NotNull StatementObject<Keyword>> elseIfStatements = null;
 
     private void setElseIfStatements(@NotNull List<AstObject> elseIfStatements) {
         for (final var statement: elseIfStatements)
@@ -27,7 +29,12 @@ public class IfStatementsObject implements AstObject {
         this.elseIfStatements = Cast.unsafe(elseIfStatements);
     }
 
-    public @NotNull StatementObject ifStatement() {
+    @Override
+    public @NotNull TypedToken<Keyword> anchor() {
+        return ifStatement.anchor();
+    }
+
+    public @NotNull StatementObject<Keyword> ifStatement() {
         return ifStatement;
     }
 
@@ -35,11 +42,11 @@ public class IfStatementsObject implements AstObject {
         return elseBody;
     }
 
-    public @Nullable List<@NotNull StatementObject> elseIfStatements() {
+    public @Nullable List<@NotNull StatementObject<Keyword>> elseIfStatements() {
         return elseIfStatements;
     }
 
-    public @NotNull List<@NotNull StatementObject> elseIfStatementsOrThrow() {
+    public @NotNull List<@NotNull StatementObject<Keyword>> elseIfStatementsOrThrow() {
         return Objects.requireNonNull(elseIfStatements);
     }
 
@@ -53,7 +60,7 @@ public class IfStatementsObject implements AstObject {
                                 .peek()
                                 .astObjectsConsumer(this::setElseIfStatements)
                                 .build()
-                        ).add(() -> new StatementObject(Keyword.ELIF))
+                        ).add(() -> new StatementObject<>(Keyword.ELIF))
                         .build()
         ).joinWith(
                 ParserNode.token(Keyword.ELSE, NodeModifier.peek())

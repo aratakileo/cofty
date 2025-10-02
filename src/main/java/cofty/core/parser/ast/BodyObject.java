@@ -6,7 +6,7 @@ import cofty.core.lexer.token.type.Simple;
 import cofty.type.Representable;
 import cofty.core.parser.ast.func.CallFuncObject;
 import cofty.core.parser.ast.func.FuncDeclarationObject;
-import cofty.core.parser.ast.func.ReturnExpressionObject;
+import cofty.core.parser.ast.func.ReturnStatementObject;
 import cofty.core.parser.ast.statement.IfStatementsObject;
 import cofty.core.parser.node.ParserNode;
 import cofty.core.parser.node.TokenNode;
@@ -60,9 +60,9 @@ public class BodyObject implements AstObject {
                 SetVarValueObject::new,
                 FuncDeclarationObject::new,
                 CallFuncObject::new,
-                ReturnExpressionObject::new,
+                ReturnStatementObject::new,
                 IfStatementsObject::new,
-                ClassObject::new
+                ClassDeclarationObject::new
         );
 
         if (stopper != null)
