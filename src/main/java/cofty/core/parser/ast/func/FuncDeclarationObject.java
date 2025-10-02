@@ -5,7 +5,6 @@ import cofty.core.parser.ast.*;
 import cofty.type.Representable;
 import cofty.type.exception.SyntaxError;
 import cofty.util.Cast;
-import cofty.v3.core.parser.ast.*;
 import cofty.core.parser.node.ParserNode;
 import cofty.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;

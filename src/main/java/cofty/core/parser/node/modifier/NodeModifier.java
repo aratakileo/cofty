@@ -234,6 +234,9 @@ public final class NodeModifier {
             if (!hasAtLeastOneBasicType())
                 throw new IllegalStateException();
 
+            if (shadowPreview && !types.contains(ModifierType.PREVIEW))
+                throw new IllegalStateException();
+
             return new NodeModifier(types, failMessage, modifierConsumer, shadowPreview);
         }
 

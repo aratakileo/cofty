@@ -13,7 +13,7 @@ class BodyObjectTest {
                         """
                         pub let num = 10
                         num = 100
-                        priv fn test() -> nil {}
+                        priv pub fn test() -> nil {}
                         test()
                         return 45
                         if true {}
