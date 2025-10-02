@@ -3,8 +3,7 @@ package cofty.core.parser.ast.value;
 import cofty.Utils;
 import cofty.core.lexer.token.Keyword;
 import cofty.core.lexer.token.TokenType;
-import cofty.v3.core.parser.ast.value.PrimitiveValueObject;
-import cofty.v3.core.parser.node.modifier.NodeModifier;
+import cofty.core.parser.node.modifier.NodeModifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

@@ -6,10 +6,10 @@ import cofty.core.parser.ParseContext;
 import cofty.type.Representable;
 import cofty.type.TextContent;
 import cofty.util.Strings;
-import cofty.v3.core.parser.ast.BodyObject;
-import cofty.v3.core.parser.node.modifier.NodeModifier;
-import cofty.v3.core.semantics.SemanticAnalyzer;
-import cofty.v3.core.semantics.SemanticsContext;
+import cofty.core.parser.ast.BodyObject;
+import cofty.core.parser.node.modifier.NodeModifier;
+import cofty.core.semantics.SemanticAnalyzer;
+import cofty.core.semantics.SemanticsContext;
 
 public class Cofty {
     public static void main(String[] args) {

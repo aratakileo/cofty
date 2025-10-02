@@ -1,8 +1,7 @@
 package cofty.core.parser.ast.func;
 
 import cofty.Utils;
-import cofty.v3.core.parser.ast.func.FuncDeclarationObject;
-import cofty.v3.core.parser.node.modifier.NodeModifier;
+import cofty.core.parser.node.modifier.NodeModifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
