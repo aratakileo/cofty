@@ -15,7 +15,7 @@ public class ModifiersObject implements AstObject {
     private final ArrayList<@NotNull TypedToken<Modifier>> modifiers = new ArrayList<>();
 
     private void addModifier(@NotNull TypedToken<?> modifierToken) {
-        modifiers.add(modifierToken.unsafeAs());
+        modifiers.add(modifierToken.strictAs());
     }
 
     public @NotNull List<@NotNull TypedToken<Modifier>> modifierTokens() {
@@ -24,10 +24,7 @@ public class ModifiersObject implements AstObject {
 
     @Override
     public @NotNull ParserNode parserNode() {
-        final var nodes = Stream.of(
-                Modifier.PUBLIC,
-                Modifier.PRIVATE
-        ).map(
+        final var nodes = Stream.of(Modifier.values()).map(
                 type -> ParserNode.token(
                         type,
                         NodeModifier.builder()
