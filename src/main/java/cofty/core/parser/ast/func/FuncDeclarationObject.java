@@ -1,6 +1,10 @@
 package cofty.core.parser.ast.func;
 
 import cofty.core.lexer.token.*;
+import cofty.core.lexer.token.type.Brackets;
+import cofty.core.lexer.token.type.Keyword;
+import cofty.core.lexer.token.type.Separator;
+import cofty.core.lexer.token.type.Simple;
 import cofty.core.parser.ast.*;
 import cofty.type.Representable;
 import cofty.type.exception.SyntaxError;
@@ -13,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class FuncDeclarationObject implements AstObject, WithBody {
-    private TypedToken<TokenType> name = null, returnableType = null;
+    private TypedToken<Simple> name = null, returnableType = null;
     private List<@NotNull VarDeclarationObject> args = null;
 
     private final ModifiersObject modifiers = new ModifiersObject();
@@ -34,7 +38,7 @@ public class FuncDeclarationObject implements AstObject, WithBody {
         this.args = Cast.unsafe(args);
     }
 
-    public @Nullable TypedToken<TokenType> name() {
+    public @Nullable TypedToken<Simple> name() {
         return name;
     }
 
@@ -42,7 +46,7 @@ public class FuncDeclarationObject implements AstObject, WithBody {
         return modifiers;
     }
 
-    public @Nullable TypedToken<TokenType> returnableType() {
+    public @Nullable TypedToken<Simple> returnableType() {
         return returnableType;
     }
 
@@ -59,9 +63,9 @@ public class FuncDeclarationObject implements AstObject, WithBody {
         var node = (ParserNode) null;
 
         (node = modifiers.parserNode())
-                .thenToken(Keyword.FN, NodeModifier.generalAndPreview())
+                .thenToken(Keyword.FUN, NodeModifier.generalAndPreview())
                 .thenToken(
-                        TokenType.ID,
+                        Simple.WORD,
                         NodeModifier.builder()
                                 .syntaxFail("expected a function name")
                                 .tokenConsumer(this::setName)
@@ -88,7 +92,7 @@ public class FuncDeclarationObject implements AstObject, WithBody {
                         NodeModifier.syntaxFail("expected an end of function arguments description")
                 ).thenToken(Separator.ARROW, NodeModifier.peek())
                 .thenToken(
-                        TokenType.ID,
+                        Simple.WORD,
                         NodeModifier.builder()
                                 .depended()
                                 .syntaxFail("expected a function returnable type")

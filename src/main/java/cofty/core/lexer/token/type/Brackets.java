@@ -1,9 +1,9 @@
-package cofty.core.lexer.token;
+package cofty.core.lexer.token.type;
 
 import cofty.type.Representable;
 import org.jetbrains.annotations.NotNull;
 
-public enum Brackets implements ITokenType, Representable {
+public enum Brackets implements TokenType, Representable {
     ROUND_OPEN("("),
     ROUND_CLOSE(")"),
     CURVE_OPEN("{"),
@@ -16,8 +16,8 @@ public enum Brackets implements ITokenType, Representable {
     }
 
     @Override
-    public @NotNull TokenType type() {
-        return TokenType.BRACKETS;
+    public @NotNull Simple type() {
+        return Simple.BRACKETS;
     }
 
     @Override

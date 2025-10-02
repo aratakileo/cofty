@@ -1,9 +1,9 @@
-package cofty.core.lexer.token;
+package cofty.core.lexer.token.type;
 
 import cofty.type.Representable;
 import org.jetbrains.annotations.NotNull;
 
-public enum Operator implements ITokenType, Representable {
+public enum Operator implements TokenType, Representable {
     ASSIGN("=");
 
     public final String op;
@@ -13,8 +13,8 @@ public enum Operator implements ITokenType, Representable {
     }
 
     @Override
-    public @NotNull TokenType type() {
-        return TokenType.OP;
+    public @NotNull Simple type() {
+        return Simple.OP;
     }
 
     @Override

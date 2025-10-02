@@ -1,6 +1,7 @@
 package cofty.core.lexer;
 
 import cofty.core.lexer.token.*;
+import cofty.core.lexer.token.type.*;
 import cofty.core.message.MessageHandler;
 import cofty.type.TextContent;
 import org.junit.jupiter.api.Assertions;
@@ -16,28 +17,36 @@ class LexerTest {
     }
 
     @Test
+    void validKeywordAndIdStartsWithKeyword() {
+        final var lexer = lexerOfText("var variable");
+        final var tokens = lexer.parse();
+
+        Assertions.assertEquals(2, tokens.size());
+    }
+
+    @Test
     void isIntegerParsedValid() {
-        Assertions.assertEquals(TokenType.INT, firstToken("_1_4").type);
+        Assertions.assertEquals(Simple.INT, firstToken("_1_4").type);
     }
 
     @Test
     void isDoubleParsedValid() {
-        Assertions.assertEquals(TokenType.DOUBLE, firstToken("1.").type);
+        Assertions.assertEquals(Simple.DOUBLE, firstToken("1.").type);
     }
 
     @Test
     void isStrParsedValid() {
-        Assertions.assertEquals(TokenType.STR, firstToken("'Hello world!\\n'").type);
+        Assertions.assertEquals(Simple.STR, firstToken("'Hello world!\\n'").type);
     }
 
     @Test
     void isIdParsedValid() {
-        Assertions.assertEquals(TokenType.ID, firstToken("s_3").type);
+        Assertions.assertEquals(Simple.WORD, firstToken("s_3").type);
     }
 
     @Test
     void isKeywordParsedValid() {
-        Assertions.assertEquals(Keyword.FN, firstToken("fn").type);
+        Assertions.assertEquals(Keyword.FUN, firstToken("fun").type);
     }
 
     @Test
@@ -66,9 +75,9 @@ class LexerTest {
                 "the result of two new lines and spaces should be one new line token");
 
         Assertions.assertEquals(
-                TokenType.NEWLINE,
+                Simple.NEWLINE,
                 tokens.get(0).type,
-                "the resulted token type should be " + TokenType.NEWLINE.toReprString()
+                "the resulted token type should be " + Simple.NEWLINE.toReprString()
         );
     }
 

@@ -1,7 +1,7 @@
 package cofty.core.parser.ast;
 
-import cofty.core.lexer.token.Keyword;
-import cofty.core.lexer.token.TokenType;
+import cofty.core.lexer.token.type.Keyword;
+import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.TypedToken;
 import cofty.core.parser.node.ParserNode;
 import cofty.core.parser.node.modifier.NodeModifier;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ClassObject implements AstObject, WithModifiers, WithBody {
-    private TypedToken<TokenType> name = null;
+    private TypedToken<Simple> name = null;
 
     private final ModifiersObject modifiers = new ModifiersObject();
     private final BodyObject body = new BodyObject();
@@ -18,7 +18,7 @@ public class ClassObject implements AstObject, WithModifiers, WithBody {
         this.name = name.unsafeAs();
     }
 
-    public @Nullable TypedToken<TokenType> name() {
+    public @Nullable TypedToken<Simple> name() {
         return name;
     }
 
@@ -35,9 +35,9 @@ public class ClassObject implements AstObject, WithModifiers, WithBody {
         var node = (ParserNode)null;
 
         (node = modifiers.parserNode())
-                .thenToken(Keyword.CLS, NodeModifier.generalAndPreview())
+                .thenToken(Keyword.CLASS, NodeModifier.generalAndPreview())
                 .thenToken(
-                        TokenType.ID,
+                        Simple.WORD,
                         NodeModifier.builder().syntaxFail("expected a class name").tokenConsumer(this::setName).build()
                 ).then(body.multilineSubbody(
                         NodeModifier.syntaxFail("expected a class body description"),

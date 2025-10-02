@@ -1,6 +1,6 @@
 package cofty.core.parser.node;
 
-import cofty.core.lexer.token.ITokenType;
+import cofty.core.lexer.token.type.TokenType;
 import cofty.core.parser.ParseContext;
 import cofty.util.Cast;
 import cofty.core.parser.node.modifier.ModifierType;
@@ -52,11 +52,11 @@ public interface ParserNode {
         return this;
     }
 
-    default @NotNull TokenNode thenToken(@NotNull ITokenType type, @NotNull NodeModifier modifier) {
+    default @NotNull TokenNode thenToken(@NotNull TokenType type, @NotNull NodeModifier modifier) {
         return then(ParserNode.token(type, modifier));
     }
 
-    default @NotNull ParserNode andToken(@NotNull ITokenType type, @NotNull NodeModifier modifier) {
+    default @NotNull ParserNode andToken(@NotNull TokenType type, @NotNull NodeModifier modifier) {
         then(ParserNode.token(type, modifier));
         return this;
     }
@@ -96,7 +96,7 @@ public interface ParserNode {
         return new ContainerNode(containable, modifier);
     }
 
-    static @NotNull TokenNode token(@NotNull ITokenType tokenType, @NotNull NodeModifier modifier) {
+    static @NotNull TokenNode token(@NotNull TokenType tokenType, @NotNull NodeModifier modifier) {
         return new TokenNode(tokenType, modifier);
     }
 

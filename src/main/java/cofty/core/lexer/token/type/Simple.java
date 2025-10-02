@@ -1,4 +1,4 @@
-package cofty.core.lexer.token;
+package cofty.core.lexer.token.type;
 
 import cofty.type.Representable;
 import org.jetbrains.annotations.NotNull;
@@ -6,30 +6,30 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.MatchResult;
 
-public enum TokenType implements Representable, ITokenType {
+public enum Simple implements Representable, TokenType {
     DOUBLE,
     INT,
     STR,
     OP,
-    ID,
     KW,
     SEP,
+    WORD,
     SKIP,
     NEWLINE,
     BRACKETS,
     MISMATCH;
 
-    public static @NotNull ITokenType valueOf(@NotNull MatchResult matchResult) {
+    public static @NotNull TokenType valueOf(@NotNull MatchResult matchResult) {
         for (final var namedGroup: matchResult.namedGroups().keySet()) {
             final var matched = matchResult.group(namedGroup);
 
             if (matched != null) {
-                final var tokenType = TokenType.valueOf(namedGroup);
+                final var tokenType = Simple.valueOf(namedGroup);
 
                 return switch (tokenType) {
                     case OP -> Operator.of(matched);
                     case SEP -> Separator.of(matched);
-                    case KW -> Modifier.is(matched) ? Modifier.of(matched) : Keyword.of(matched);
+                    case WORD -> Keyword.is(matched) ? Keyword.of(matched) : WORD;
                     case BRACKETS -> Brackets.of(matched);
                     default -> tokenType;
                 };
@@ -40,11 +40,11 @@ public enum TokenType implements Representable, ITokenType {
     }
 
     @Override
-    public boolean equals(@NotNull ITokenType itype) {
-        if (itype instanceof TokenType tokenType)
-            return super.equals(tokenType);
+    public boolean equals(@NotNull TokenType itype) {
+        if (itype instanceof Simple simple)
+            return super.equals(simple);
 
-        return ITokenType.super.equals(itype);
+        return TokenType.super.equals(itype);
     }
 
     @Override
@@ -53,7 +53,7 @@ public enum TokenType implements Representable, ITokenType {
     }
 
     @Override
-    public @NotNull TokenType type() {
+    public @NotNull Simple type() {
         return this;
     }
 

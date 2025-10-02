@@ -1,7 +1,7 @@
 package cofty.core.parser.ast.value;
 
-import cofty.core.lexer.token.Keyword;
-import cofty.core.lexer.token.TokenType;
+import cofty.core.lexer.token.type.Keyword;
+import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.TypedToken;
 import cofty.core.parser.ast.AstObject;
 import cofty.core.parser.node.ParserNode;
@@ -25,10 +25,10 @@ public class PrimitiveValueObject implements AstObject {
     @Override
     public @NotNull ParserNode parserNode() {
         final var nodes = Stream.of(
-                TokenType.INT,
-                TokenType.ID,
-                TokenType.DOUBLE,
-                TokenType.STR,
+                Simple.INT,
+                Simple.WORD,
+                Simple.DOUBLE,
+                Simple.STR,
                 Keyword.TRUE,
                 Keyword.FALSE
         ).map(

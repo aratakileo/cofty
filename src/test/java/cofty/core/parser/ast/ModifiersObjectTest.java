@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 class ModifiersObjectTest {
     @Test
     void validAllModifiers() {
-        final var expression = "pub priv";
+        final var expression = "public private";
         final var context = Utils.parseContextOf(expression);
         final var astObject = new ModifiersObject();
 

@@ -1,6 +1,9 @@
 package cofty.core.parser.ast.func;
 
 import cofty.core.lexer.token.*;
+import cofty.core.lexer.token.type.Brackets;
+import cofty.core.lexer.token.type.Separator;
+import cofty.core.lexer.token.type.Simple;
 import cofty.type.exception.SyntaxError;
 import cofty.util.Cast;
 import cofty.core.parser.ast.AstObject;
@@ -14,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class CallFuncObject implements AstObject {
-    private TypedToken<TokenType> name = null;
+    private TypedToken<Simple> name = null;
     private List<@NotNull ValueExpressionObject> args = null;
 
     private void setName(@NotNull TypedToken<?> name) {
@@ -28,7 +31,7 @@ public class CallFuncObject implements AstObject {
         this.args = Cast.unsafe(args);
     }
 
-    public @Nullable TypedToken<TokenType> name() {
+    public @Nullable TypedToken<Simple> name() {
         return name;
     }
 
@@ -40,7 +43,7 @@ public class CallFuncObject implements AstObject {
     public @NotNull ParserNode parserNode() {
         var node = (TokenNode)null;
 
-        (node = ParserNode.token(TokenType.ID, NodeModifier.builder().general().tokenConsumer(this::setName).build()))
+        (node = ParserNode.token(Simple.WORD, NodeModifier.builder().general().tokenConsumer(this::setName).build()))
                 .thenToken(Brackets.ROUND_OPEN, NodeModifier.generalAndPreview())
                 .thenRepeatableQueueBuilder(NodeModifier.builder().peek().astObjectsConsumer(this::setArgs).build())
                     .setSeparator(ParserNode.token(

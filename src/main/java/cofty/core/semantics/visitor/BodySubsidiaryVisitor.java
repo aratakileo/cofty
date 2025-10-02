@@ -1,7 +1,7 @@
 package cofty.core.semantics.visitor;
 
-import cofty.core.lexer.token.ITokenType;
-import cofty.core.lexer.token.Modifier;
+import cofty.core.lexer.token.type.TokenType;
+import cofty.core.lexer.token.type.Modifier;
 import cofty.core.lexer.token.TypedToken;
 import cofty.core.parser.ast.AstObject;
 import cofty.core.parser.ast.WithBody;
@@ -41,7 +41,7 @@ public interface BodySubsidiaryVisitor {
         }
 
         var result = true;
-        final var modifiersBuffer = new HashSet<ITokenType>();
+        final var modifiersBuffer = new HashSet<TokenType>();
 
         for (final var token: astObject.modifiers().modifierTokens()) {
             final var type = token.type;
@@ -107,7 +107,7 @@ public interface BodySubsidiaryVisitor {
 
     default boolean checkIfAccessModifiers(
             @NotNull SemanticsContext context,
-            @NotNull HashSet<ITokenType> buffer,
+            @NotNull HashSet<TokenType> buffer,
             @NotNull TypedToken<Modifier> token
     ) {
         if (!token.type.isAccessModifier()) return true;
@@ -117,7 +117,7 @@ public interface BodySubsidiaryVisitor {
             return false;
         }
 
-        if (buffer.contains(Modifier.PRIV) || buffer.contains(Modifier.PUB)) {
+        if (buffer.contains(Modifier.PRIVATE) || buffer.contains(Modifier.PUBLIC)) {
             context.CRITICAL.putSyntaxErr(
                     "the access modifier has already been previously specified earlier",
                     token

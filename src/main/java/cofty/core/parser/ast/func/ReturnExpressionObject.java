@@ -1,6 +1,6 @@
 package cofty.core.parser.ast.func;
 
-import cofty.core.lexer.token.Keyword;
+import cofty.core.lexer.token.type.Keyword;
 import cofty.core.parser.ast.AstObject;
 import cofty.core.parser.ast.value.ValueExpressionObject;
 import cofty.core.parser.node.ParserNode;

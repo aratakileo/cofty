@@ -1,6 +1,10 @@
 package cofty.core.parser.ast;
 
 import cofty.core.lexer.token.*;
+import cofty.core.lexer.token.type.Keyword;
+import cofty.core.lexer.token.type.Operator;
+import cofty.core.lexer.token.type.Separator;
+import cofty.core.lexer.token.type.Simple;
 import cofty.core.parser.ast.value.ValueExpressionObject;
 import cofty.core.parser.node.ParserNode;
 import cofty.core.parser.node.modifier.NodeModifier;
@@ -10,9 +14,9 @@ import org.jetbrains.annotations.Nullable;
 public class VarDeclarationObject implements AstObject, WithModifiers {
     private final boolean isFunctionArgument;
 
-    private TypedToken<TokenType> name = null;
+    private TypedToken<Simple> name = null;
     private TypedToken<Keyword> mutable = null;
-    private TypedToken<TokenType> explicitlySpecifiedType = null;
+    private TypedToken<Simple> explicitlySpecifiedType = null;
 
     private final ModifiersObject modifiers = new ModifiersObject();
     private final ValueExpressionObject value = new ValueExpressionObject();
@@ -33,7 +37,7 @@ public class VarDeclarationObject implements AstObject, WithModifiers {
         this.explicitlySpecifiedType = explicitlySpecifiedType.unsafeAs();
     }
 
-    public @Nullable TypedToken<TokenType> name() {
+    public @Nullable TypedToken<Simple> name() {
         return name;
     }
 
@@ -41,7 +45,7 @@ public class VarDeclarationObject implements AstObject, WithModifiers {
         return mutable;
     }
 
-    public @Nullable TypedToken<TokenType> explicitlySpecifiedType() {
+    public @Nullable TypedToken<Simple> explicitlySpecifiedType() {
         return explicitlySpecifiedType;
     }
 
@@ -55,7 +59,7 @@ public class VarDeclarationObject implements AstObject, WithModifiers {
 
     private @NotNull ParserNode typeDeclarationNode(@NotNull NodeModifier firstModifier) {
         return ParserNode.token(Separator.COLON, firstModifier).andToken(
-                TokenType.ID,
+                Simple.WORD,
                 NodeModifier.builder()
                         .depended()
                         .syntaxFail("expected a variable value type")
@@ -89,10 +93,10 @@ public class VarDeclarationObject implements AstObject, WithModifiers {
 
         if (isFunctionArgument)
             variableNameNodeModifierBuilder.preview();
-        else node.thenToken(Keyword.LET, NodeModifier.generalAndPreview()).then(mutNode);
+        else node.thenToken(Keyword.VAR, NodeModifier.generalAndPreview()).then(mutNode);
 
         (isFunctionArgument ? node : node.nextOrThrow().nextOrThrow()).thenToken(
-                TokenType.ID,
+                Simple.WORD,
                 variableNameNodeModifierBuilder.build()
         ).thenAnyOf(
                 NodeModifier.syntaxFail("expected explicit type declaration or value assignment"),

@@ -1,6 +1,6 @@
 package cofty.core.parser.ast.statement;
 
-import cofty.core.lexer.token.Keyword;
+import cofty.core.lexer.token.type.Keyword;
 import cofty.type.Representable;
 import cofty.type.exception.SyntaxError;
 import cofty.util.Cast;

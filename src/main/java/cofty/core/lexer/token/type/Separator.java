@@ -1,9 +1,9 @@
-package cofty.core.lexer.token;
+package cofty.core.lexer.token.type;
 
 import cofty.type.Representable;
 import org.jetbrains.annotations.NotNull;
 
-public enum Separator implements ITokenType, Representable {
+public enum Separator implements TokenType, Representable {
     DOT("."),
     COLON(":"),
     COMMA(","),
@@ -16,8 +16,8 @@ public enum Separator implements ITokenType, Representable {
     }
 
     @Override
-    public @NotNull TokenType type() {
-        return TokenType.SEP;
+    public @NotNull Simple type() {
+        return Simple.SEP;
     }
 
     @Override

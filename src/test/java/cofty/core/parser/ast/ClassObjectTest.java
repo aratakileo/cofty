@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 class ClassObjectTest {
     @Test
     void validNoBody() {
-        final var context = Utils.parseContextOf("pub cls Test {}");
+        final var context = Utils.parseContextOf("public class Test {}");
         final var astObject = new ClassObject();
 
         Assertions.assertTrue(

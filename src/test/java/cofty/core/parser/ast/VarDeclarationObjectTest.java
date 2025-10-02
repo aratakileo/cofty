@@ -8,12 +8,12 @@ import org.junit.jupiter.api.Test;
 class VarDeclarationObjectTest {
     @Test
     void validFullGeneral() {
-        final var context = Utils.parseContextOf("pub let mut num: int = _3_000_000");
+        final var context = Utils.parseContextOf("public var mut num: int = _3_000_000");
         final var astObject = new VarDeclarationObject(false);
 
         Assertions.assertTrue(
                 astObject.parserNode().proceedQueue(context, NodeModifier.general()),
-                "`pub let num: int = _3_000_000` should be proceeded"
+                "`public var num: int = _3_000_000` should be proceeded"
         );
 
         Assertions.assertEquals(
@@ -114,12 +114,12 @@ class VarDeclarationObjectTest {
 
     @Test
     void noTypeDeclarationNoValue() {
-        final var context = Utils.parseContextOf("let variable");
+        final var context = Utils.parseContextOf("var variable");
         final var astObject = new VarDeclarationObject(false);
 
         Assertions.assertFalse(
                 astObject.parserNode().proceedQueue(context, NodeModifier.general()),
-                "`let variable` shouldn't be proceeded"
+                "`var variable` shouldn't be proceeded"
         );
 
         Assertions.assertEquals(
@@ -136,12 +136,12 @@ class VarDeclarationObjectTest {
 
     @Test
     void validPreview() {
-        final var context = Utils.parseContextOf("pub let");
+        final var context = Utils.parseContextOf("public var");
         final var astObject = new VarDeclarationObject(false);
 
         Assertions.assertTrue(
                 astObject.parserNode().proceedQueue(context, NodeModifier.generalAndPreview()),
-                "`pub let` should be previewed"
+                "`public var` should be previewed"
         );
     }
 }

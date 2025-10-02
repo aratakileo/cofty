@@ -1,8 +1,8 @@
 package cofty.core.parser.ast.value;
 
 import cofty.Utils;
-import cofty.core.lexer.token.Keyword;
-import cofty.core.lexer.token.TokenType;
+import cofty.core.lexer.token.type.Keyword;
+import cofty.core.lexer.token.type.Simple;
 import cofty.core.parser.node.modifier.NodeModifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -26,7 +26,7 @@ class PrimitiveValueObjectTest {
         );
 
         Assertions.assertNotNull(astObject.value(), "primitive value shouldn't be null");
-        Assertions.assertEquals(TokenType.INT, astObject.value().type, "primitive value should be int value");
+        Assertions.assertEquals(Simple.INT, astObject.value().type, "primitive value should be int value");
 
         Assertions.assertEquals(
                 value,
@@ -55,7 +55,7 @@ class PrimitiveValueObjectTest {
         Assertions.assertNotNull(astObject.value(), "primitive value shouldn't be null");
 
         Assertions.assertEquals(
-                TokenType.DOUBLE,
+                Simple.DOUBLE,
                 astObject.value().type,
                 "primitive value should be double value"
         );
@@ -87,7 +87,7 @@ class PrimitiveValueObjectTest {
         Assertions.assertNotNull(astObject.value(), "primitive value shouldn't be null");
 
         Assertions.assertEquals(
-                TokenType.STR,
+                Simple.STR,
                 astObject.value().type,
                 "primitive value should be str value"
         );
@@ -151,7 +151,7 @@ class PrimitiveValueObjectTest {
         Assertions.assertNotNull(astObject.value(), "primitive value shouldn't be null");
 
         Assertions.assertEquals(
-                TokenType.ID,
+                Simple.WORD,
                 astObject.value().type,
                 "primitive value should be id value"
         );

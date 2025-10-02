@@ -1,7 +1,7 @@
 package cofty.core.parser.ast;
 
 import cofty.Utils;
-import cofty.core.lexer.token.Brackets;
+import cofty.core.lexer.token.type.Brackets;
 import cofty.core.parser.node.modifier.NodeModifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -11,13 +11,13 @@ class BodyObjectTest {
     void validBody() {
         final var context = Utils.parseContextOf(
                         """
-                        pub let num = 10
+                        public var num = 10
                         num = 100
-                        priv pub fn test() -> nil {}
+                        private public fun test() -> nil {}
                         test()
                         return 45
                         if true {}
-                        priv cls Test {}
+                        private class Test {}
                         """
         );
 
@@ -45,14 +45,14 @@ class BodyObjectTest {
     void validBodyWithStopper() {
         final var context = Utils.parseContextOf(
                         """
-                        let num = 10
+                        var num = 10
                         num = 100
-                        fn test() -> nil {}
+                        fun test() -> nil {}
                         test()
                         return 45
                         }
                         
-                        let value = 345
+                        var value = 345
                         """
         );
 
@@ -78,7 +78,7 @@ class BodyObjectTest {
 
     @Test
     void twoExpressionsOnOneLineFail() {
-        final var context = Utils.parseContextOf("let num = 10 fn test() -> nil {}");
+        final var context = Utils.parseContextOf("var num = 10 fun test() -> nil {}");
 
         final var astObject = new BodyObject();
 

@@ -1,6 +1,6 @@
 package cofty.core.parser.ast;
 
-import cofty.core.lexer.token.Modifier;
+import cofty.core.lexer.token.type.Modifier;
 import cofty.core.lexer.token.TypedToken;
 import cofty.type.Representable;
 import cofty.core.parser.node.ParserNode;
@@ -25,8 +25,8 @@ public class ModifiersObject implements AstObject {
     @Override
     public @NotNull ParserNode parserNode() {
         final var nodes = Stream.of(
-                Modifier.PUB,
-                Modifier.PRIV
+                Modifier.PUBLIC,
+                Modifier.PRIVATE
         ).map(
                 type -> ParserNode.token(
                         type,

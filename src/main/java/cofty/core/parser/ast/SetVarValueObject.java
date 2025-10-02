@@ -1,7 +1,7 @@
 package cofty.core.parser.ast;
 
-import cofty.core.lexer.token.Operator;
-import cofty.core.lexer.token.TokenType;
+import cofty.core.lexer.token.type.Operator;
+import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.TypedToken;
 import cofty.type.Representable;
 import cofty.core.parser.ast.value.ValueExpressionObject;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SetVarValueObject implements AstObject {
-    private TypedToken<TokenType> name = null;
+    private TypedToken<Simple> name = null;
 
     private final ValueExpressionObject value = new ValueExpressionObject();
 
@@ -24,7 +24,7 @@ public class SetVarValueObject implements AstObject {
         return value;
     }
 
-    public @Nullable TypedToken<TokenType> name() {
+    public @Nullable TypedToken<Simple> name() {
         return name;
     }
 
@@ -32,7 +32,7 @@ public class SetVarValueObject implements AstObject {
     public @NotNull ParserNode parserNode() {
         var node = (TokenNode)null;
 
-        (node = ParserNode.token(TokenType.ID, NodeModifier.builder().general().tokenConsumer(this::setName).build()))
+        (node = ParserNode.token(Simple.WORD, NodeModifier.builder().general().tokenConsumer(this::setName).build()))
                 .thenToken(Operator.ASSIGN, NodeModifier.generalAndPreview())
                 .then(
                         value.parserNode(),

@@ -1,20 +1,19 @@
-package cofty.core.lexer.token;
+package cofty.core.lexer.token.type;
 
-import cofty.type.Containable;
 import cofty.type.Representable;
 import org.jetbrains.annotations.NotNull;
 
-public enum Modifier implements ITokenType, Representable {
-    PUB,
-    PRIV;
+public enum Modifier implements TokenType, Representable {
+    PUBLIC,
+    PRIVATE;
 
     public boolean isAccessModifier() {
-        return isIn(PUB, PRIV);
+        return isIn(PUBLIC, PRIVATE);
     }
 
     @Override
-    public @NotNull TokenType type() {
-        return TokenType.KW;
+    public @NotNull Simple type() {
+        return Simple.KW;
     }
 
     @Override
@@ -36,6 +35,6 @@ public enum Modifier implements ITokenType, Representable {
     }
 
     public static boolean is(@NotNull String kw) {
-        return kw.equals("pub") || kw.equals("priv");
+        return kw.equals("public") || kw.equals("private");
     }
 }

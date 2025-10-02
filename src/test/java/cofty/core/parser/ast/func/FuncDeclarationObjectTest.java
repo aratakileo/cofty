@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 class FuncDeclarationObjectTest {
     @Test
     void validNoArgumentsNoReturnableTypeNoBody() {
-        final var context = Utils.parseContextOf("fn test() {}");
+        final var context = Utils.parseContextOf("fun test() {}");
         final var astObject = new FuncDeclarationObject();
 
         Assertions.assertTrue(
@@ -33,7 +33,7 @@ class FuncDeclarationObjectTest {
 
     @Test
     void validOneArgument() {
-        final var context = Utils.parseContextOf("fn test(argument: int) {}");
+        final var context = Utils.parseContextOf("fun test(argument: int) {}");
         final var astObject = new FuncDeclarationObject();
 
         Assertions.assertTrue(
@@ -58,7 +58,7 @@ class FuncDeclarationObjectTest {
 
     @Test
     void validReturnableTypeDeclaration() {
-        final var context = Utils.parseContextOf("fn test() -> nil {}");
+        final var context = Utils.parseContextOf("fun test() -> nil {}");
         final var astObject = new FuncDeclarationObject();
 
         Assertions.assertTrue(

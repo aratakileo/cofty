@@ -1,6 +1,6 @@
 package cofty.core.parser;
 
-import cofty.core.lexer.token.TokenType;
+import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.TypedToken;
 import cofty.core.message.MessageHandler;
 import cofty.core.message.channel.ParserMessagesChannel;
@@ -67,7 +67,7 @@ public class ParseContext implements QueueIterator<TypedToken<?>> {
     }
 
     public boolean hasNonNewLineCurrent() {
-        return hasCurrent() && !currentOrThrow().type.equals(TokenType.NEWLINE) && !isNewLineSkipped;
+        return hasCurrent() && !currentOrThrow().type.equals(Simple.NEWLINE) && !isNewLineSkipped;
     }
 
     @Override
@@ -86,7 +86,7 @@ public class ParseContext implements QueueIterator<TypedToken<?>> {
     }
 
     public void skipNewLine() {
-        if (!hasCurrent() || !currentOrThrow().type.equals(TokenType.NEWLINE))
+        if (!hasCurrent() || !currentOrThrow().type.equals(Simple.NEWLINE))
             throw new IllegalStateException();
 
         goNext();

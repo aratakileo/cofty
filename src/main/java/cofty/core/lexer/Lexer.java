@@ -1,6 +1,9 @@
 package cofty.core.lexer;
 
 import cofty.core.lexer.token.*;
+import cofty.core.lexer.token.type.Keyword;
+import cofty.core.lexer.token.type.Modifier;
+import cofty.core.lexer.token.type.Simple;
 import cofty.core.message.MessageBuilder;
 import cofty.core.message.MessageHandler;
 import cofty.type.TextContent;
@@ -31,11 +34,11 @@ public class Lexer {
         var prevToken = (AnyToken) null;
 
         for (final var matchResult: matcher.results().toList()) {
-            final var tokenType = TokenType.valueOf(matchResult);
+            final var tokenType = Simple.valueOf(matchResult);
             final var token = AnyToken.build(matchResult, tokenType);
 
-            if (prevToken != null && prevToken.type.equals(TokenType.MISMATCH)) {
-                if (token.type.equals(TokenType.MISMATCH)) {
+            if (prevToken != null && prevToken.type.equals(Simple.MISMATCH)) {
+                if (token.type.equals(Simple.MISMATCH)) {
                     prevToken = (AnyToken) prevToken.merge(token);
                     continue;
                 }
@@ -43,13 +46,13 @@ public class Lexer {
                 showSyntaxError(prevToken);
             }
 
-            if (!tokenType.isIn(TokenType.SKIP, TokenType.MISMATCH))
+            if (!tokenType.isIn(Simple.SKIP, Simple.MISMATCH))
                 tokens.add(token);
 
             prevToken = token;
         }
 
-        if (prevToken != null && prevToken.type.equals(TokenType.MISMATCH))
+        if (prevToken != null && prevToken.type.equals(Simple.MISMATCH))
             showSyntaxError(prevToken);
 
         return tokens;
@@ -62,32 +65,21 @@ public class Lexer {
     static {
         var patternTexts = new ArrayList<String>();
 
-        final var keywordsRegex = String.join(
-                "|",
-                Arrays.stream(Keyword.values()).map(val -> val.name().toLowerCase()).toList()
-        );
-
-        final var modifiersRegex = String.join(
-                "|",
-                Arrays.stream(Modifier.values()).map(val -> val.name().toLowerCase()).toList()
-        );
-
-        final var patterns = new LinkedHashMap<TokenType, String>();
-        patterns.put(TokenType.STR, "'(?:\\\\.|[^'])*'|\"(?:\\\\.|[^\"])*\"");
-        patterns.put(TokenType.DOUBLE, "_*\\d+[\\d_]*(?:\\.[\\d_]*|[dD])");
-        patterns.put(TokenType.INT, "_*\\d+[\\d_]*");
-        patterns.put(TokenType.KW, keywordsRegex + '|' + modifiersRegex);
-        patterns.put(TokenType.ID, "(?!_*\\d+)[A-Za-z\\d_]+");
-        patterns.put(TokenType.OP, "=");
-        patterns.put(TokenType.SEP, ":|\\.|,|->");
-        patterns.put(TokenType.BRACKETS, "\\(|\\)|\\{|\\}");
+        final var patterns = new LinkedHashMap<Simple, String>();
+        patterns.put(Simple.STR, "'(?:\\\\.|[^'])*'|\"(?:\\\\.|[^\"])*\"");
+        patterns.put(Simple.DOUBLE, "_*\\d+[\\d_]*(?:\\.[\\d_]*|[dD])");
+        patterns.put(Simple.INT, "_*\\d+[\\d_]*");
+        patterns.put(Simple.WORD, "(?!_*\\d+)[A-Za-z\\d_]+");
+        patterns.put(Simple.OP, "=");
+        patterns.put(Simple.SEP, ":|\\.|,|->");
+        patterns.put(Simple.BRACKETS, "\\(|\\)|\\{|\\}");
 
         // [ \t]* - to avoid NEWLINE token splitting
-        patterns.put(TokenType.NEWLINE, "([ \t]*\n[ \t]*)+");
+        patterns.put(Simple.NEWLINE, "([ \t]*\n[ \t]*)+");
 
         // [ \t] instead of \\s to avoid absorption NEWLINE token by SKIP token
-        patterns.put(TokenType.SKIP, "[ \t]+");
-        patterns.put(TokenType.MISMATCH, ".");
+        patterns.put(Simple.SKIP, "[ \t]+");
+        patterns.put(Simple.MISMATCH, ".");
 
         for (var pattern: patterns.entrySet())
             patternTexts.add(String.format("(?<%s>%s)", pattern.getKey().name(), pattern.getValue()));

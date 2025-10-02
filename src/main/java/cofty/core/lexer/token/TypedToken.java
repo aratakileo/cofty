@@ -1,10 +1,11 @@
 package cofty.core.lexer.token;
 
+import cofty.core.lexer.token.type.TokenType;
 import cofty.type.Representable;
 import cofty.util.Cast;
 import org.jetbrains.annotations.NotNull;
 
-public class TypedToken<T extends ITokenType> {
+public class TypedToken<T extends TokenType> {
     public final T type;
     public final String content;
     public final int start, end;
@@ -28,7 +29,7 @@ public class TypedToken<T extends ITokenType> {
         );
     }
 
-    public <_T extends ITokenType> @NotNull TypedToken<_T> unsafeAs() {
+    public <_T extends TokenType> @NotNull TypedToken<_T> unsafeAs() {
         return Cast.unsafe(this);
     }
 

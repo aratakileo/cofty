@@ -1,7 +1,7 @@
 package cofty.v2.core.semantics;
 
 import cofty.core.lexer.token.AnyToken;
-import cofty.core.lexer.token.TokenType;
+import cofty.core.lexer.token.type.Simple;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +39,7 @@ public class Path {
 
     public static @NotNull Path ofRaw(@NotNull List<AnyToken> rawSegments) {
         return of(rawSegments.stream()
-                .filter(token -> token.type.equals(TokenType.ID))
+                .filter(token -> token.type.equals(Simple.WORD))
                 .map(token -> token.content)
                 .toList());
     }

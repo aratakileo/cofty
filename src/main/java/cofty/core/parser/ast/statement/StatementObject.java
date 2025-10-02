@@ -1,7 +1,7 @@
 package cofty.core.parser.ast.statement;
 
-import cofty.core.lexer.token.Brackets;
-import cofty.core.lexer.token.ITokenType;
+import cofty.core.lexer.token.type.Brackets;
+import cofty.core.lexer.token.type.TokenType;
 import cofty.type.exception.SyntaxError;
 import cofty.core.parser.ast.AstObject;
 import cofty.core.parser.ast.BodyObject;
@@ -13,15 +13,15 @@ import cofty.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 
 public class StatementObject implements AstObject, WithBody {
-    private final ITokenType statementStartKeyword;
+    private final TokenType statementStartKeyword;
     private final ValueExpressionObject statement = new ValueExpressionObject();
     private final BodyObject body = new BodyObject();
 
-    public StatementObject(@NotNull ITokenType statementStartKeyword) {
+    public StatementObject(@NotNull TokenType statementStartKeyword) {
         this.statementStartKeyword = statementStartKeyword;
     }
 
-    public @NotNull ITokenType statementStartKeyword() {
+    public @NotNull TokenType statementStartKeyword() {
         return statementStartKeyword;
     }
 

@@ -1,7 +1,7 @@
 package cofty.core.parser.ast.statement;
 
 import cofty.Utils;
-import cofty.core.lexer.token.Keyword;
+import cofty.core.lexer.token.type.Keyword;
 import cofty.core.parser.node.modifier.NodeModifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

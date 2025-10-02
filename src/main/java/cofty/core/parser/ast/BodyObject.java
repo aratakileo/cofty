@@ -1,8 +1,8 @@
 package cofty.core.parser.ast;
 
-import cofty.core.lexer.token.Brackets;
-import cofty.core.lexer.token.ITokenType;
-import cofty.core.lexer.token.TokenType;
+import cofty.core.lexer.token.type.Brackets;
+import cofty.core.lexer.token.type.TokenType;
+import cofty.core.lexer.token.type.Simple;
 import cofty.type.Representable;
 import cofty.core.parser.ast.func.CallFuncObject;
 import cofty.core.parser.ast.func.FuncDeclarationObject;
@@ -37,11 +37,11 @@ public class BodyObject implements AstObject {
         return parserNode(null, null);
     }
 
-    public @NotNull ParserNode parserNode(@NotNull ITokenType stopper) {
+    public @NotNull ParserNode parserNode(@NotNull TokenType stopper) {
         return parserNode(stopper, null);
     }
 
-    public @NotNull ParserNode parserNode(@Nullable ITokenType stopper, @Nullable Exception emptyBodyException) {
+    public @NotNull ParserNode parserNode(@Nullable TokenType stopper, @Nullable Exception emptyBodyException) {
         final var builder = ParserNode.repeatableQueueBuilder(
                 NodeModifier.builder()
                         .preview()
@@ -49,7 +49,7 @@ public class BodyObject implements AstObject {
                         .syntaxFail("invalid syntax")
                         .build()
         ).setSeparator(ParserNode.token(
-                TokenType.NEWLINE,
+                Simple.NEWLINE,
                 NodeModifier.builder()
                         .syntaxFail("expected the new expression would start on a new line")
                         .preview()
@@ -72,8 +72,8 @@ public class BodyObject implements AstObject {
     }
 
     public @NotNull ParserNode singleLineSubbody(@Nullable Exception emptyBodyException) {
-        return parserNode(TokenType.NEWLINE, emptyBodyException)
-                .andToken(TokenType.NEWLINE, NodeModifier.peek());
+        return parserNode(Simple.NEWLINE, emptyBodyException)
+                .andToken(Simple.NEWLINE, NodeModifier.peek());
     }
 
     public @NotNull ParserNode multilineSubbody(
