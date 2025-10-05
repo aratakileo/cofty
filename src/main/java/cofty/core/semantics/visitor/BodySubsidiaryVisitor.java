@@ -23,6 +23,10 @@ public interface BodySubsidiaryVisitor {
         return true;
     }
 
+    default boolean allowStaticModifier() {
+        return false;
+    }
+
     default boolean allowFunctionsOrClasses() {
         return true;
     }
@@ -52,6 +56,7 @@ public interface BodySubsidiaryVisitor {
             }
 
             if (!checkIfAccessModifiers(context, modifiersBuffer, token)) result = false;
+            if (!checkIfStaticModifier(context, modifiersBuffer, token)) result = false;
 
             modifiersBuffer.add(token.type);
         }
@@ -127,6 +132,21 @@ public interface BodySubsidiaryVisitor {
         return result;
     }
 
+    default boolean checkIfStaticModifier(
+            @NotNull SemanticsContext context,
+            @NotNull HashSet<TokenType> buffer,
+            @NotNull TypedToken<Modifier> token
+    ) {
+        if (token.type != Modifier.STATIC) return true;
+
+        if (!allowStaticModifier()) {
+            context.CRITICAL.putSyntaxErr("static modifier are not allowed here", token);
+            return false;
+        }
+
+        return true;
+    }
+
     default boolean checkIfAccessModifiers(
             @NotNull SemanticsContext context,
             @NotNull HashSet<TokenType> buffer,
@@ -154,7 +174,10 @@ public interface BodySubsidiaryVisitor {
         if (astObjectWithBody instanceof FuncDeclarationObject)
             return FUNCTION_BODY;
 
-        if (astObjectWithBody instanceof StatementObject)
+        if (astObjectWithBody instanceof ClassDeclarationObject)
+            return CLASS_BODY;
+
+        if (astObjectWithBody instanceof StatementObject || astObjectWithBody instanceof SubBodyObject)
             return SUB_BODY;
 
         return ROOT_BODY;
@@ -168,4 +191,5 @@ public interface BodySubsidiaryVisitor {
     SubBodyVisitor SUB_BODY = new SubBodyVisitor();
     ElseBodyVisitor ELSE_BODY = new ElseBodyVisitor();
     FunctionBodyVisitor FUNCTION_BODY = new FunctionBodyVisitor();
+    ClassBodyVisitor CLASS_BODY = new ClassBodyVisitor();
 }

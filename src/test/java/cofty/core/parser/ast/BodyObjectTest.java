@@ -16,6 +16,7 @@ class BodyObjectTest {
                         private public fun test() -> nil {}
                         test()
                         return 45
+                        static {}
                         if true {}
                         private class Test {}
                         """
@@ -35,9 +36,9 @@ class BodyObjectTest {
         );
 
         Assertions.assertEquals(
-                7,
+                8,
                 astObject.objects().size(),
-                "there should be 5 ast objects of body"
+                "there should be 8 ast objects of body"
         );
     }
 

@@ -62,7 +62,8 @@ public class BodyObject implements AstObject {
                 CallFuncObject::new,
                 ReturnStatementObject::new,
                 IfStatementsObject::new,
-                ClassDeclarationObject::new
+                ClassDeclarationObject::new,
+                SubBodyObject::new
         );
 
         if (stopper != null)

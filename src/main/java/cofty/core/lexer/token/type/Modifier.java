@@ -5,7 +5,8 @@ import org.jetbrains.annotations.NotNull;
 
 public enum Modifier implements TokenType, Representable {
     PUBLIC,
-    PRIVATE;
+    PRIVATE,
+    STATIC;
 
     public boolean isAccessModifier() {
         return isIn(PUBLIC, PRIVATE);
@@ -35,6 +36,6 @@ public enum Modifier implements TokenType, Representable {
     }
 
     public static boolean is(@NotNull String kw) {
-        return kw.equals("public") || kw.equals("private");
+        return kw.equals("public") || kw.equals("private") || kw.equals("static");
     }
 }
