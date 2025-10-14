@@ -38,27 +38,12 @@ public interface ParserNode {
 
     <E extends ParserNode> @NotNull E then(@NotNull E next);
 
-    default <E extends ParserNode> @NotNull ParserNode and(@NotNull E next) {
-        then(next);
-        return this;
-    }
-
     default @NotNull ContainerNode then(@NotNull ParserNode node, @NotNull NodeModifier modifier) {
         return then(ParserNode.contain(node, modifier));
     }
 
-    default @NotNull ParserNode and(@NotNull ParserNode node, @NotNull NodeModifier modifier) {
-        then(ParserNode.contain(node, modifier));
-        return this;
-    }
-
     default @NotNull TokenNode thenToken(@NotNull TokenType type, @NotNull NodeModifier modifier) {
         return then(ParserNode.token(type, modifier));
-    }
-
-    default @NotNull ParserNode andToken(@NotNull TokenType type, @NotNull NodeModifier modifier) {
-        then(ParserNode.token(type, modifier));
-        return this;
     }
 
     default @NotNull AnyOfNode thenAnyOf(@NotNull NodeModifier modifier, @NotNull ParserNode @NotNull... nodes) {
@@ -71,6 +56,14 @@ public interface ParserNode {
 
     default @NotNull RepeatableQueueNode.Builder thenRepeatableQueueBuilder(@NotNull NodeModifier modifier) {
         return new RepeatableQueueNode.Builder(modifier, this::then);
+    }
+
+    default @NotNull ParserNode joinWithToken(@NotNull TokenType type, @NotNull NodeModifier modifier) {
+        return joinWith(ParserNode.token(type, modifier));
+    }
+
+    default @NotNull ParserNode joinWith(@NotNull ParserNode node, @NotNull NodeModifier modifier) {
+        return joinWith(ParserNode.contain(node, modifier));
     }
 
     default @NotNull ParserNode joinWith(@NotNull ParserNode parserNode) {

@@ -30,11 +30,15 @@ public class RepeatedAnyOfNode extends EmptyNode {
                     if (!node.modifier().shadowPreview) return true;
 
                     isRepeatedAtLeastOnce = true;
+
                     continue root;
                 }
 
                 if (node.proceedQueue(context, NodeModifier.prioritize(topLevelModifier, modifier))) {
                     isRepeatedAtLeastOnce = true;
+
+                    if (!context.hasCurrent()) break root;
+
                     continue root;
                 }
             }

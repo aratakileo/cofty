@@ -58,7 +58,7 @@ class FuncDeclarationObjectTest {
 
     @Test
     void validReturnableTypeDeclaration() {
-        final var context = Utils.parseContextOf("fun test() -> nil {}");
+        final var context = Utils.parseContextOf("fun test() -> nil.nil {}");
         final var astObject = new FuncDeclarationObject();
 
         Assertions.assertTrue(
@@ -78,9 +78,15 @@ class FuncDeclarationObjectTest {
         );
 
         Assertions.assertEquals(
+                2,
+                astObject.returnableType().name().segments().size(),
+                "the function returnable type should consist of two parts of the type name segments"
+        );
+
+        Assertions.assertEquals(
                 "nil",
-                astObject.returnableType().content,
-                "the function returnable type should be `nil`"
+                astObject.returnableType().name().segments().get(0).content,
+                "the first segment of function returnable type should be `nil`"
         );
     }
 }

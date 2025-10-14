@@ -13,10 +13,13 @@ class BodyObjectTest {
                         """
                         public var num = 10
                         num = 100
-                        private public fun test() -> nil {}
+                        parent.num = 100
+                        private public fun test(num: int,) -> nil {}
                         test()
                         return 45
+                        test.child(45, 78,)
                         static {}
+                        {}
                         if true {}
                         private class Test {}
                         """
@@ -36,9 +39,9 @@ class BodyObjectTest {
         );
 
         Assertions.assertEquals(
-                8,
+                11,
                 astObject.objects().size(),
-                "there should be 8 ast objects of body"
+                "there should be 11 ast objects of body"
         );
     }
 
@@ -78,7 +81,7 @@ class BodyObjectTest {
     }
 
     @Test
-    void twoExpressionsOnOneLineFail() {
+    void invalidTwoExpressionsOnOneLine() {
         final var context = Utils.parseContextOf("var num = 10 fun test() -> nil {}");
 
         final var astObject = new BodyObject();
@@ -95,7 +98,7 @@ class BodyObjectTest {
         );
 
         Assertions.assertEquals(
-                "SyntaxError: expected the new expression would start on a new line",
+                "SyntaxError: expected the new expression would starts with a new line",
                 context.CRITICAL_MESSAGES.get(0).content
         );
     }

@@ -51,7 +51,7 @@ public class BodyObject implements AstObject {
         ).setSeparator(ParserNode.token(
                 Simple.NEWLINE,
                 NodeModifier.builder()
-                        .syntaxFail("expected the new expression would start on a new line")
+                        .syntaxFail("expected the new expression would starts with a new line")
                         .preview()
                         .build()
         )).setEmptyBodyException(emptyBodyException)
@@ -74,7 +74,7 @@ public class BodyObject implements AstObject {
 
     public @NotNull ParserNode singleLineSubbody(@Nullable Exception emptyBodyException) {
         return parserNode(Simple.NEWLINE, emptyBodyException)
-                .andToken(Simple.NEWLINE, NodeModifier.peek());
+                .joinWithToken(Simple.NEWLINE, NodeModifier.peek());
     }
 
     public @NotNull ParserNode multilineSubbody(

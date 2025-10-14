@@ -125,10 +125,8 @@ public class NodeQueueIterator implements QueueIterator<ParserNode> {
             final var isPreviewFinished = isNodeProceed && modifier.is(ModifierType.PREVIEW)
                     && currentOrThrow().modifier().is(ModifierType.PREVIEW);
 
-            if (isPreviewFinished) {
-                if (modifier.shadowPreview && currentOrThrow().modifier().shadowPreview) removeContextSnapshot();
-                else rollbackContextSnapshot();
-
+            if (isPreviewFinished && (!modifier.shadowPreview || !currentOrThrow().modifier().shadowPreview)) {
+                rollbackContextSnapshot();
                 return true;
             }
 

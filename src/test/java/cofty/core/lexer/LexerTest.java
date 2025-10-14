@@ -9,11 +9,11 @@ import org.junit.jupiter.api.Test;
 
 class LexerTest {
     @Test
-    void allValidTokensParse() {
-        final var lexer = lexerOfText("1 2. s_3 let = . ( \n 'Hello world!\\n'");
+    void validAllTokensParsed() {
+        final var lexer = lexerOfText("1 2. s_3 let static = . ( \n 'Hello world!\\n'");
         final var tokens = lexer.parse();
 
-        Assertions.assertEquals(9, tokens.size());
+        Assertions.assertEquals(10, tokens.size(), "there should be 10 tokens");
     }
 
     @Test
@@ -21,51 +21,58 @@ class LexerTest {
         final var lexer = lexerOfText("var variable");
         final var tokens = lexer.parse();
 
-        Assertions.assertEquals(2, tokens.size());
+        Assertions.assertEquals(2, tokens.size(), "there should be two tokens (not three)");
+        Assertions.assertEquals(Keyword.VAR, tokens.get(0).type, "the first token should be a keyword token");
+        Assertions.assertEquals(Simple.WORD, tokens.get(1).type, "the second token should be a word token");
     }
 
     @Test
-    void isIntegerParsedValid() {
+    void validIntegerParsed() {
         Assertions.assertEquals(Simple.INT, firstToken("_1_4").type);
     }
 
     @Test
-    void isDoubleParsedValid() {
+    void validDoubleNumberParsed() {
         Assertions.assertEquals(Simple.DOUBLE, firstToken("1.").type);
     }
 
     @Test
-    void isStrParsedValid() {
+    void validStringValueParsed() {
         Assertions.assertEquals(Simple.STR, firstToken("'Hello world!\\n'").type);
     }
 
     @Test
-    void isIdParsedValid() {
+    void validWordParsed() {
         Assertions.assertEquals(Simple.WORD, firstToken("s_3").type);
     }
 
     @Test
-    void isKeywordParsedValid() {
+    void validKeywordParsed() {
         Assertions.assertEquals(Keyword.FUN, firstToken("fun").type);
     }
 
     @Test
-    void isOperatorParsedValid() {
+    void validModifierKeywordParsed() {
+        Assertions.assertEquals(Modifier.STATIC, firstToken("static").type);
+    }
+
+    @Test
+    void validOperatorParsed() {
         Assertions.assertEquals(Operator.ASSIGN, firstToken("=").type);
     }
 
     @Test
-    void isSeparatorParsedValid() {
+    void validSeparatorOperatorParsed() {
         Assertions.assertEquals(Separator.ARROW, firstToken("->").type);
     }
 
     @Test
-    void isBracketParsedValid() {
+    void validBracketParsed() {
         Assertions.assertEquals(Brackets.CURVE_CLOSE, firstToken("}").type);
     }
 
     @Test
-    void isNewLineParsedValid() {
+    void validNewLinesAsSingleToken() {
         final var lexer = lexerOfText("  \n     \n  ");
         final var tokens = lexer.parse();
 

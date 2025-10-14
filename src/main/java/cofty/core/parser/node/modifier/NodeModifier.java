@@ -67,12 +67,22 @@ public final class NodeModifier {
         return fail(new SyntaxError(message));
     }
 
+    public static @NotNull NodeModifier syntaxFailAndDepended(@NotNull String message) {
+        return new NodeModifier(
+                Lists.hashSetOf(ModifierType.FAIL, ModifierType.DEPENDED),
+                new SyntaxError(message),
+                null,
+                false
+        );
+    }
+
     public static @NotNull NodeModifier generalAndPreview() {
         return new NodeModifier(
                 Lists.hashSetOf(ModifierType.GENERAL, ModifierType.PREVIEW),
                 null,
                 null,
-                false);
+                false
+        );
     }
 
     public static @NotNull NodeModifier generalAndPreview(boolean isShadow) {
@@ -80,7 +90,8 @@ public final class NodeModifier {
                 Lists.hashSetOf(ModifierType.GENERAL, ModifierType.PREVIEW),
                 null,
                 null,
-                isShadow);
+                isShadow
+        );
     }
 
     public static @NotNull NodeModifier general() {
@@ -264,6 +275,7 @@ public final class NodeModifier {
             builder.types.addAll(nodeModifier.types);
             builder.modifierConsumer = nodeModifier.modifierConsumer;
             builder.failMessage = nodeModifier.failMessage;
+            builder.shadowPreview = nodeModifier.shadowPreview;
 
             return builder;
         }

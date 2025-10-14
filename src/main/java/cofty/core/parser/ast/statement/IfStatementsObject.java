@@ -64,7 +64,7 @@ public class IfStatementsObject implements AstObject, WithAnchor<Keyword> {
                         .build()
         ).joinWith(
                 ParserNode.token(Keyword.ELSE, NodeModifier.peek())
-                        .and(elseBody.multilineOrSingleLineSubbody(
+                        .joinWith(elseBody.multilineOrSingleLineSubbody(
                                 new SyntaxError("expected a statement body description"),
                                 NodeModifier.syntaxFail("expected an end of statement body description")
                         ), NodeModifier.builder().depended().general().build())

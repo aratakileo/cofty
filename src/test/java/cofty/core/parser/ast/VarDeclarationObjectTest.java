@@ -47,7 +47,7 @@ class VarDeclarationObjectTest {
 
         Assertions.assertEquals(
                 "int",
-                astObject.explicitlySpecifiedType().content,
+                astObject.explicitlySpecifiedType().name().segments().getFirst().content,
                 "the variable explicitly specified value type should be `int`"
         );
 
@@ -96,7 +96,7 @@ class VarDeclarationObjectTest {
 
         Assertions.assertEquals(
                 "int",
-                astObject.explicitlySpecifiedType().content,
+                astObject.explicitlySpecifiedType().name().segments().getFirst().content,
                 "the function argument explicitly specified value type should be `int`"
         );
 
@@ -113,7 +113,7 @@ class VarDeclarationObjectTest {
     }
 
     @Test
-    void noTypeDeclarationNoValue() {
+    void invalidNoTypeDeclarationNoValue() {
         final var context = Utils.parseContextOf("var variable");
         final var astObject = new VarDeclarationObject(false);
 

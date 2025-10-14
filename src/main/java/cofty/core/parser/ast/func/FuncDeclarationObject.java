@@ -6,6 +6,7 @@ import cofty.core.lexer.token.type.Keyword;
 import cofty.core.lexer.token.type.Separator;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.parser.ast.*;
+import cofty.core.parser.ast.value.TypeDescriptionObject;
 import cofty.type.Representable;
 import cofty.type.exception.SyntaxError;
 import cofty.util.Cast;
@@ -18,7 +19,10 @@ import java.util.List;
 
 public class FuncDeclarationObject implements AstObject, WithBody, WithAnchor<Keyword> {
     private TypedToken<Keyword> anchor = null;
-    private TypedToken<Simple> name = null, returnableType = null;
+    private TypedToken<Simple> name = null;
+
+    private final TypeDescriptionObject returnableType = new TypeDescriptionObject();
+
     private List<@NotNull VarDeclarationObject> args = null;
 
     private final ModifiersObject modifiers = new ModifiersObject();
@@ -30,10 +34,6 @@ public class FuncDeclarationObject implements AstObject, WithBody, WithAnchor<Ke
 
     private void setName(@NotNull TypedToken<?> name) {
         this.name = name.strictAs();
-    }
-
-    private void setReturnableType(@NotNull TypedToken<?> returnableType) {
-        this.returnableType = returnableType.strictAs();
     }
 
     private void setArgs(@NotNull List<AstObject> args) {
@@ -56,7 +56,7 @@ public class FuncDeclarationObject implements AstObject, WithBody, WithAnchor<Ke
         return modifiers;
     }
 
-    public @Nullable TypedToken<Simple> returnableType() {
+    public @NotNull TypeDescriptionObject returnableType() {
         return returnableType;
     }
 
@@ -70,10 +70,9 @@ public class FuncDeclarationObject implements AstObject, WithBody, WithAnchor<Ke
 
     @Override
     public @NotNull ParserNode parserNode() {
-        var node = (ParserNode) null;
+        final var node = modifiers.parserNode();
 
-        (node = modifiers.parserNode())
-                .thenToken(
+        node.thenToken(
                         Keyword.FUN,
                         NodeModifier.builder().general().preview().tokenConsumer(this::setAnchor).build()
                 ).thenToken(
@@ -103,17 +102,15 @@ public class FuncDeclarationObject implements AstObject, WithBody, WithAnchor<Ke
                         Brackets.ROUND_CLOSE,
                         NodeModifier.syntaxFail("expected an end of function arguments description")
                 ).thenToken(Separator.ARROW, NodeModifier.peek())
-                .thenToken(
-                        Simple.WORD,
-                        NodeModifier.builder()
-                                .depended()
-                                .syntaxFail("expected a function returnable type")
-                                .tokenConsumer(this::setReturnableType)
-                                .build()
-                ).then(body.multilineSubbody(
-                        NodeModifier.syntaxFail("expected a function body"),
-                        NodeModifier.syntaxFail("expected an end of function body description")
-                ));
+                .then(
+                        returnableType.parserNode(
+                                NodeModifier.syntaxFailAndDepended("expected a function returnable type")
+                        ).joinWith(body.multilineSubbody(
+                                    NodeModifier.syntaxFail("expected a function body"),
+                                    NodeModifier.syntaxFail("expected an end of function body description")
+                                )
+                        )
+                );
 
         return node;
     }

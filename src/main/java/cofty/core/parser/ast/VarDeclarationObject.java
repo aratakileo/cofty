@@ -5,6 +5,7 @@ import cofty.core.lexer.token.type.Keyword;
 import cofty.core.lexer.token.type.Operator;
 import cofty.core.lexer.token.type.Separator;
 import cofty.core.lexer.token.type.Simple;
+import cofty.core.parser.ast.value.TypeDescriptionObject;
 import cofty.core.parser.ast.value.ValueExpressionObject;
 import cofty.core.parser.node.ParserNode;
 import cofty.core.parser.node.modifier.NodeModifier;
@@ -16,8 +17,8 @@ public class VarDeclarationObject implements AstObject, WithModifiers {
 
     private TypedToken<Simple> name = null;
     private TypedToken<Keyword> mutable = null;
-    private TypedToken<Simple> explicitlySpecifiedType = null;
 
+    private final TypeDescriptionObject explicitlySpecifiedType = new TypeDescriptionObject();
     private final ModifiersObject modifiers = new ModifiersObject();
     private final ValueExpressionObject value = new ValueExpressionObject();
 
@@ -33,10 +34,6 @@ public class VarDeclarationObject implements AstObject, WithModifiers {
         this.name = name.strictAs();
     }
 
-    private void setExplicitlySpecifiedType(@NotNull TypedToken<?> explicitlySpecifiedType) {
-        this.explicitlySpecifiedType = explicitlySpecifiedType.strictAs();
-    }
-
     public @Nullable TypedToken<Simple> name() {
         return name;
     }
@@ -45,7 +42,7 @@ public class VarDeclarationObject implements AstObject, WithModifiers {
         return mutable;
     }
 
-    public @Nullable TypedToken<Simple> explicitlySpecifiedType() {
+    public @NotNull TypeDescriptionObject explicitlySpecifiedType() {
         return explicitlySpecifiedType;
     }
 
@@ -58,23 +55,18 @@ public class VarDeclarationObject implements AstObject, WithModifiers {
     }
 
     private @NotNull ParserNode typeDeclarationNode(@NotNull NodeModifier firstModifier) {
-        return ParserNode.token(Separator.COLON, firstModifier).andToken(
-                Simple.WORD,
-                NodeModifier.builder()
-                        .depended()
-                        .syntaxFail("expected a variable value type")
-                        .tokenConsumer(this::setExplicitlySpecifiedType)
-                        .build()
-        );
+        return ParserNode.token(
+                Separator.COLON,
+                firstModifier
+        ).joinWith(explicitlySpecifiedType.parserNode(
+                NodeModifier.syntaxFailAndDepended("expected a variable value type")
+        ));
     }
 
     private @NotNull ParserNode valueNode(@NotNull NodeModifier firstModifier) {
-        return ParserNode.token(Operator.ASSIGN, firstModifier).and(
+        return ParserNode.token(Operator.ASSIGN, firstModifier).joinWith(
                 value.parserNode(),
-                NodeModifier.builder()
-                        .depended()
-                        .syntaxFail("expected a variable value")
-                        .build()
+                NodeModifier.syntaxFailAndDepended("expected a variable value")
         );
     }
 
