@@ -16,4 +16,8 @@ public class SemanticAnalyzer {
     public boolean analyzePrimary() {
         return BodySubsidiaryVisitor.ROOT_BODY.visitBodyObjects(context, rootAstObject.objectsOrThrow());
     }
+
+    public boolean analyze() {
+        return analyzePrimary();
+    }
 }
