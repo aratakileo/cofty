@@ -1,7 +1,7 @@
 package cofty.core.parser.ast;
 
 import cofty.Utils;
-import cofty.core.lexer.token.type.Brackets;
+import cofty.core.lexer.token.type.operator.Bracket;
 import cofty.core.parser.node.modifier.NodeModifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -63,7 +63,7 @@ class BodyObjectTest {
         final var astObject = new BodyObject();
 
         Assertions.assertTrue(
-                astObject.parserNode(Brackets.CURVE_CLOSE).proceedQueue(context, NodeModifier.general()),
+                astObject.parserNode(Bracket.CURVE_CLOSE).proceedQueue(context, NodeModifier.general()),
                 "non-root body expressions should be proceeded"
         );
 

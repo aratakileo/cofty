@@ -1,9 +1,8 @@
 package cofty.core.lexer.token.type;
 
-import cofty.type.Representable;
 import org.jetbrains.annotations.NotNull;
 
-public enum Modifier implements TokenType, Representable {
+public enum Modifier implements TokenType {
     PUBLIC,
     PRIVATE,
     STATIC;

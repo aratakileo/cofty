@@ -4,6 +4,7 @@ import cofty.core.lexer.token.type.Keyword;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.TypedToken;
 import cofty.core.parser.ast.AstObject;
+import cofty.core.parser.ast.value.expr.ValueExpression;
 import cofty.core.parser.node.ParserNode;
 import cofty.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.stream.Stream;
 
-public class PrimitiveValueObject implements AstObject {
+public class PrimitiveValueObject implements ValueExpression, AstObject {
     private TypedToken<?> value = null;
 
     private void setValue(@NotNull TypedToken<?> value) {
@@ -43,6 +44,11 @@ public class PrimitiveValueObject implements AstObject {
         ).toList();
 
         return ParserNode.anyOf(NodeModifier.generalAndPreview(), nodes);
+    }
+
+    @Override
+    public boolean isStatic() {
+        return false;
     }
 
     @Override

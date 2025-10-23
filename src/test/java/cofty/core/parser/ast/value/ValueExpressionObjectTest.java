@@ -1,9 +1,12 @@
 package cofty.core.parser.ast.value;
 
 import cofty.Utils;
+import cofty.core.parser.ast.value.expr.ValueExpressionObject;
 import cofty.core.parser.node.modifier.NodeModifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import java.util.Objects;
 
 class ValueExpressionObjectTest {
     @Test
@@ -12,7 +15,10 @@ class ValueExpressionObjectTest {
         final var astObject = new ValueExpressionObject();
 
         Assertions.assertTrue(astObject.parserNode().proceedQueue(parseContext, NodeModifier.general()));
-        Assertions.assertNotNull(astObject.value().value());
-        Assertions.assertEquals("345", astObject.value().value().content);
+
+        if (astObject.expr() instanceof PrimitiveValueObject primitiveValueObject) {
+            Assertions.assertNotNull(primitiveValueObject.value());
+            Assertions.assertEquals("345", Objects.requireNonNull(primitiveValueObject.value()).content);
+        } else throw new RuntimeException();
     }
 }

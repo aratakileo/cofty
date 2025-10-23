@@ -1,7 +1,7 @@
 package cofty.core.parser.ast.value;
 
 import cofty.core.lexer.token.TypedToken;
-import cofty.core.lexer.token.type.Separator;
+import cofty.core.lexer.token.type.operator.Separator;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.parser.ast.AstObject;
 import cofty.core.parser.node.ParserNode;

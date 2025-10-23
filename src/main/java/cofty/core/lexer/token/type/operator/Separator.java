@@ -1,9 +1,10 @@
-package cofty.core.lexer.token.type;
+package cofty.core.lexer.token.type.operator;
 
-import cofty.type.Representable;
+import cofty.core.lexer.token.type.Simple;
+import cofty.core.lexer.token.type.TokenType;
 import org.jetbrains.annotations.NotNull;
 
-public enum Separator implements TokenType, Representable {
+public enum Separator implements TokenType {
     DOT("."),
     COLON(":"),
     COMMA(","),

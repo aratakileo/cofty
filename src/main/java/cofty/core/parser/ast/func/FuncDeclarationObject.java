@@ -1,9 +1,9 @@
 package cofty.core.parser.ast.func;
 
 import cofty.core.lexer.token.*;
-import cofty.core.lexer.token.type.Brackets;
+import cofty.core.lexer.token.type.operator.Bracket;
 import cofty.core.lexer.token.type.Keyword;
-import cofty.core.lexer.token.type.Separator;
+import cofty.core.lexer.token.type.operator.Separator;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.parser.ast.*;
 import cofty.core.parser.ast.value.TypeDescriptionObject;
@@ -82,7 +82,7 @@ public class FuncDeclarationObject implements AstObject, WithBody, WithAnchor<Ke
                                 .tokenConsumer(this::setName)
                                 .build()
                 ).thenToken(
-                        Brackets.ROUND_OPEN,
+                        Bracket.ROUND_OPEN,
                         NodeModifier.syntaxFail("expected a function arguments description")
                 )
                 .thenRepeatableQueueBuilder(
@@ -95,11 +95,11 @@ public class FuncDeclarationObject implements AstObject, WithBody, WithAnchor<Ke
                             Separator.COMMA,
                             NodeModifier.builder().syntaxFail("expected a comma separator").preview().build()
                     )).makeSeparatorOnlyOneAtTime(new SyntaxError("duplicate comma"))
-                    .setStopper(ParserNode.token(Brackets.ROUND_CLOSE, NodeModifier.generalAndPreview()))
+                    .setStopper(ParserNode.token(Bracket.ROUND_CLOSE, NodeModifier.generalAndPreview()))
                     .add(() -> new VarDeclarationObject(true))
                     .build()
                 .thenToken(
-                        Brackets.ROUND_CLOSE,
+                        Bracket.ROUND_CLOSE,
                         NodeModifier.syntaxFail("expected an end of function arguments description")
                 ).thenToken(Separator.ARROW, NodeModifier.peek())
                 .then(

@@ -1,6 +1,7 @@
 package cofty.core.parser.ast;
 
 import cofty.Utils;
+import cofty.core.parser.ast.value.PrimitiveValueObject;
 import cofty.core.parser.node.modifier.NodeModifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -44,13 +45,16 @@ class SetVarValueObjectTest {
         );
 
         Assertions.assertNotNull(astObject.value(), "the proceeded variable value shouldn't be null");
-        Assertions.assertNotNull(astObject.value().value().value(), "the variable value shouldn't be null");
 
-        Assertions.assertEquals(
-                "_3_000_000",
-                Objects.requireNonNull(astObject.value().value().value()).content,
-                "the variable value should be `_3_000_000`"
-        );
+        if (astObject.value().expr() instanceof PrimitiveValueObject primitiveValueObject) {
+            Assertions.assertNotNull(primitiveValueObject.value(), "the variable value shouldn't be null");
+
+            Assertions.assertEquals(
+                    "_3_000_000",
+                    Objects.requireNonNull(primitiveValueObject.value()).content,
+                    "the variable value should be `_3_000_000`"
+            );
+        } else throw new IllegalStateException();
     }
 
     @Test

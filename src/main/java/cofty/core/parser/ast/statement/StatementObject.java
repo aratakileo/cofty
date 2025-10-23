@@ -1,14 +1,14 @@
 package cofty.core.parser.ast.statement;
 
 import cofty.core.lexer.token.TypedToken;
-import cofty.core.lexer.token.type.Brackets;
+import cofty.core.lexer.token.type.operator.Bracket;
 import cofty.core.lexer.token.type.TokenType;
 import cofty.core.parser.ast.WithAnchor;
 import cofty.type.exception.SyntaxError;
 import cofty.core.parser.ast.AstObject;
 import cofty.core.parser.ast.BodyObject;
 import cofty.core.parser.ast.WithBody;
-import cofty.core.parser.ast.value.ValueExpressionObject;
+import cofty.core.parser.ast.value.expr.ValueExpressionObject;
 import cofty.core.parser.node.ParserNode;
 import cofty.core.parser.node.TokenNode;
 import cofty.core.parser.node.modifier.NodeModifier;
@@ -57,9 +57,9 @@ public class StatementObject<T extends TokenType> implements AstObject, WithBody
     private @NotNull ParserNode statementExpressionWithParenthesis() {
         var node = (TokenNode)null;
 
-        (node = ParserNode.token(Brackets.ROUND_OPEN, NodeModifier.generalAndPreview()))
+        (node = ParserNode.token(Bracket.ROUND_OPEN, NodeModifier.generalAndPreview()))
                 .then(justStatementExpression(false))
-                .thenToken(Brackets.ROUND_CLOSE, NodeModifier.syntaxFail("expected an end of statement description"));
+                .thenToken(Bracket.ROUND_CLOSE, NodeModifier.syntaxFail("expected an end of statement description"));
 
         return node;
     }

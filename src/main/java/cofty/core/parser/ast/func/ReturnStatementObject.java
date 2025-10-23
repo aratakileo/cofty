@@ -4,7 +4,7 @@ import cofty.core.lexer.token.TypedToken;
 import cofty.core.lexer.token.type.Keyword;
 import cofty.core.parser.ast.AstObject;
 import cofty.core.parser.ast.WithAnchor;
-import cofty.core.parser.ast.value.ValueExpressionObject;
+import cofty.core.parser.ast.value.expr.ValueExpressionObject;
 import cofty.core.parser.node.ParserNode;
 import cofty.core.parser.node.TokenNode;
 import cofty.core.parser.node.modifier.NodeModifier;

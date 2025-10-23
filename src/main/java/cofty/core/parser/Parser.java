@@ -1,7 +1,7 @@
 package cofty.core.parser;
 
 import cofty.core.parser.ast.BodyObject;
-import cofty.type.exception.SyntaxError;
+import cofty.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 
 public class Parser {
@@ -13,10 +13,10 @@ public class Parser {
     }
 
     public boolean parse() {
-        if (!bodyObject.parse(context)) return false;
+        if (!bodyObject.parserNode().proceedQueue(context, NodeModifier.general())) return false;
 
         if (context.hasCurrent()) {
-            context.CRITICAL_MESSAGES.putErr(new SyntaxError("invalid syntax"));
+            context.CRITICAL_MESSAGES.putSyntaxErr("invalid syntax");
             return false;
         }
 

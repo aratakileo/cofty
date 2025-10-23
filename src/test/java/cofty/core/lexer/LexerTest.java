@@ -2,6 +2,9 @@ package cofty.core.lexer;
 
 import cofty.core.lexer.token.*;
 import cofty.core.lexer.token.type.*;
+import cofty.core.lexer.token.type.operator.Assign;
+import cofty.core.lexer.token.type.operator.Bracket;
+import cofty.core.lexer.token.type.operator.Separator;
 import cofty.core.message.MessageHandler;
 import cofty.type.TextContent;
 import org.junit.jupiter.api.Assertions;
@@ -58,7 +61,7 @@ class LexerTest {
 
     @Test
     void validOperatorParsed() {
-        Assertions.assertEquals(Operator.ASSIGN, firstToken("=").type);
+        Assertions.assertEquals(Assign.ASSIGN, firstToken("=").type);
     }
 
     @Test
@@ -68,7 +71,7 @@ class LexerTest {
 
     @Test
     void validBracketParsed() {
-        Assertions.assertEquals(Brackets.CURVE_CLOSE, firstToken("}").type);
+        Assertions.assertEquals(Bracket.CURVE_CLOSE, firstToken("}").type);
     }
 
     @Test

@@ -2,11 +2,11 @@ package cofty.core.parser.ast;
 
 import cofty.core.lexer.token.*;
 import cofty.core.lexer.token.type.Keyword;
-import cofty.core.lexer.token.type.Operator;
-import cofty.core.lexer.token.type.Separator;
+import cofty.core.lexer.token.type.operator.Assign;
+import cofty.core.lexer.token.type.operator.Separator;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.parser.ast.value.TypeDescriptionObject;
-import cofty.core.parser.ast.value.ValueExpressionObject;
+import cofty.core.parser.ast.value.expr.ValueExpressionObject;
 import cofty.core.parser.node.ParserNode;
 import cofty.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +64,7 @@ public class VarDeclarationObject implements AstObject, WithModifiers {
     }
 
     private @NotNull ParserNode valueNode(@NotNull NodeModifier firstModifier) {
-        return ParserNode.token(Operator.ASSIGN, firstModifier).joinWith(
+        return ParserNode.token(Assign.ASSIGN, firstModifier).joinWith(
                 value.parserNode(),
                 NodeModifier.syntaxFailAndDepended("expected a variable value")
         );

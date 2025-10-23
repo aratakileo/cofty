@@ -55,7 +55,7 @@ public final class NodeModifier {
         return Objects.requireNonNull(failMessage);
     }
 
-    public @NotNull ModifierConsumer actionOrThrow() {
+    public @NotNull ModifierConsumer consumerOrThrow() {
         return Objects.requireNonNull(modifierConsumer);
     }
 
@@ -112,7 +112,7 @@ public final class NodeModifier {
     ) {
         if (
                 !topLevelModifier.is(ModifierType.GENERAL)
-                        || currentLevelModifier.isAny(ModifierType.ACTION, ModifierType.PREVIEW)
+                        || currentLevelModifier.isAny(ModifierType.CONSUME, ModifierType.PREVIEW)
         )
             return topLevelModifier;
 
@@ -186,7 +186,7 @@ public final class NodeModifier {
         }
 
         public @NotNull Builder tokenConsumer(@NotNull Consumer<TypedToken<?>> action) {
-            return action(new ModifierConsumer() {
+            return consumer(new ModifierConsumer() {
                 @Override
                 public void consume(@NotNull TypedToken<?> token) {
                     action.accept(token);
@@ -195,7 +195,7 @@ public final class NodeModifier {
         }
 
         public @NotNull Builder astObjectConsumer(@NotNull Consumer<AstObject> action) {
-            return action(new ModifierConsumer() {
+            return consumer(new ModifierConsumer() {
                 @Override
                 public void consume(@NotNull AstObject astObject) {
                     action.accept(astObject);
@@ -204,7 +204,7 @@ public final class NodeModifier {
         }
 
         public @NotNull Builder astObjectsConsumer(@NotNull Consumer<List<AstObject>> action) {
-            return action(new ModifierConsumer() {
+            return consumer(new ModifierConsumer() {
                 @Override
                 public void consume(@NotNull List<AstObject> astObjects) {
                     action.accept(astObjects);
@@ -223,7 +223,7 @@ public final class NodeModifier {
 
             types.remove(type);
 
-            if (type == ModifierType.ACTION)
+            if (type == ModifierType.CONSUME)
                 modifierConsumer = null;
 
             if (type == ModifierType.FAIL)
@@ -251,12 +251,12 @@ public final class NodeModifier {
             return new NodeModifier(types, failMessage, modifierConsumer, shadowPreview);
         }
 
-        private @NotNull Builder action(@NotNull ModifierConsumer action) {
+        private @NotNull Builder consumer(@NotNull ModifierConsumer consumer) {
             if (this.modifierConsumer != null)
                 throw new IllegalStateException();
 
-            types.add(ModifierType.ACTION);
-            this.modifierConsumer = action;
+            types.add(ModifierType.CONSUME);
+            this.modifierConsumer = consumer;
 
             return this;
         }

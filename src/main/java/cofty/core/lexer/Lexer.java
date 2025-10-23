@@ -1,9 +1,8 @@
 package cofty.core.lexer;
 
 import cofty.core.lexer.token.*;
-import cofty.core.lexer.token.type.Keyword;
-import cofty.core.lexer.token.type.Modifier;
 import cofty.core.lexer.token.type.Simple;
+import cofty.core.lexer.token.type.TokenType;
 import cofty.core.message.MessageBuilder;
 import cofty.core.message.MessageHandler;
 import cofty.type.TextContent;
@@ -11,7 +10,6 @@ import cofty.type.exception.SyntaxError;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,7 +32,7 @@ public class Lexer {
         var prevToken = (AnyToken) null;
 
         for (final var matchResult: matcher.results().toList()) {
-            final var tokenType = Simple.valueOf(matchResult);
+            final var tokenType = TokenType.valueOf(matchResult);
             final var token = AnyToken.build(matchResult, tokenType);
 
             if (prevToken != null && prevToken.type.equals(Simple.MISMATCH)) {
@@ -70,8 +68,8 @@ public class Lexer {
         patterns.put(Simple.DOUBLE, "_*\\d+[\\d_]*(?:\\.[\\d_]*|[dD])");
         patterns.put(Simple.INT, "_*\\d+[\\d_]*");
         patterns.put(Simple.WORD, "(?!_*\\d+)[A-Za-z\\d_]+");
-        patterns.put(Simple.OP, "=");
         patterns.put(Simple.SEP, ":|\\.|,|->");
+        patterns.put(Simple.OP, "<=|>=|\\!=|==|=|<<|>>|>|<|-|\\+|\\*\\*|\\*|\\^|%|/|~|&|\\|");
         patterns.put(Simple.BRACKETS, "\\(|\\)|\\{|\\}");
 
         // [ \t]* - to avoid NEWLINE token splitting

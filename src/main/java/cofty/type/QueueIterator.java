@@ -10,6 +10,11 @@ public interface QueueIterator<T> {
 
     @Nullable T current();
     @Nullable T goNext();
+
+    default @NotNull T goNextOrThrow() {
+        return Objects.requireNonNull(goNext());
+    }
+
     @Nullable T next();
     @Nullable T prev();
 

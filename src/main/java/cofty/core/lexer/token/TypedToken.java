@@ -35,8 +35,8 @@ public class TypedToken<T extends TokenType> {
 
     @Override
     public @NotNull String toString() {
-        return "Token{" +
-                "type=" + type +
+        return getClass().getSimpleName() + '{' +
+                "type=" + Representable.repr(type) +
                 ", content=" + Representable.repr(content) +
                 ", position=[" + start +
                 "-" + end +

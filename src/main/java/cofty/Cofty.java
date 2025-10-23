@@ -5,7 +5,7 @@ import cofty.type.TextContent;
 
 public class Cofty {
     public static void main(String[] args) {
-        final var compiler = new Compiler(TextContent.read("test_v3.cft").unwrap());
+        final var compiler = new Compiler(TextContent.read("test.cft").unwrap());
 
         compiler.compile();
         compiler.resultLogger.print();

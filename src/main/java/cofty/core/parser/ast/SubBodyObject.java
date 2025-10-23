@@ -1,13 +1,13 @@
 package cofty.core.parser.ast;
 
 import cofty.core.lexer.token.TypedToken;
-import cofty.core.lexer.token.type.Brackets;
+import cofty.core.lexer.token.type.operator.Bracket;
 import cofty.core.parser.node.ParserNode;
 import cofty.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 
-public class SubBodyObject implements AstObject, WithBody, WithModifiers, WithAnchor<Brackets> {
-    private TypedToken<Brackets> anchor = null;
+public class SubBodyObject implements AstObject, WithBody, WithModifiers, WithAnchor<Bracket> {
+    private TypedToken<Bracket> anchor = null;
 
     private final BodyObject body = new BodyObject();
     private final ModifiersObject modifiers = new ModifiersObject();
@@ -17,7 +17,7 @@ public class SubBodyObject implements AstObject, WithBody, WithModifiers, WithAn
     }
 
     @Override
-    public @NotNull TypedToken<Brackets> anchor() {
+    public @NotNull TypedToken<Bracket> anchor() {
         return anchor;
     }
 

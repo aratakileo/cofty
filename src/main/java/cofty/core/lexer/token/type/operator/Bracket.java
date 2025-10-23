@@ -1,9 +1,11 @@
-package cofty.core.lexer.token.type;
+package cofty.core.lexer.token.type.operator;
 
+import cofty.core.lexer.token.type.Simple;
+import cofty.core.lexer.token.type.TokenType;
 import cofty.type.Representable;
 import org.jetbrains.annotations.NotNull;
 
-public enum Brackets implements TokenType, Representable {
+public enum Bracket implements TokenType {
     ROUND_OPEN("("),
     ROUND_CLOSE(")"),
     CURVE_OPEN("{"),
@@ -11,7 +13,7 @@ public enum Brackets implements TokenType, Representable {
 
     public final String bracket;
 
-    Brackets(@NotNull String bracket) {
+    Bracket(@NotNull String bracket) {
         this.bracket = bracket;
     }
 
@@ -35,7 +37,7 @@ public enum Brackets implements TokenType, Representable {
         return String.format("%s(%s)", toReprString(), Representable.repr(bracket));
     }
 
-    public static @NotNull Brackets of(@NotNull String op) {
+    public static @NotNull Bracket of(@NotNull String op) {
         for (final var _op: values())
             if (_op.bracket.equals(op))
                 return _op;

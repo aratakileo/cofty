@@ -21,7 +21,7 @@ public class NodeQueueIterator implements QueueIterator<ParserNode> {
             @NotNull NodeModifier modifier,
             @NotNull ParserNode first
     ) {
-        if (modifier.is(ModifierType.ACTION)) throw new IllegalStateException();
+        if (modifier.is(ModifierType.CONSUME)) throw new IllegalStateException();
 
         this.context = context;
         this.modifier = modifier;

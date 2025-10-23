@@ -2,6 +2,7 @@ package cofty.core.parser.ast.statement;
 
 import cofty.Utils;
 import cofty.core.lexer.token.type.Keyword;
+import cofty.core.parser.ast.value.PrimitiveValueObject;
 import cofty.core.parser.node.modifier.NodeModifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -23,10 +24,12 @@ class StatementObjectTest {
                 "there shouldn't be any error or warning messages"
         );
 
-        Assertions.assertNotNull(
-                astObject.statement().value().value(),
-                "the proceeded if statement expression shouldn't be null"
-        );
+        if (astObject.statement().expr() instanceof PrimitiveValueObject primitiveValueObject) {
+            Assertions.assertNotNull(
+                    primitiveValueObject.value(),
+                    "the proceeded if statement expression shouldn't be null"
+            );
+        } else throw new IllegalStateException();
     }
 
     @Test
@@ -45,10 +48,12 @@ class StatementObjectTest {
                 "there shouldn't be any error or warning messages"
         );
 
-        Assertions.assertNotNull(
-                astObject.statement().value().value(),
-                "the proceeded if statement expression shouldn't be null"
-        );
+        if (astObject.statement().expr() instanceof PrimitiveValueObject primitiveValueObject) {
+            Assertions.assertNotNull(
+                    primitiveValueObject.value(),
+                    "the proceeded if statement expression shouldn't be null"
+            );
+        } else throw new IllegalStateException();
 
         Assertions.assertNotNull(
                 astObject.body().objects(),

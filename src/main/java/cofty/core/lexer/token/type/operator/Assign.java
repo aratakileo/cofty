@@ -1,14 +1,16 @@
-package cofty.core.lexer.token.type;
+package cofty.core.lexer.token.type.operator;
 
+import cofty.core.lexer.token.type.Simple;
+import cofty.core.lexer.token.type.TokenType;
 import cofty.type.Representable;
 import org.jetbrains.annotations.NotNull;
 
-public enum Operator implements TokenType, Representable {
+public enum Assign implements TokenType {
     ASSIGN("=");
 
     public final String op;
 
-    Operator(@NotNull String op) {
+    Assign(@NotNull String op) {
         this.op = op;
     }
 
@@ -32,11 +34,15 @@ public enum Operator implements TokenType, Representable {
         return String.format("%s(%s)", toReprString(), Representable.repr(op));
     }
 
-    public static @NotNull Operator of(@NotNull String op) {
+    public static boolean is(@NotNull String op) {
+        return op.equals("=");
+    }
+
+    public static @NotNull Assign of(@NotNull String op) {
         for (final var _op: values())
             if (_op.op.equals(op))
                 return _op;
 
-        throw new IllegalStateException(String.format("unsupportable operator `%s`", op));
+        throw new IllegalStateException(String.format("unsupportable assign operator `%s`", op));
     }
 }

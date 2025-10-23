@@ -1,6 +1,7 @@
 package cofty.core.parser.ast;
 
 import cofty.Utils;
+import cofty.core.parser.ast.value.PrimitiveValueObject;
 import cofty.core.parser.node.modifier.NodeModifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -24,7 +25,6 @@ class VarDeclarationObjectTest {
 
         Assertions.assertNotNull(astObject.name(), "the proceeded variable name shouldn't be null");
         Assertions.assertNotNull(astObject.value(), "the proceeded variable value shouldn't be null");
-        Assertions.assertNotNull(astObject.value().value().value(), "the proceeded variable value shouldn't be null");
         Assertions.assertNotNull(astObject.modifiers(), "the proceeded variable modifiers shouldn't be null");
 
         Assertions.assertEquals(
@@ -51,11 +51,15 @@ class VarDeclarationObjectTest {
                 "the variable explicitly specified value type should be `int`"
         );
 
-        Assertions.assertEquals(
-                "_3_000_000",
-                astObject.value().value().value().content,
-                "the variable value should be `_3_000_000`"
-        );
+        if (astObject.value().expr() instanceof PrimitiveValueObject primitiveValueObject) {
+            Assertions.assertNotNull(primitiveValueObject.value(), "the proceeded variable value shouldn't be null");
+
+            Assertions.assertEquals(
+                    "_3_000_000",
+                    primitiveValueObject.value().content,
+                    "the variable value should be `_3_000_000`"
+            );
+        } else throw new IllegalStateException();
     }
 
     @Test
@@ -100,16 +104,18 @@ class VarDeclarationObjectTest {
                 "the function argument explicitly specified value type should be `int`"
         );
 
-        Assertions.assertNotNull(
-                astObject.value().value().value(),
-                "the function argument value shouldn't be null"
-        );
+        if (astObject.value().expr() instanceof PrimitiveValueObject primitiveValueObject) {
+            Assertions.assertNotNull(
+                    primitiveValueObject.value(),
+                    "the function argument value shouldn't be null"
+            );
 
-        Assertions.assertEquals(
-                "_3_000_000",
-                astObject.value().value().value().content,
-                "the function argument value should be `_3_000_000`"
-        );
+            Assertions.assertEquals(
+                    "_3_000_000",
+                    primitiveValueObject.value().content,
+                    "the function argument value should be `_3_000_000`"
+            );
+        } else throw new IllegalStateException();
     }
 
     @Test

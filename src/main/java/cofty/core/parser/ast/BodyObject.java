@@ -1,6 +1,6 @@
 package cofty.core.parser.ast;
 
-import cofty.core.lexer.token.type.Brackets;
+import cofty.core.lexer.token.type.operator.Bracket;
 import cofty.core.lexer.token.type.TokenType;
 import cofty.core.lexer.token.type.Simple;
 import cofty.type.Representable;
@@ -83,9 +83,9 @@ public class BodyObject implements AstObject {
     ) {
         var node = (TokenNode)null;
 
-        (node = ParserNode.token(Brackets.CURVE_OPEN, curveBracketOpenModifier))
-                .then(parserNode(Brackets.CURVE_CLOSE))
-                .thenToken(Brackets.CURVE_CLOSE, curveBracketCloseModifier);
+        (node = ParserNode.token(Bracket.CURVE_OPEN, curveBracketOpenModifier))
+                .then(parserNode(Bracket.CURVE_CLOSE))
+                .thenToken(Bracket.CURVE_CLOSE, curveBracketCloseModifier);
 
         return node;
     }

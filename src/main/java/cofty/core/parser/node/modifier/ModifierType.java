@@ -3,7 +3,7 @@ package cofty.core.parser.node.modifier;
 import cofty.type.Containable;
 
 public enum ModifierType implements Containable<ModifierType> {
-    ACTION,
+    CONSUME,
     DEPENDED,
     FAIL,
     GENERAL,

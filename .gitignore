@@ -40,5 +40,7 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### Other ###
 /.idea
 *.cft

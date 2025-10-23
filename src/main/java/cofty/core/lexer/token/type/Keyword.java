@@ -1,11 +1,10 @@
 package cofty.core.lexer.token.type;
 
-import cofty.type.Representable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public enum Keyword implements TokenType, Representable {
+public enum Keyword implements TokenType {
     VAR,
     MUT,
     CLASS,
@@ -35,15 +34,11 @@ public enum Keyword implements TokenType, Representable {
     }
 
     public static boolean is(@NotNull String word) {
-        return LOWERCASED_VALUES.containsKey(word) || Modifier.is(word);
+        return LOWERCASED_VALUES.containsKey(word);
     }
 
     public static @NotNull TokenType of(@NotNull String word) {
         if (!is(word)) throw new IllegalStateException(String.format("`%s` is not a keyword", word));
-
-        if (Modifier.is(word))
-            return Modifier.of(word);
-
         return LOWERCASED_VALUES.get(word);
     }
 

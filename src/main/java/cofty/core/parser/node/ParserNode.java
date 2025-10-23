@@ -93,6 +93,10 @@ public interface ParserNode {
         return new TokenNode(tokenType, modifier);
     }
 
+    static @NotNull OperatorExpressionNode operatorExpression(@NotNull NodeModifier modifier) {
+        return new OperatorExpressionNode(modifier);
+    }
+
     static @NotNull RepeatableQueueNode.Builder repeatableQueueBuilder(@NotNull NodeModifier modifier) {
         return new RepeatableQueueNode.Builder(modifier, null);
     }

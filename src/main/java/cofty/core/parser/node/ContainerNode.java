@@ -13,7 +13,7 @@ public class ContainerNode extends EmptyNode {
         super(modifier);
         this.node = node;
 
-        if (modifier.is(ModifierType.ACTION)) throw new IllegalStateException();
+        if (modifier.is(ModifierType.CONSUME)) throw new IllegalStateException();
     }
 
     @Override
