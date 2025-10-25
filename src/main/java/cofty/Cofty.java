@@ -1,7 +1,7 @@
 package cofty;
 
-import cofty.core.Compiler;
 import cofty.type.TextContent;
+import cofty.v4.core.Compiler;
 
 public class Cofty {
     public static void main(String[] args) {

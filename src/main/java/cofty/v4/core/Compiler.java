@@ -1,16 +1,16 @@
-package cofty.core;
+package cofty.v4.core;
 
+import cofty.core.CompileResultLogger;
 import cofty.core.lexer.Lexer;
 import cofty.core.message.MessageHandler;
 import cofty.core.parser.ParseContext;
-import cofty.core.parser.Parser;
-import cofty.core.semantics.SemanticAnalyzer;
 import cofty.core.semantics.SemanticsContext;
 import cofty.type.TextContent;
+import cofty.v4.core.parser.BodyParser;
+import cofty.v4.core.semantics.SemanticAnalyzer;
 import org.jetbrains.annotations.NotNull;
 
-@Deprecated
-public class Compiler {
+public final class Compiler {
     public final TextContent text;
     public final MessageHandler messages = new MessageHandler();
     public final CompileResultLogger resultLogger = new CompileResultLogger(messages);
@@ -37,24 +37,29 @@ public class Compiler {
 
         resultLogger.checkInLexer(true);
 
-        final var parser = new Parser(new ParseContext(parsedTokens, text, messages));
+        final var parseResult = BodyParser.ROOT_BODY.parse(new ParseContext(parsedTokens, text, messages));
 
-        if (!parser.parse()) {
+        if (parseResult.isFailed()) {
             resultLogger.checkInParser(false);
             return false;
         }
 
         resultLogger.checkInParser(true);
 
-        final var semanticAnalyzer = new SemanticAnalyzer(new SemanticsContext(text, messages), parser.bodyObject);
-
-        if (!semanticAnalyzer.analyze()) {
-            resultLogger.checkInSemanticAnalyzer(false);
-            return false;
-        }
-
-        resultLogger.checkInSemanticAnalyzer(true);
+        final var semanticAnalyzer = new SemanticAnalyzer(
+                new SemanticsContext(text, messages),
+                parseResult.valueOrThrow()
+        );
 
         return true;
+
+//        if (!semanticAnalyzer.analyze()) {
+//            resultLogger.checkInSemanticAnalyzer(false);
+//            return false;
+//        }
+//
+//        resultLogger.checkInSemanticAnalyzer(true);
+//
+//        return true;
     }
 }

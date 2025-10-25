@@ -4,6 +4,7 @@ import cofty.core.parser.ast.BodyObject;
 import cofty.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 
+@Deprecated
 public class Parser {
     public final BodyObject bodyObject = new BodyObject();
     public final ParseContext context;

@@ -12,10 +12,14 @@ public interface Representable {
     @NotNull String toReprString();
 
     static @NotNull String repr(@Nullable String string) {
+        return repr(string, false);
+    }
+
+    static @NotNull String repr(@Nullable String string, boolean noQuotationMark) {
         if (string == null)
             return "null";
 
-        final var result = new StringBuilder("\"");
+        final var result = new StringBuilder(noQuotationMark ? "" : "\"");
 
         for (var ch: string.toCharArray())
             result.append(switch (ch) {
@@ -29,7 +33,7 @@ public interface Representable {
                 default -> ch;
             });
 
-        return result.append('"').toString();
+        return result.append(noQuotationMark ? "" : "\"").toString();
     }
 
     static @NotNull String repr(@Nullable Representable value) {

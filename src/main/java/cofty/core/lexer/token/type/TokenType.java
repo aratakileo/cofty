@@ -41,7 +41,6 @@ public interface TokenType extends Containable<TokenType>, Representable {
 
                 return switch (tokenType) {
                     case OP -> operatorLikeOf(matched);
-                    case SEP -> Separator.of(matched);
                     case WORD -> isKeywordLike(matched) ? keywordLikeOf(matched) : Simple.WORD;
                     case BRACKETS -> Bracket.of(matched);
                     default -> tokenType;
@@ -53,6 +52,7 @@ public interface TokenType extends Containable<TokenType>, Representable {
     }
 
     static @NotNull TokenType operatorLikeOf(@NotNull String op) {
+        if (Separator.is(op)) return Separator.of(op);
         if (Assign.is(op)) return Assign.of(op);
         if (ContextSensitive.is(op)) return ContextSensitive.of(op);
         if (Binary.is(op)) return Binary.of(op);

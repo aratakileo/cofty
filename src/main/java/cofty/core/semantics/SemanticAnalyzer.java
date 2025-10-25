@@ -4,6 +4,7 @@ import cofty.core.parser.ast.BodyObject;
 import cofty.core.semantics.visitor.BodySubsidiaryVisitor;
 import org.jetbrains.annotations.NotNull;
 
+@Deprecated
 public class SemanticAnalyzer {
     public final SemanticsContext context;
     public final BodyObject rootAstObject;

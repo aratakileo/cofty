@@ -66,10 +66,9 @@ public class Lexer {
         final var patterns = new LinkedHashMap<Simple, String>();
         patterns.put(Simple.STR, "'(?:\\\\.|[^'])*'|\"(?:\\\\.|[^\"])*\"");
         patterns.put(Simple.DOUBLE, "_*\\d+[\\d_]*(?:\\.[\\d_]*|[dD])");
-        patterns.put(Simple.INT, "_*\\d+[\\d_]*");
+        patterns.put(Simple.INT, "_*(?:0_*[xX][\\da-fA-F_]+|\\d+[\\d_]*)");
         patterns.put(Simple.WORD, "(?!_*\\d+)[A-Za-z\\d_]+");
-        patterns.put(Simple.SEP, ":|\\.|,|->");
-        patterns.put(Simple.OP, "<=|>=|\\!=|==|=|<<|>>|>|<|-|\\+|\\*\\*|\\*|\\^|%|/|~|&|\\|");
+        patterns.put(Simple.OP, "<=|>=|\\!=|==|=|<<|>>|->|>|<|-|\\+|\\*\\*|\\*|\\^|%|/|~|&|:|\\.|,|\\!|\\|");
         patterns.put(Simple.BRACKETS, "\\(|\\)|\\{|\\}");
 
         // [ \t]* - to avoid NEWLINE token splitting

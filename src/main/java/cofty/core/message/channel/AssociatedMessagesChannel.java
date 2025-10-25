@@ -19,6 +19,13 @@ public class AssociatedMessagesChannel {
         this.channel = channel;
     }
 
+    public void putSyntaxErrAfterToken(
+            @NotNull String errMessage,
+            @NotNull TypedToken<?> token
+    ) {
+        putAfterToken(MessageType.ERROR, new SyntaxError(errMessage), token);
+    }
+
     public void putErrAfterToken(
             @NotNull Exception err,
             @NotNull TypedToken<?> token

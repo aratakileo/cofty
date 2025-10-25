@@ -6,7 +6,7 @@ import cofty.core.parser.node.modifier.NodeModifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-class VarDeclarationObjectTest {
+class FieldDeclarationObjectTest {
     @Test
     void validFullGeneral() {
         final var context = Utils.parseContextOf("public var mut num: int = _3_000_000");

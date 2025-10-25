@@ -9,7 +9,6 @@ public enum Simple implements TokenType {
     STR,
     OP,
     KW,
-    SEP,
     WORD,
     SKIP,
     NEWLINE,
