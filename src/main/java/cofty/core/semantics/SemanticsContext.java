@@ -1,18 +1,15 @@
 package cofty.core.semantics;
 
-import cofty.core.message.MessageHandler;
-import cofty.core.message.channel.AssociatedMessagesChannel;
+import cofty.v4.core.compiler.message.CompilationMessageHandler;
 import cofty.type.TextContent;
 import org.jetbrains.annotations.NotNull;
 
 public class SemanticsContext {
     public final TextContent text;
-    public final MessageHandler messages;
-    public final AssociatedMessagesChannel CRITICAL;
+    public final CompilationMessageHandler.TextAssociated messages;
 
-    public SemanticsContext(@NotNull TextContent text, @NotNull MessageHandler messages) {
+    public SemanticsContext(@NotNull TextContent text, @NotNull CompilationMessageHandler messages) {
         this.text = text;
-        this.messages = messages;
-        this.CRITICAL = messages.CRITICAL.associate(text);
+        this.messages = messages.associateWith(text);
     }
 }

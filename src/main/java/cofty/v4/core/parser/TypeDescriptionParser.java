@@ -3,7 +3,6 @@ package cofty.v4.core.parser;
 import cofty.core.lexer.token.TypedToken;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.type.operator.Separator;
-import cofty.core.parser.ParseContext;
 import cofty.util.Lists;
 import cofty.v4.core.parser.ast.TypeDescriptionObject;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +20,9 @@ public final class TypeDescriptionParser implements Parser<TypeDescriptionObject
 
         while (context.goNextIfCurrentIs(Separator.DOT)) {
             if (!context.currentIs(Simple.WORD)) {
-                context.CRITICAL_MESSAGES.putSyntaxErr("invalid syntax");
+                context.messages.addInvalidSyntaxErr();
+                context.goNext();
+
                 return ParseResult.failed();
             }
 

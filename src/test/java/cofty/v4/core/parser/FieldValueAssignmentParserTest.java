@@ -2,7 +2,6 @@ package cofty.v4.core.parser;
 
 import cofty.Utils;
 import cofty.type.Representable;
-import cofty.v4.core.parser.FieldValueAssignmentParser;
 import cofty.v4.core.parser.ast.value.complex.ComplexValueObject;
 import cofty.v4.core.parser.ast.value.complex.FieldAccessObject;
 import cofty.v4.core.parser.ast.value.complex.SimpleValue;

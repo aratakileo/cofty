@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+@Deprecated
 public interface QueueIterator<T> {
     boolean hasNext();
 

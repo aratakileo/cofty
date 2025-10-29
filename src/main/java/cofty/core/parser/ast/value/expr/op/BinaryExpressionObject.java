@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@Deprecated
 public class BinaryExpressionObject implements Operator, AstObject, ValueExpression {
     private final List<TypedToken<?>> operator;
     private final ValueExpression leftValue, rightValue;

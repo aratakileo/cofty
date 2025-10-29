@@ -6,6 +6,7 @@ import cofty.core.parser.node.ParserNode;
 import cofty.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 
+@Deprecated
 public class SubBodyObject implements AstObject, WithBody, WithModifiers, WithAnchor<Bracket> {
     private TypedToken<Bracket> anchor = null;
 

@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@Deprecated
 public class FuncDeclarationObject implements AstObject, WithBody, WithAnchor<Keyword> {
     private TypedToken<Keyword> anchor = null;
     private TypedToken<Simple> name = null;

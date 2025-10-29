@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 public class OperatorExpressionParser {
     private final ArrayList<TokenType> operatorStack = new ArrayList<>();
     private final ArrayList<List<TypedToken<?>>> operatorTokensStack = new ArrayList<>();

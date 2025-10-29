@@ -1,10 +1,10 @@
 package cofty.core;
 
-import cofty.core.message.MessageHandler;
+import cofty.v4.core.compiler.message.CompilationMessageHandler;
 import org.jetbrains.annotations.NotNull;
 
 public class CompileResultLogger {
-    private final MessageHandler messages;
+    private final CompilationMessageHandler messages;
 
     private StageState lexerStageState = StageState.CANCELED,
             parserStageState = StageState.CANCELED,
@@ -12,7 +12,7 @@ public class CompileResultLogger {
 
     private String lexerStageMessage = null;
 
-    public CompileResultLogger(@NotNull MessageHandler messages) {
+    public CompileResultLogger(@NotNull CompilationMessageHandler messages) {
         this.messages = messages;
     }
 
@@ -46,9 +46,15 @@ public class CompileResultLogger {
 
         if (messages.isEmpty()) return;
 
-        System.out.println("\nError messages:");
+        if (messages.hasErrs()) {
+            System.out.printf("%n%s errors:%n", messages.errCount());
+            messages.printErrs();
+        }
 
-        messages.print();
+        if (messages.hasWarns()) {
+            System.out.printf("%n%s warnings:%n", messages.warnCount());
+            messages.printWarns();
+        }
     }
 
     public enum StageState {

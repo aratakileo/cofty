@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@Deprecated
 public class UnaryExpressionObject implements Operator, AstObject, ValueExpression {
     private final List<TypedToken<?>> operator;
     private final ValueExpression value;

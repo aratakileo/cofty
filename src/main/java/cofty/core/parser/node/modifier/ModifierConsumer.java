@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@Deprecated
 public interface ModifierConsumer {
     default void consume(@NotNull TypedToken<?> token) {
         throw new RuntimeException("unacceptable type of consumption");

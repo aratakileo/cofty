@@ -4,6 +4,7 @@ import cofty.type.Representable;
 import cofty.type.TextContent;
 import org.jetbrains.annotations.NotNull;
 
+@Deprecated
 public class Message {
     private final TextContent textContent;
     public final MessageType type;

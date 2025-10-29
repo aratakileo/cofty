@@ -8,6 +8,7 @@ import cofty.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@Deprecated
 public class ClassDeclarationObject implements AstObject, WithModifiers, WithBody, WithAnchor<Keyword> {
     private TypedToken<Keyword> anchor = null;
     private TypedToken<Simple> name = null;

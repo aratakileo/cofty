@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.List;
 
+@Deprecated
 public interface BodySubsidiaryVisitor {
     default boolean allowModifiers() {
         return true;
@@ -39,7 +40,7 @@ public interface BodySubsidiaryVisitor {
         if (astObject.modifiers().modifierTokens().isEmpty()) return true;
 
         if (!allowModifiers()) {
-            context.CRITICAL.putSyntaxErr("not allowed here", astObject.modifiers().modifierTokens().getFirst());
+            context.messages.addSyntaxErr("not allowed here", astObject.modifiers().modifierTokens().getFirst());
             return false;
         }
 
@@ -50,7 +51,7 @@ public interface BodySubsidiaryVisitor {
             final var type = token.type;
 
             if (modifiersBuffer.contains(type)) {
-                context.CRITICAL.putSyntaxErr("this modifier has already been described", token);
+                context.messages.addSyntaxErr("this modifier has already been described", token);
                 result = false;
                 continue;
             }
@@ -68,7 +69,7 @@ public interface BodySubsidiaryVisitor {
         var result = true;
 
         if (!allowReturnStatement() && astObject instanceof ReturnStatementObject returnStatementObject) {
-            context.CRITICAL.putSyntaxErr("not allowed here", returnStatementObject.anchor());
+            context.messages.addSyntaxErr("not allowed here", returnStatementObject.anchor());
             result = false;
         }
 
@@ -77,7 +78,7 @@ public interface BodySubsidiaryVisitor {
         if (!(astObject instanceof ClassDeclarationObject) && !(astObject instanceof FuncDeclarationObject))
             return result;
 
-        context.CRITICAL.putSyntaxErr("not allowed here", ((WithAnchor<?>) astObject).anchor());
+        context.messages.addSyntaxErr("not allowed here", ((WithAnchor<?>) astObject).anchor());
         return false;
 
     }
@@ -140,7 +141,7 @@ public interface BodySubsidiaryVisitor {
         if (token.type != Modifier.STATIC) return true;
 
         if (!allowStaticModifier()) {
-            context.CRITICAL.putSyntaxErr("static modifier are not allowed here", token);
+            context.messages.addSyntaxErr("static modifier are not allowed here", token);
             return false;
         }
 
@@ -155,12 +156,12 @@ public interface BodySubsidiaryVisitor {
         if (!token.type.isAccessModifier()) return true;
 
         if (!allowAccessModifiers()) {
-            context.CRITICAL.putSyntaxErr("access modifiers are not allowed here", token);
+            context.messages.addSyntaxErr("access modifiers are not allowed here", token);
             return false;
         }
 
         if (buffer.contains(Modifier.PRIVATE) || buffer.contains(Modifier.PUBLIC)) {
-            context.CRITICAL.putSyntaxErr(
+            context.messages.addSyntaxErr(
                     "the access modifier has already been previously specified earlier",
                     token
             );

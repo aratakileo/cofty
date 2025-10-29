@@ -10,6 +10,7 @@ import cofty.core.parser.node.TokenNode;
 import cofty.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 
+@Deprecated
 public class ReturnStatementObject implements AstObject, WithAnchor<Keyword> {
     private TypedToken<Keyword> anchor = null;
 

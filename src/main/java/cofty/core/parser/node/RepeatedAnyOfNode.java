@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@Deprecated
 public class RepeatedAnyOfNode extends EmptyNode {
     private final List<ParserNode> nodes;
 

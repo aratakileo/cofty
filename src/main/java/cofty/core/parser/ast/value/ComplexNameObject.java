@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 public class ComplexNameObject implements AstObject {
     private final ArrayList<TypedToken<Simple>> segments = new ArrayList<>();
 

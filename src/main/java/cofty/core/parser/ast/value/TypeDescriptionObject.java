@@ -5,6 +5,7 @@ import cofty.core.parser.node.ParserNode;
 import cofty.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 
+@Deprecated
 public class TypeDescriptionObject implements AstObject {
     private final ComplexNameObject name = new ComplexNameObject();
 

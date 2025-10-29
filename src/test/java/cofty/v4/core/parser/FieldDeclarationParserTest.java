@@ -4,7 +4,6 @@ import cofty.Utils;
 import cofty.core.lexer.token.type.Keyword;
 import cofty.core.lexer.token.type.Simple;
 import cofty.type.Representable;
-import cofty.v4.core.parser.FieldDeclarationParser;
 import cofty.v4.core.parser.ast.value.complex.ComplexValueObject;
 import cofty.v4.core.parser.ast.value.complex.SimpleValue;
 import org.junit.jupiter.api.Assertions;

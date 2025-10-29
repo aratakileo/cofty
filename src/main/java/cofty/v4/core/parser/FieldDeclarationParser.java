@@ -5,7 +5,6 @@ import cofty.core.lexer.token.type.Keyword;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.type.operator.Assign;
 import cofty.core.lexer.token.type.operator.Separator;
-import cofty.core.parser.ParseContext;
 import cofty.v4.core.parser.ast.FieldDeclarationObject;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,28 +23,34 @@ public final class FieldDeclarationParser implements Parser<FieldDeclarationObje
         final var nameToken = context.current(Simple.WORD);
 
         if (!context.goNextIfCurrentIs(Simple.WORD)) {
-            context.CRITICAL_MESSAGES.putSyntaxErr("expected a field name");
+            context.messages.addSyntaxErr("expected a field name");
+            context.goNext();
+
             return ParseResult.failed();
         }
 
         final var valueTypeParseResult = context.goNextIfCurrentIs(Separator.COLON)
                 ? TypeDescriptionParser.DEFAULT.parse(context) : null;
 
-        if (valueTypeParseResult != null && valueTypeParseResult.isCanceled()) {
-            context.CRITICAL_MESSAGES.putSyntaxErr("expected a field value type");
+        if (valueTypeParseResult != null && !valueTypeParseResult.isSuccessful()) {
+            if (valueTypeParseResult.isCanceled())
+                context.messages.addSyntaxErr("expected a field value type");
+
             return ParseResult.failed();
         }
 
         final var valueParseResult = context.goNextIfCurrentIs(Assign.ASSIGN)
                 ? ValueExpressionParser.DEFAULT.parse(context) : null;
 
-        if (valueParseResult != null && valueParseResult.isCanceled()) {
-            context.CRITICAL_MESSAGES.putSyntaxErr("expected a field value");
+        if (valueParseResult != null && !valueParseResult.isSuccessful()) {
+            if (valueParseResult.isCanceled())
+                context.messages.addSyntaxErr("expected a field value");
+
             return ParseResult.failed();
         }
 
         if (valueTypeParseResult == null && valueParseResult == null) {
-            context.CRITICAL_MESSAGES.putSyntaxErrAfterToken(
+            context.messages.addSyntaxErrAfterToken(
                     "expected specified either the field value type or the field value itself",
                     Objects.requireNonNull(nameToken)
             );

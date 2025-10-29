@@ -1,7 +1,6 @@
 package cofty.v4.core.parser;
 
 import cofty.Utils;
-import cofty.v4.core.parser.BodyParser;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -9,6 +8,9 @@ class BodyParserTest {
     @Test
     void validRootBodyAllAllowedElements() {
         final var expr = """
+                
+                
+                
                 var lavender = 0xE6E6FA
                 abstractDrawer.draw(lavender)
                 println(lavender!rgb)

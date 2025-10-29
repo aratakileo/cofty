@@ -3,7 +3,7 @@ package cofty.core.lexer;
 import cofty.core.lexer.token.*;
 import cofty.core.lexer.token.type.*;
 import cofty.core.lexer.token.type.operator.*;
-import cofty.core.message.MessageHandler;
+import cofty.v4.core.compiler.message.CompilationMessageHandler;
 import cofty.type.TextContent;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -14,7 +14,7 @@ class LexerTest {
         final var lexer = lexerOfText("1 2. s_3 let static = . ( \n 'Hello world!\\n'");
         final var tokens = lexer.parse();
 
-        Assertions.assertEquals(10, tokens.size(), "there should be 10 tokens");
+        Assertions.assertEquals(10, tokens.size(), "there must be 10 tokens");
     }
 
     @Test
@@ -22,9 +22,9 @@ class LexerTest {
         final var lexer = lexerOfText("var variable");
         final var tokens = lexer.parse();
 
-        Assertions.assertEquals(2, tokens.size(), "there should be two tokens (not three)");
-        Assertions.assertEquals(Keyword.VAR, tokens.get(0).type, "the first token should be a keyword token");
-        Assertions.assertEquals(Simple.WORD, tokens.get(1).type, "the second token should be a word token");
+        Assertions.assertEquals(2, tokens.size(), "there must be two tokens (not three)");
+        Assertions.assertEquals(Keyword.VAR, tokens.get(0).type, "the first token must be a keyword token");
+        Assertions.assertEquals(Simple.WORD, tokens.get(1).type, "the second token must be a word token");
     }
 
     @Test
@@ -74,23 +74,40 @@ class LexerTest {
 
     @Test
     void validNewLinesAsSingleToken() {
-        final var lexer = lexerOfText("  \n     \n  ");
+        final var lexer = lexerOfText("are  \n     \n  ");
+        final var tokens = lexer.parse();
+
+        Assertions.assertEquals(
+                2,
+                tokens.size(),
+                "the result of two new lines and spaces must be one other token and one new line token");
+
+        Assertions.assertEquals(
+                Simple.NEWLINE,
+                tokens.get(1).type,
+                "the resulted token type must be " + Simple.NEWLINE.toReprString()
+        );
+    }
+
+    @Test
+    void validNewLineAsFirstTokenInQueueIsRemoved() {
+        final var lexer = lexerOfText("\n     \n  are");
         final var tokens = lexer.parse();
 
         Assertions.assertEquals(
                 1,
                 tokens.size(),
-                "the result of two new lines and spaces should be one new line token");
+                "the result of expression must be one word token");
 
         Assertions.assertEquals(
-                Simple.NEWLINE,
-                tokens.get(0).type,
-                "the resulted token type should be " + Simple.NEWLINE.toReprString()
+                Simple.WORD,
+                tokens.getFirst().type,
+                "the resulted token type must be " + Simple.NEWLINE.toReprString()
         );
     }
 
     private Lexer lexerOfText(String text) {
-        return new Lexer(TextContent.ofInput(text), new MessageHandler());
+        return new Lexer(TextContent.ofInput(text), new CompilationMessageHandler());
     }
 
     private TypedToken<?> firstToken(String token) {

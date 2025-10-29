@@ -10,6 +10,7 @@ import cofty.type.exception.SyntaxError;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@Deprecated
 public class AssociatedMessagesChannel {
     public final TextContent text;
     public final MessagesChannel channel;

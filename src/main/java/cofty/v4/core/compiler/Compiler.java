@@ -1,9 +1,9 @@
-package cofty.v4.core;
+package cofty.v4.core.compiler;
 
 import cofty.core.CompileResultLogger;
 import cofty.core.lexer.Lexer;
-import cofty.core.message.MessageHandler;
-import cofty.core.parser.ParseContext;
+import cofty.v4.core.compiler.message.CompilationMessageHandler;
+import cofty.v4.core.parser.ParseContext;
 import cofty.core.semantics.SemanticsContext;
 import cofty.type.TextContent;
 import cofty.v4.core.parser.BodyParser;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class Compiler {
     public final TextContent text;
-    public final MessageHandler messages = new MessageHandler();
+    public final CompilationMessageHandler messages = new CompilationMessageHandler();
     public final CompileResultLogger resultLogger = new CompileResultLogger(messages);
 
     public Compiler(@NotNull TextContent text) {

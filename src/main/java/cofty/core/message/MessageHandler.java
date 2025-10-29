@@ -3,6 +3,7 @@ package cofty.core.message;
 import cofty.core.message.channel.MessageChannel;
 import cofty.core.message.channel.MessagesChannel;
 
+@Deprecated
 public class MessageHandler {
     public final MessagesChannel CRITICAL = new MessagesChannel(MessageChannel.CRITICAL),
             NON_CRITICAL = new MessagesChannel(MessageChannel.NON_CRITICAL);

@@ -1,20 +1,20 @@
 package cofty.v4.core.parser;
 
 import cofty.core.lexer.token.type.Simple;
-import cofty.core.parser.ParseContext;
 import cofty.util.Cast;
 import cofty.v4.core.parser.ast.BodyObject;
 import cofty.v4.core.parser.ast.BodyResidentObject;
+import cofty.v4.core.parser.ast.value.complex.ComplexValueObject;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 public final class BodyParser implements Parser<BodyObject> {
     public static final BodyParser ROOT_BODY = new BodyParser("root");
 
-    private final static Set<? extends Parser<BodyResidentObject>> RESIDENT_PARSERS;
+    private final static List<? extends Parser<BodyResidentObject>> RESIDENT_PARSERS;
 
     private final String bodyName;
 
@@ -29,33 +29,36 @@ public final class BodyParser implements Parser<BodyObject> {
         var parseResult = (ParseResult<BodyResidentObject>)null;
         var lineStartsWithToken = context.current();
         var newLineProceeded = true;
+        var isFailed = false;
 
         while (true) {
             parseResult = parseLine(context);
 
             if (!newLineProceeded && !parseResult.isCanceled()) {
-                context.CRITICAL_MESSAGES.putSyntaxErr(
+                context.messages.addSyntaxErrBeforeToken(
                         "expected a newline separator between expressions",
                         Objects.requireNonNull(lineStartsWithToken)
                 );
+                context.goNext();
 
-                return ParseResult.failed();
+                isFailed = true;
             }
 
-            if (!parseResult.isSuccessful()) break;
+            if (parseResult.isCanceled()) break;
 
-            residents.add(parseResult.valueOrThrow());
+            if (parseResult.isFailed()) isFailed = true;
+            else residents.add(parseResult.valueOrThrow());
 
             newLineProceeded = context.goNextIfCurrentIs(Simple.NEWLINE);
             lineStartsWithToken = context.current();
         }
 
-        if (parseResult.isFailed()) return ParseResult.failed();
-
-        if (parseResult.isCanceled() && context.hasCurrent()) {
-            context.CRITICAL_MESSAGES.putSyntaxErr("invalid syntax");
+        if (context.hasCurrent()) {
+            context.messages.addInvalidSyntaxErr();
             return ParseResult.failed();
         }
+
+        if (isFailed) return ParseResult.failed();
 
         if (residents.isEmpty()) return ParseResult.canceled();
 
@@ -63,6 +66,23 @@ public final class BodyParser implements Parser<BodyObject> {
     }
 
     private @NotNull ParseResult<BodyResidentObject> parseLine(@NotNull ParseContext context) {
+        final var valueExpressionParseResult = ValueExpressionParser.DEFAULT.parse(context);
+
+        if (valueExpressionParseResult.isFailed()) return ParseResult.failed();
+
+        if (valueExpressionParseResult.isSuccessful()) {
+            if (valueExpressionParseResult.valueOrThrow().expr instanceof ComplexValueObject complexValueObject) {
+                final var fieldValueAssignmentParseResult = FieldValueAssignmentParser.DEFAULT.parse(
+                        context,
+                        complexValueObject  // to avoid warnings duplication
+                );
+
+                if (!fieldValueAssignmentParseResult.isCanceled()) return Cast.unsafe(fieldValueAssignmentParseResult);
+            }
+
+            return Cast.unsafe(valueExpressionParseResult);
+        }
+
         for (final var parser: RESIDENT_PARSERS) {
             final var parseResult = parser.parse(context);
 
@@ -73,10 +93,8 @@ public final class BodyParser implements Parser<BodyObject> {
     }
 
     static {
-        RESIDENT_PARSERS = Cast.unsafe(Set.of(
-                FieldDeclarationParser.DEFAULT,
-                FieldValueAssignmentParser.DEFAULT,
-                ValueExpressionParser.DEFAULT
+        RESIDENT_PARSERS = Cast.unsafe(List.of(  // the order in which these parsers are called is really important!
+                FieldDeclarationParser.DEFAULT
         ));
     }
 }

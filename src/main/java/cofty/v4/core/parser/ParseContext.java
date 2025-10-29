@@ -1,11 +1,9 @@
-package cofty.core.parser;
+package cofty.v4.core.parser;
 
-import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.TypedToken;
+import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.type.TokenType;
-import cofty.core.message.MessageHandler;
-import cofty.core.message.channel.ParserMessagesChannel;
-import cofty.type.QueueIterator;
+import cofty.v4.core.compiler.message.CompilationMessageHandler;
 import cofty.type.TextContent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,15 +12,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
 
-@Deprecated
-public class ParseContext implements QueueIterator<TypedToken<?>> {
+public final class ParseContext {
     public final List<TypedToken<?>> tokens;
     public final TextContent text;
-    public final MessageHandler messages;
-
-    public final ParserMessagesChannel CRITICAL_MESSAGES, NON_CRITICAL_MESSAGES;
+    public final CompilationMessageHandler.ParseContextAssociated messages;
 
     private int index = 0;
     private final ArrayList<Integer> indexSnapshotStack = new ArrayList<>();
@@ -34,14 +28,11 @@ public class ParseContext implements QueueIterator<TypedToken<?>> {
     public ParseContext(
             @NotNull List<TypedToken<?>> tokens,
             @NotNull TextContent text,
-            @NotNull MessageHandler messages
+            @NotNull CompilationMessageHandler messages
     ) {
         this.tokens = tokens;
         this.text = text;
-        this.messages = messages;
-
-        CRITICAL_MESSAGES = messages.CRITICAL.associate(this);
-        NON_CRITICAL_MESSAGES = messages.NON_CRITICAL.associate(this);
+        this.messages = messages.associateWith(this);
     }
 
     public int index() {
@@ -86,12 +77,14 @@ public class ParseContext implements QueueIterator<TypedToken<?>> {
         isNewLineSkipped = false;
     }
 
-    @Override
     public boolean hasNext() {
         return index < tokens.size() - 1;
     }
 
-    @Override
+    private boolean hasPrev() {
+        return index > 0;
+    }
+
     public boolean hasCurrent() {
         return index < tokens.size();
     }
@@ -100,30 +93,37 @@ public class ParseContext implements QueueIterator<TypedToken<?>> {
         return hasCurrent() && !currentOrThrow().type.equals(Simple.NEWLINE) && !isNewLineSkipped;
     }
 
-    @Override
     public @Nullable TypedToken<?> current() {
         return hasCurrent() ? tokens.get(index) : null;
+    }
+
+    public @NotNull TypedToken<?> currentOrThrow() {
+        return Objects.requireNonNull(current());
     }
 
     public @Nullable TypedToken<?> current(@NotNull TokenType except) {
         if (!hasCurrent()) return null;
 
-        if (skipNewLines && currentOrThrow().type.equals(Simple.NEWLINE) && !except.equals(Simple.NEWLINE))
+        if (canSkipNewLine(except))
             skipNewLine();
 
-        return tokens.get(index);
+        return current();
     }
 
-    @Override
-    @Deprecated
     public @Nullable TypedToken<?> prev() {
-        return tokens.get(index - 1);
+        return hasPrev() ? tokens.get(index - 1) : null;
     }
 
-    @Override
-    @Deprecated
+    public @NotNull TypedToken<?> prevOrThrow() {
+        return Objects.requireNonNull(prev());
+    }
+
     public @Nullable TypedToken<?> next() {
         return tokens.get(index + 1);
+    }
+
+    public @NotNull TypedToken<?> nextOrThrow() {
+        return Objects.requireNonNull(next());
     }
 
     public void skipNewLine() {
@@ -135,7 +135,6 @@ public class ParseContext implements QueueIterator<TypedToken<?>> {
         isNewLineSkipped = true;
     }
 
-    @Override
     public @Nullable TypedToken<?> goNext() {
         if (!hasCurrent())
             return null;
@@ -158,30 +157,10 @@ public class ParseContext implements QueueIterator<TypedToken<?>> {
         return Objects.requireNonNull(advance());
     }
 
-    @Deprecated
-    public @NotNull TypedToken<?> cursor() {
-        return hasCurrent() ? currentOrThrow() : prevOrThrow();
-    }
-
     public @NotNull TypedToken<?> nonNewLineCursorOrPrev() {
-        if (isNewLineSkipped) return peekOrThrow(-2);
+        if (isNewLineSkipped) return tokens.get(index - 2);
 
         return hasNonNewLineCurrent() ? currentOrThrow() : prevOrThrow();
-    }
-
-    @Deprecated
-    private @Nullable TypedToken<?> peek(int step) {
-        return tokens.get(index + step);
-    }
-
-    @Deprecated
-    private @NotNull TypedToken<?> peekOrThrow(int step) {
-        return Objects.requireNonNull(tokens.get(index + step));
-    }
-
-    @Deprecated
-    public boolean peek(int step, @NotNull Function<TypedToken<?>, Boolean> peeker) {
-        return index + step < tokens.size() && peeker.apply(tokens.get(index + step));
     }
 
     public boolean currentIs(@NotNull TokenType type) {
@@ -219,7 +198,7 @@ public class ParseContext implements QueueIterator<TypedToken<?>> {
                 && hasNext()
                 && currentOrThrow().type.equals(Simple.NEWLINE)
                 && !type.equals(Simple.NEWLINE)
-                && tokens.get(index + 1).type.equals(type);
+                && nextOrThrow().type.equals(type);
     }
 
     private boolean canSkipNewLine(@NotNull Collection<TokenType> types) {
@@ -227,6 +206,6 @@ public class ParseContext implements QueueIterator<TypedToken<?>> {
                 && hasNext()
                 && currentOrThrow().type.equals(Simple.NEWLINE)
                 && !types.contains(Simple.NEWLINE)
-                && types.contains(tokens.get(index + 1).type);
+                && types.contains(nextOrThrow().type);
     }
 }

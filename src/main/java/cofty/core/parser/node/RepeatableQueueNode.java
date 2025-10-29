@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
 
+@Deprecated
 public class RepeatableQueueNode extends EmptyNode {
     private final List<@NotNull AstObjectInitializer> astObjectInitializers;
     private final ParserNode separator, stopper;

@@ -1,3 +1,3 @@
 # Developer docs
 
-- [Operators](/operators.md)
+- [Operators](/docs/operators.md)

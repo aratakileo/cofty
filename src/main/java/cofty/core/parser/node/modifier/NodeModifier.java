@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+@Deprecated
 public final class NodeModifier {
     private final HashSet<@NotNull ModifierType> types;
     

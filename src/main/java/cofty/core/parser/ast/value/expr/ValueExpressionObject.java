@@ -7,6 +7,7 @@ import cofty.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@Deprecated
 public class ValueExpressionObject implements AstObject, ValueExpression {
     private ValueExpression expression = null;
 

@@ -14,6 +14,7 @@ import cofty.core.parser.node.TokenNode;
 import cofty.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 
+@Deprecated
 public class StatementObject<T extends TokenType> implements AstObject, WithBody, WithAnchor<T> {
     private final T statementStartKeyword;
     private final ValueExpressionObject statement = new ValueExpressionObject();

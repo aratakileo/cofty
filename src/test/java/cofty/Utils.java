@@ -1,8 +1,8 @@
 package cofty;
 
 import cofty.core.lexer.Lexer;
-import cofty.core.message.MessageHandler;
-import cofty.core.parser.ParseContext;
+import cofty.v4.core.compiler.message.CompilationMessageHandler;
+import cofty.v4.core.parser.ParseContext;
 import cofty.type.TextContent;
 
 public final class Utils {
@@ -10,7 +10,7 @@ public final class Utils {
 
     public static ParseContext parseContextOf(String text) {
         final var textContent = TextContent.ofInput(text);
-        final var messages = new MessageHandler();
+        final var messages = new CompilationMessageHandler();
         final var tokens = new Lexer(textContent, messages).parse();
 
         return new ParseContext(tokens, textContent, messages);

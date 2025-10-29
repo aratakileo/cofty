@@ -3,7 +3,6 @@ package cofty.v4.core.parser;
 import cofty.Utils;
 import cofty.core.lexer.token.type.Simple;
 import cofty.type.Representable;
-import cofty.v4.core.parser.ComplexValueParser;
 import cofty.v4.core.parser.ast.value.complex.ComplexValueObject;
 import cofty.v4.core.parser.ast.value.complex.FieldAccessObject;
 import cofty.v4.core.parser.ast.value.complex.FuncCallObject;

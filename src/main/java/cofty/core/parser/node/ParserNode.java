@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
+@Deprecated
 public interface ParserNode {
     @Nullable ParserNode next();
     default @NotNull ParserNode nextOrThrow() {

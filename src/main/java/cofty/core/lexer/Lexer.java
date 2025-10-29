@@ -3,10 +3,11 @@ package cofty.core.lexer;
 import cofty.core.lexer.token.*;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.type.TokenType;
-import cofty.core.message.MessageBuilder;
-import cofty.core.message.MessageHandler;
+import cofty.core.message.MessageType;
+import cofty.v4.core.compiler.message.CompilationMessage;
+import cofty.v4.core.compiler.message.CompilationMessageHandler;
 import cofty.type.TextContent;
-import cofty.type.exception.SyntaxError;
+import cofty.v4.core.compiler.message.CompilationMessageLabel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -18,10 +19,10 @@ public class Lexer {
     private static final Pattern PATTERN;
 
     private final TextContent text;
-    private final MessageHandler messages;
+    private final CompilationMessageHandler messages;
     private final Matcher matcher;
 
-    public Lexer(@NotNull TextContent text, @NotNull MessageHandler messages) {
+    public Lexer(@NotNull TextContent text, @NotNull CompilationMessageHandler messages) {
         this.text = text;
         this.messages = messages;
         this.matcher = PATTERN.matcher(text.text);
@@ -44,7 +45,7 @@ public class Lexer {
                 showSyntaxError(prevToken);
             }
 
-            if (!tokenType.isIn(Simple.SKIP, Simple.MISMATCH))
+            if (!tokenType.isIn(Simple.SKIP, Simple.MISMATCH) && (tokenType != Simple.NEWLINE || !tokens.isEmpty()))
                 tokens.add(token);
 
             prevToken = token;
@@ -57,7 +58,7 @@ public class Lexer {
     }
 
     private void showSyntaxError(@NotNull AnyToken token) {
-        messages.CRITICAL.put(MessageBuilder.err(text, token, new SyntaxError("invalid syntax")));
+        messages.add(CompilationMessage.create(text, MessageType.ERROR, CompilationMessageLabel.INVALID_SYNTAX, token));
     }
 
     static {

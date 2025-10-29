@@ -7,13 +7,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@Deprecated
 public class ElseBodyVisitor extends SubBodyVisitor {
     @Override
     public boolean visitBodyObjects(@NotNull SemanticsContext context, @NotNull List<AstObject> objects) {
         var result = super.visitBodyObjects(context, objects);
 
         if (objects.getFirst() instanceof IfStatementsObject ifStatementsObject) {
-            context.CRITICAL.putSyntaxErr("not allowed here", ifStatementsObject.anchor());
+            context.messages.addSyntaxErr("not allowed here", ifStatementsObject.anchor());
             return false;
         }
 

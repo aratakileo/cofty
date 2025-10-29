@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
+@Deprecated
 public class MessagesChannel {
     private final MessageChannel channel;
     private final ArrayList<Message> messages = new ArrayList<>();

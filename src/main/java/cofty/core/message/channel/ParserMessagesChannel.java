@@ -4,6 +4,7 @@ import cofty.core.parser.ParseContext;
 import cofty.type.exception.SyntaxError;
 import org.jetbrains.annotations.NotNull;
 
+@Deprecated
 public class ParserMessagesChannel extends AssociatedMessagesChannel {
     public final ParseContext context;
 

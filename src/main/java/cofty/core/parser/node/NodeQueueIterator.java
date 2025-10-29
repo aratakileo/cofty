@@ -8,6 +8,7 @@ import cofty.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@Deprecated
 public class NodeQueueIterator implements QueueIterator<ParserNode> {
     public final ParseContext context;
     public final NodeModifier modifier;

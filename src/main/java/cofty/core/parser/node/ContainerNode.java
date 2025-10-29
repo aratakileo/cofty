@@ -6,6 +6,7 @@ import cofty.core.parser.node.modifier.ModifierType;
 import cofty.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 
+@Deprecated
 public class ContainerNode extends EmptyNode {
     public final ParserNode node;
 

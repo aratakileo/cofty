@@ -6,6 +6,7 @@ import cofty.type.TextContent;
 import cofty.util.Strings;
 import org.jetbrains.annotations.NotNull;
 
+@Deprecated
 public class MessageBuilder {
     private final MessageType messageType;
     private final TextContent textContent;

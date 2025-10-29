@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.stream.Stream;
 
+@Deprecated
 public class PrimitiveValueObject implements ValueExpression, AstObject {
     private TypedToken<?> value = null;
 

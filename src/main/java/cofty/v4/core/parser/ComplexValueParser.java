@@ -5,7 +5,6 @@ import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.type.TokenType;
 import cofty.core.lexer.token.type.operator.Bracket;
 import cofty.core.lexer.token.type.operator.Separator;
-import cofty.core.parser.ParseContext;
 import cofty.util.Lists;
 import cofty.v4.core.parser.ast.value.ValueExpressionObject;
 import cofty.v4.core.parser.ast.value.complex.*;
@@ -41,28 +40,46 @@ public final class ComplexValueParser implements Parser<ComplexValueObject> {
         final var firstSegmentParseResult = context.currentIs(Simple.WORD)
                 ? parseFuncCallOrFieldAccess(context, false) : new SimpleValue(context.advanceOrThrow());
 
-        if (firstSegmentParseResult == null)
+        if (firstSegmentParseResult == null) {
+            context.rollbackSkippingNewLinesState();
             return ParseResult.failed();
+        }
 
         final var segments = Lists.arrayListOf(firstSegmentParseResult);
+
+        var postfixFunctionCallsCounter = 0;
 
         while (context.currentIsAny(SEPARATORS)) {
             final var isPostfixFuncCall = context.currentIs(Separator.EXCLAMATION_MARK);
 
+            postfixFunctionCallsCounter = checkPostfixFunctionCalls(
+                    context,
+                    segments,
+                    isPostfixFuncCall,
+                    postfixFunctionCallsCounter
+            );
+
             context.goNext();
 
             if (!context.currentIs(Simple.WORD)) {
-                context.CRITICAL_MESSAGES.putSyntaxErr("expected a field access or a function call");
+                context.messages.addSyntaxErr("expected a field access or a function call");
+                context.rollbackSkippingNewLinesState();
+                context.goNext();
+
                 return ParseResult.failed();
             }
 
             final var segmentParseResult = parseFuncCallOrFieldAccess(context, isPostfixFuncCall);
 
-            if (segmentParseResult == null)
+            if (segmentParseResult == null) {
+                context.rollbackSkippingNewLinesState();
                 return ParseResult.failed();
+            }
 
             segments.add(segmentParseResult);
         }
+
+        postfixFunctionCallsCounter = checkPostfixFunctionCalls(context, segments, false, postfixFunctionCallsCounter);
 
         context.rollbackSkippingNewLinesState();
 
@@ -75,17 +92,20 @@ public final class ComplexValueParser implements Parser<ComplexValueObject> {
     ) {
         final var name = context.advanceOrThrow().<Simple>strictAs();
 
-        if (!context.goNextIfCurrentIs(Bracket.ROUND_OPEN))
+        if (!context.currentIs(Bracket.ROUND_OPEN))
             return isPostfixFuncCall ? new FuncCallObject(name, List.of(), true) : new FieldAccessObject(name);
 
+        final var roundOpeningBracket = context.advanceOrThrow();
         final var args = new ArrayList<ValueExpressionObject>();
 
-        boolean alreadySeparated = true;
+        var alreadySeparated = true;
 
-        while (!context.goNextIfCurrentIs(Bracket.ROUND_CLOSE)) {
+        while (!context.currentIs(Bracket.ROUND_CLOSE)) {
             if (context.currentIs(Separator.COMMA)) {
                 if (alreadySeparated) {
-                    context.CRITICAL_MESSAGES.putSyntaxErr("expected an argument value, not the comma");
+                    context.messages.addSyntaxErr("expected an argument value, not the comma");
+                    context.goNext();
+
                     return null;
                 }
 
@@ -97,12 +117,14 @@ public final class ComplexValueParser implements Parser<ComplexValueObject> {
             final var parseResult = ValueExpressionParser.DEFAULT.parse(context);
 
             if (!parseResult.isSuccessful() && !context.currentIs(Bracket.ROUND_CLOSE)) {
-                context.CRITICAL_MESSAGES.putSyntaxErr("expected the ending of round brackets");
+                context.messages.addSyntaxErr("expected the ending of round brackets");
+                context.goNext();
+
                 return null;
             }
 
             if (!alreadySeparated && !parseResult.isCanceled()) {
-                context.CRITICAL_MESSAGES.putSyntaxErr(
+                context.messages.addSyntaxErrBeforeToken(
                         "expected a comma separator between arguments",
                         ((ComplexValueObject)parseResult.valueOrThrow().expr).segments.getFirst().failAnchor()
                 );
@@ -117,6 +139,34 @@ public final class ComplexValueParser implements Parser<ComplexValueObject> {
             alreadySeparated = false;
         }
 
+        final var roundClosingBracket = context.advanceOrThrow();
+
+        if (isPostfixFuncCall && args.isEmpty())
+            context.messages.addInRangeWarn(
+                    "a postfix function call without arguments, but with round brackets",
+                    roundOpeningBracket,
+                    roundClosingBracket
+            );
+
         return new FuncCallObject(name, args.stream().toList(), isPostfixFuncCall);
+    }
+
+    private int checkPostfixFunctionCalls(
+            @NotNull ParseContext context,
+            @NotNull ArrayList<ValueSegmentObject> segments,
+            boolean isPostfixFuncCall,
+            int postfixFunctionCallsCounter
+    ) {
+        if (!isPostfixFuncCall) {
+            if (postfixFunctionCallsCounter > 3) context.messages.addInRangeWarn(
+                    "more than three postfix function calls in a row",
+                    segments.get(segments.size() - postfixFunctionCallsCounter).failAnchor(),
+                    segments.getLast().failAnchor()
+            );
+
+            postfixFunctionCallsCounter = 0;
+        } else postfixFunctionCallsCounter++;
+
+        return postfixFunctionCallsCounter;
     }
 }

@@ -5,6 +5,7 @@ import cofty.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@Deprecated
 public abstract class EmptyNode implements ParserNode, Representable {
     public final NodeModifier modifier;
 

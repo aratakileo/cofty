@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
+@Deprecated
 public class IfStatementsObject implements AstObject, WithAnchor<Keyword> {
     private final StatementObject<Keyword> ifStatement = new StatementObject<>(Keyword.IF);
     private final BodyObject elseBody = new BodyObject();

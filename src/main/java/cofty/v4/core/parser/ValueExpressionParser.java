@@ -1,6 +1,5 @@
 package cofty.v4.core.parser;
 
-import cofty.core.parser.ParseContext;
 import cofty.v4.core.parser.ast.value.ValueExpressionObject;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,6 +20,7 @@ public final class ValueExpressionParser implements Parser<ValueExpressionObject
         }
 
         if (complexValueParseResult.isFailed()) {
+            context.rollbackSkippingNewLinesState();
             return ParseResult.failed();
         }
 

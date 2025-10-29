@@ -12,6 +12,7 @@ import cofty.core.parser.node.modifier.NodeModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@Deprecated
 public class VarDeclarationObject implements AstObject, WithModifiers {
     private final boolean isFunctionArgument;
 

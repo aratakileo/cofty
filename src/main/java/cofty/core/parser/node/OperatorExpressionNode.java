@@ -5,6 +5,7 @@ import cofty.core.parser.node.modifier.NodeModifier;
 import cofty.type.Representable;
 import org.jetbrains.annotations.NotNull;
 
+@Deprecated
 public class OperatorExpressionNode extends EmptyNode {
     public OperatorExpressionNode(@NotNull NodeModifier modifier) {
         super(modifier);
