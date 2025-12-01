@@ -36,7 +36,93 @@ class BodyParserTest {
     }
 
     @Test
-    void invalidNoWords() {
+    void validSimpleNestedBody() {
+        final var expr = "{}";
+        final var context = Utils.parseContextOf(expr);
+        final var parseResult = BodyParser.NESTED_BODY.parse(context);
+
+        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
+
+        Assertions.assertDoesNotThrow(
+                parseResult::valueOrThrow,
+                "the resulted ast object must be non null"
+        );
+
+        final var astObject = parseResult.valueOrThrow();
+        final var countOfResidents = 0;
+
+        Assertions.assertEquals(
+                countOfResidents,
+                astObject.residents.size(),
+                String.format("there must be %s body expressions", countOfResidents)
+        );
+    }
+
+    @Test
+    void validNestedBodyInSimpleNestedBody() {
+        final var expr = "{{}}";
+        final var context = Utils.parseContextOf(expr);
+        final var parseResult = BodyParser.NESTED_BODY.parse(context);
+
+        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
+
+        Assertions.assertDoesNotThrow(
+                parseResult::valueOrThrow,
+                "the resulted ast object must be non null"
+        );
+
+        final var astObject = parseResult.valueOrThrow();
+        final var countOfResidents = 1;
+
+        Assertions.assertEquals(
+                countOfResidents,
+                astObject.residents.size(),
+                String.format("there must be %s body expressions", countOfResidents)
+        );
+    }
+
+    @Test
+    void invalidUnclosedSimpleNestedBody() {
+        final var expr = "{";
+        final var context = Utils.parseContextOf(expr);
+        final var parseResult = BodyParser.NESTED_BODY.parse(context);
+
+        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
+
+        Assertions.assertEquals(
+                1,
+                context.messages.handler.errCount(),
+                "there must be exactly one compilation error message"
+        );
+
+        Assertions.assertNull(
+                parseResult.value(),
+                "the resulted ast object must be null"
+        );
+    }
+
+    @Test
+    void invalidUnclosedSimpleNestedBodyWithOtherParseFails() {
+        final var expr = "{var test =";
+        final var context = Utils.parseContextOf(expr);
+        final var parseResult = BodyParser.NESTED_BODY.parse(context);
+
+        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
+
+        Assertions.assertEquals(
+                2,
+                context.messages.handler.errCount(),
+                "there must be exactly two compilation error message"
+        );
+
+        Assertions.assertNull(
+                parseResult.value(),
+                "the resulted ast object must be null"
+        );
+    }
+
+    @Test
+    void invalidEmptyRootBody() {
         final var expr = "";
         final var context = Utils.parseContextOf(expr);
         final var parseResult = BodyParser.ROOT_BODY.parse(context);
@@ -50,7 +136,7 @@ class BodyParserTest {
     }
 
     @Test
-    void invalidNoSeparatorBetweenExpressions() {
+    void invalidRootBodyNoSeparatorBetweenExpressions() {
         final var expr = "variable1 variable2";
         final var context = Utils.parseContextOf(expr);
         final var parseResult = BodyParser.ROOT_BODY.parse(context);
