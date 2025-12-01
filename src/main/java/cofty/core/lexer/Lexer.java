@@ -3,7 +3,7 @@ package cofty.core.lexer;
 import cofty.core.lexer.token.*;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.type.TokenType;
-import cofty.core.message.MessageType;
+import cofty.v4.core.compiler.message.MessageType;
 import cofty.v4.core.compiler.message.CompilationMessage;
 import cofty.v4.core.compiler.message.CompilationMessageHandler;
 import cofty.type.TextContent;

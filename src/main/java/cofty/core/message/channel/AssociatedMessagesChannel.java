@@ -1,10 +1,9 @@
 package cofty.core.message.channel;
 
-import cofty.core.lexer.token.AnyToken;
 import cofty.core.lexer.token.TypedToken;
 import cofty.core.message.Message;
 import cofty.core.message.MessageBuilder;
-import cofty.core.message.MessageType;
+import cofty.v4.core.compiler.message.MessageType;
 import cofty.type.TextContent;
 import cofty.type.exception.SyntaxError;
 import org.jetbrains.annotations.NotNull;

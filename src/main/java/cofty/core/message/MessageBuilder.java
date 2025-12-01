@@ -4,6 +4,7 @@ import cofty.core.lexer.token.TypedToken;
 import cofty.type.Representable;
 import cofty.type.TextContent;
 import cofty.util.Strings;
+import cofty.v4.core.compiler.message.MessageType;
 import org.jetbrains.annotations.NotNull;
 
 @Deprecated

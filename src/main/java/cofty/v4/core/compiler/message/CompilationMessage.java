@@ -1,7 +1,6 @@
 package cofty.v4.core.compiler.message;
 
 import cofty.core.lexer.token.TypedToken;
-import cofty.core.message.MessageType;
 import cofty.type.Representable;
 import cofty.type.TextContent;
 import cofty.util.Strings;

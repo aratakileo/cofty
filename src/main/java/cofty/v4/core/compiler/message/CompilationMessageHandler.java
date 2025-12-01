@@ -1,7 +1,6 @@
 package cofty.v4.core.compiler.message;
 
 import cofty.core.lexer.token.TypedToken;
-import cofty.core.message.MessageType;
 import cofty.type.TextContent;
 import cofty.v4.core.parser.ParseContext;
 import org.jetbrains.annotations.NotNull;
@@ -44,17 +43,19 @@ public final class CompilationMessageHandler {
     }
 
     public @NotNull TextAssociated associateWith(@NotNull TextContent text) {
-        return new TextAssociated(text);
+        return new TextAssociated(this, text);
     }
 
     public @NotNull ParseContextAssociated associateWith(@NotNull ParseContext context) {
         return new ParseContextAssociated(this, context);
     }
 
-    public class TextAssociated {
+    public static class TextAssociated {
         public final TextContent text;
+        public final CompilationMessageHandler handler;
 
-        public TextAssociated(@NotNull TextContent text) {
+        public TextAssociated(@NotNull CompilationMessageHandler handler, @NotNull TextContent text) {
+            this.handler = handler;
             this.text = text;
         }
 
@@ -62,7 +63,7 @@ public final class CompilationMessageHandler {
                 @NotNull String label,
                 @NotNull TypedToken<?> token
         ) {
-            CompilationMessageHandler.this.add(CompilationMessage.create(
+            handler.add(CompilationMessage.create(
                     text,
                     MessageType.ERROR,
                     CompilationMessageLabel.syntaxError(label), token)
@@ -73,7 +74,7 @@ public final class CompilationMessageHandler {
                 @NotNull String label,
                 @NotNull TypedToken<?> token
         ) {
-            CompilationMessageHandler.this.add(CompilationMessage.createAfter(
+            handler.add(CompilationMessage.createAfter(
                     text,
                     MessageType.ERROR,
                     CompilationMessageLabel.syntaxError(label),
@@ -85,7 +86,7 @@ public final class CompilationMessageHandler {
                 @NotNull String label,
                 @NotNull TypedToken<?> token
         ) {
-            CompilationMessageHandler.this.add(CompilationMessage.createBefore(
+            handler.add(CompilationMessage.createBefore(
                     text,
                     MessageType.ERROR,
                     CompilationMessageLabel.syntaxError(label),
@@ -98,7 +99,7 @@ public final class CompilationMessageHandler {
                 int start,
                 int end
         ) {
-            CompilationMessageHandler.this.add(CompilationMessage.create(
+            handler.add(CompilationMessage.create(
                     text,
                     MessageType.ERROR,
                     CompilationMessageLabel.syntaxError(label),
@@ -112,7 +113,7 @@ public final class CompilationMessageHandler {
                 @NotNull TypedToken<?> firstToken,
                 @NotNull TypedToken<?> lastToken
         ) {
-            CompilationMessageHandler.this.add(CompilationMessage.create(
+            handler.add(CompilationMessage.create(
                     text,
                     MessageType.ERROR,
                     CompilationMessageLabel.syntaxError(label),
@@ -125,7 +126,7 @@ public final class CompilationMessageHandler {
                 @NotNull String message,
                 @NotNull TypedToken<?> token
         ) {
-            CompilationMessageHandler.this.add(CompilationMessage.create(
+            handler.add(CompilationMessage.create(
                     text,
                     MessageType.WARNING,
                     CompilationMessageLabel.create(message),
@@ -137,7 +138,7 @@ public final class CompilationMessageHandler {
                 @NotNull String message,
                 @NotNull TypedToken<?> token
         ) {
-            CompilationMessageHandler.this.add(CompilationMessage.createAfter(
+            handler.add(CompilationMessage.createAfter(
                     text,
                     MessageType.WARNING,
                     CompilationMessageLabel.create(message),
@@ -149,7 +150,7 @@ public final class CompilationMessageHandler {
                 @NotNull String message,
                 @NotNull TypedToken<?> token
         ) {
-            CompilationMessageHandler.this.add(CompilationMessage.createBefore(
+            handler.add(CompilationMessage.createBefore(
                     text,
                     MessageType.WARNING,
                     CompilationMessageLabel.create(message),
@@ -162,7 +163,7 @@ public final class CompilationMessageHandler {
                 int start,
                 int end
         ) {
-            CompilationMessageHandler.this.add(CompilationMessage.create(
+            handler.add(CompilationMessage.create(
                     text,
                     MessageType.WARNING,
                     CompilationMessageLabel.create(message),
@@ -176,7 +177,7 @@ public final class CompilationMessageHandler {
                 @NotNull TypedToken<?> firstToken,
                 @NotNull TypedToken<?> lastToken
         ) {
-            CompilationMessageHandler.this.add(CompilationMessage.create(
+            handler.add(CompilationMessage.create(
                     text,
                     MessageType.WARNING,
                     CompilationMessageLabel.create(message),
@@ -186,11 +187,14 @@ public final class CompilationMessageHandler {
         }
     }
 
-    public final class ParseContextAssociated extends TextAssociated {
+    public static final class ParseContextAssociated extends TextAssociated {
         public final ParseContext context;
 
-        public ParseContextAssociated(@NotNull CompilationMessageHandler messages, @NotNull ParseContext context) {
-            super(context.text);
+        public ParseContextAssociated(
+                @NotNull CompilationMessageHandler handler,
+                @NotNull ParseContext context
+        ) {
+            super(handler, context.text);
             this.context = context;
         }
 
@@ -209,7 +213,7 @@ public final class CompilationMessageHandler {
                     ? CompilationMessage.create(text, type, label, token)
                     : CompilationMessage.createAfter(text, type, label, token);
 
-            CompilationMessageHandler.this.add(message);
+            handler.add(message);
         }
     }
 }

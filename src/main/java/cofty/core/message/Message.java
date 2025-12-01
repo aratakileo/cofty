@@ -2,6 +2,7 @@ package cofty.core.message;
 
 import cofty.type.Representable;
 import cofty.type.TextContent;
+import cofty.v4.core.compiler.message.MessageType;
 import org.jetbrains.annotations.NotNull;
 
 @Deprecated

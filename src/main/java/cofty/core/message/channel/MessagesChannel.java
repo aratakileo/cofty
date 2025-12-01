@@ -1,7 +1,7 @@
 package cofty.core.message.channel;
 
 import cofty.core.message.Message;
-import cofty.core.message.MessageType;
+import cofty.v4.core.compiler.message.MessageType;
 import cofty.core.parser.ParseContext;
 import cofty.type.TextContent;
 import org.jetbrains.annotations.NotNull;

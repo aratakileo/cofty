@@ -1,4 +1,4 @@
-package cofty.core.message;
+package cofty.v4.core.compiler.message;
 
 public enum MessageType {
     ERROR,
