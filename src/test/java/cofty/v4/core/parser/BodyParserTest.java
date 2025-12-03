@@ -14,6 +14,14 @@ class BodyParserTest {
                 var lavender = 0xE6E6FA
                 abstractDrawer.draw(lavender)
                 println(lavender!rgb)
+                
+                {
+                    println('Inside the nested body')
+                }
+                
+                fun sum(a: int, b = 5) -> int {
+                    return 7
+                }
                 """;
         final var context = Utils.parseContextOf(expr);
         final var parseResult = BodyParser.ROOT_BODY.parse(context);
@@ -26,12 +34,12 @@ class BodyParserTest {
         );
 
         final var astObject = parseResult.valueOrThrow();
-        final var countOfResidents = 3;
+        final var countOfResidents = 5;
 
         Assertions.assertEquals(
                 countOfResidents,
                 astObject.residents.size(),
-                String.format("there must be %s body expressions", countOfResidents)
+                String.format("there must be exactly %s body expressions", countOfResidents)
         );
     }
 
@@ -54,7 +62,34 @@ class BodyParserTest {
         Assertions.assertEquals(
                 countOfResidents,
                 astObject.residents.size(),
-                String.format("there must be %s body expressions", countOfResidents)
+                String.format("there must be exactly %s body expressions", countOfResidents)
+        );
+    }
+
+    @Test
+    void validSimpleNestedBodyWithNestedFuncCallStartsWithNewLine() {
+        final var expr = """
+                {
+                    println('Hello World!')
+                }
+                """;
+        final var context = Utils.parseContextOf(expr);
+        final var parseResult = BodyParser.NESTED_BODY.parse(context);
+
+        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
+
+        Assertions.assertDoesNotThrow(
+                parseResult::valueOrThrow,
+                "the resulted ast object must be non null"
+        );
+
+        final var astObject = parseResult.valueOrThrow();
+        final var countOfResidents = 1;
+
+        Assertions.assertEquals(
+                countOfResidents,
+                astObject.residents.size(),
+                String.format("there must be exactly %s body expressions", countOfResidents)
         );
     }
 

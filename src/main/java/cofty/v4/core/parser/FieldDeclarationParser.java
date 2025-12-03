@@ -8,22 +8,39 @@ import cofty.core.lexer.token.type.operator.Separator;
 import cofty.v4.core.parser.ast.FieldDeclarationObject;
 import org.jetbrains.annotations.NotNull;
 
+import java.text.MessageFormat;
 import java.util.Objects;
 
 public final class FieldDeclarationParser implements Parser<FieldDeclarationObject> {
-    public static final FieldDeclarationParser DEFAULT = new FieldDeclarationParser();
+    public static final FieldDeclarationParser DEFAULT = new FieldDeclarationParser(false),
+            FUNC_ARG = new FieldDeclarationParser(true);
 
-    private FieldDeclarationParser() {}
+    private final boolean asFuncArgument;
+
+    private FieldDeclarationParser(boolean asFuncArgument) {
+        this.asFuncArgument = asFuncArgument;
+    }
 
     @Override
     public @NotNull ParseResult<FieldDeclarationObject> parse(@NotNull ParseContext context) {
-        if (!context.goNextIfCurrentIs(Keyword.VAR)) return ParseResult.canceled();
+        boolean isFailed = false;
+
+        if (asFuncArgument && context.currentIs(Keyword.VAR)) {
+            context.messages.addSyntaxErr("not allowed here");
+            context.goNext();
+
+            isFailed = true;
+        } else if (!asFuncArgument && !context.goNextIfCurrentIs(Keyword.VAR))
+            return ParseResult.canceled();
 
         final var mutableToken = context.currentIs(Keyword.MUT) ? context.advanceOrThrow() : null;
         final var nameToken = context.current(Simple.WORD);
 
         if (!context.goNextIfCurrentIs(Simple.WORD)) {
-            context.messages.addSyntaxErr("expected a field name");
+            if (asFuncArgument && mutableToken == null && !isFailed)
+                return ParseResult.canceled();
+
+            context.messages.addSyntaxErr(String.format("expected a %s name here", declarationName()));
             context.goNext();
 
             return ParseResult.failed();
@@ -34,7 +51,7 @@ public final class FieldDeclarationParser implements Parser<FieldDeclarationObje
 
         if (valueTypeParseResult != null && !valueTypeParseResult.isSuccessful()) {
             if (valueTypeParseResult.isCanceled())
-                context.messages.addSyntaxErr("expected a field value type");
+                context.messages.addSyntaxErr(String.format("expected a %s value type here", declarationName()));
 
             return ParseResult.failed();
         }
@@ -44,14 +61,17 @@ public final class FieldDeclarationParser implements Parser<FieldDeclarationObje
 
         if (valueParseResult != null && !valueParseResult.isSuccessful()) {
             if (valueParseResult.isCanceled())
-                context.messages.addSyntaxErr("expected a field value");
+                context.messages.addSyntaxErr(String.format("expected a %s value here", declarationName()));
 
             return ParseResult.failed();
         }
 
         if (valueTypeParseResult == null && valueParseResult == null) {
             context.messages.addSyntaxErrAfterToken(
-                    "expected specified either the field value type or the field value itself",
+                    MessageFormat.format(
+                            "expected specified either the {0} value type or the {0} value itself",
+                            declarationName()
+                    ),
                     Objects.requireNonNull(nameToken)
             );
 
@@ -59,7 +79,7 @@ public final class FieldDeclarationParser implements Parser<FieldDeclarationObje
         }
 
         if (valueTypeParseResult != null && valueParseResult != null)
-            return ParseResult.successful(FieldDeclarationObject.create(
+            return isFailed ? ParseResult.failed() : ParseResult.successful(FieldDeclarationObject.create(
                     TypedToken.strictAsOrNull(mutableToken),
                     TypedToken.strictAs(nameToken),
                     valueTypeParseResult.valueOrThrow(),
@@ -67,16 +87,20 @@ public final class FieldDeclarationParser implements Parser<FieldDeclarationObje
             ));
 
         if (valueTypeParseResult != null)
-            return ParseResult.successful(FieldDeclarationObject.create(
+            return isFailed ? ParseResult.failed() : ParseResult.successful(FieldDeclarationObject.create(
                     TypedToken.strictAsOrNull(mutableToken),
                     TypedToken.strictAs(nameToken),
                     valueTypeParseResult.valueOrThrow()
             ));
 
-        return ParseResult.successful(FieldDeclarationObject.create(
+        return isFailed ? ParseResult.failed() : ParseResult.successful(FieldDeclarationObject.create(
                 TypedToken.strictAsOrNull(mutableToken),
                 TypedToken.strictAs(nameToken),
                 valueParseResult.valueOrThrow()
         ));
+    }
+
+    private @NotNull String declarationName() {
+        return asFuncArgument ? "function argument" : "field";
     }
 }

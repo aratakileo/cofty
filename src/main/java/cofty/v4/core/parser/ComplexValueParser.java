@@ -62,7 +62,7 @@ public final class ComplexValueParser implements Parser<ComplexValueObject> {
             context.goNext();
 
             if (!context.currentIs(Simple.WORD)) {
-                context.messages.addSyntaxErr("expected a field access or a function call");
+                context.messages.addSyntaxErr("expected a field access or a function call here");
                 context.rollbackSkippingNewLinesState();
                 context.goNext();
 
@@ -103,7 +103,7 @@ public final class ComplexValueParser implements Parser<ComplexValueObject> {
         while (!context.currentIs(Bracket.ROUND_CLOSE)) {
             if (context.currentIs(Separator.COMMA)) {
                 if (alreadySeparated) {
-                    context.messages.addSyntaxErr("expected an argument value, not the comma");
+                    context.messages.addSyntaxErr("expected an argument value here, not the comma");
                     context.goNext();
 
                     return null;
@@ -117,7 +117,7 @@ public final class ComplexValueParser implements Parser<ComplexValueObject> {
             final var parseResult = ValueExpressionParser.DEFAULT.parse(context);
 
             if (!parseResult.isSuccessful() && !context.currentIs(Bracket.ROUND_CLOSE)) {
-                context.messages.addSyntaxErr("expected the ending of round brackets");
+                context.messages.addSyntaxErr("expected the ending of the round brackets here");
                 context.goNext();
 
                 return null;
@@ -125,7 +125,7 @@ public final class ComplexValueParser implements Parser<ComplexValueObject> {
 
             if (!alreadySeparated && !parseResult.isCanceled()) {
                 context.messages.addSyntaxErrBeforeToken(
-                        "expected a comma separator between arguments",
+                        "expected a comma separator here between arguments",
                         ((ComplexValueObject)parseResult.valueOrThrow().expr).segments.getFirst().failAnchor()
                 );
 

@@ -6,8 +6,10 @@ import java.util.List;
 
 public final class BodyObject implements BodyResidentObject {
     public final List<BodyResidentObject> residents;
+    public final boolean finishedWithReturnStatement;
 
-    public BodyObject(@NotNull List<BodyResidentObject> residents) {
+    public BodyObject(@NotNull List<BodyResidentObject> residents, boolean finishedWithReturnStatement) {
         this.residents = residents;
+        this.finishedWithReturnStatement = finishedWithReturnStatement;
     }
 }

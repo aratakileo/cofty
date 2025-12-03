@@ -48,7 +48,7 @@ public final class FieldValueAssignmentParser implements Parser<FieldValueAssign
         if (!(lastSegment instanceof FieldAccessObject)) {
             context.messages.addSyntaxErr(
                     String.format(
-                            "expected exactly a field to assign a new value, not the %s",
+                            "expected exactly a field here to assign a new value, not the %s",
                             lastSegment.represent()
                     ),
                     lastSegment.failAnchor()
@@ -62,7 +62,7 @@ public final class FieldValueAssignmentParser implements Parser<FieldValueAssign
         if (fieldValueParseResult.isFailed()) return ParseResult.failed();
 
         if (fieldValueParseResult.isCanceled()) {
-            context.messages.addSyntaxErr("expected the field value");
+            context.messages.addSyntaxErr("expected the field value here");
             return ParseResult.failed();
         }
 
