@@ -82,7 +82,6 @@ public final class BodyParser implements Parser<BodyObject> {
                         "expected a newline separator here between expressions",
                         Objects.requireNonNull(lineStartsWithToken)
                 );
-                context.goNext();
 
                 isFailed = true;
             }

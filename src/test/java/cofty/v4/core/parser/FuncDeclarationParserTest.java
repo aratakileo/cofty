@@ -261,4 +261,109 @@ class FuncDeclarationParserTest {
                 "there must be exactly one compilation error message"
         );
     }
+
+    @Test
+    void invalidNotSeparatedWithDotArguments() {
+        final var expr = "fun invalid(a = 0 b = 1) {}";
+
+        final var context = Utils.parseContextOf(expr);
+        final var parseResult = FuncDeclarationParser.DEFAULT.parse(context);
+
+        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
+
+        Assertions.assertNull(
+                parseResult.value(),
+                "the resulted ast object must be null"
+        );
+
+        Assertions.assertEquals(
+                1,
+                context.messages.handler.errCount(),
+                "there must be exactly one compilation error message"
+        );
+    }
+
+    @Test
+    void invalidNoArgsSectionDescribed() {
+        final var expr = "fun invalid";
+
+        final var context = Utils.parseContextOf(expr);
+        final var parseResult = FuncDeclarationParser.DEFAULT.parse(context);
+
+        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
+
+        Assertions.assertNull(
+                parseResult.value(),
+                "the resulted ast object must be null"
+        );
+
+        Assertions.assertEquals(
+                1,
+                context.messages.handler.errCount(),
+                "there must be exactly one compilation error message"
+        );
+    }
+
+    @Test
+    void invalidArgsDescriptionNotFinishedCorrectly() {
+        final var expr = "fun invalid(";
+
+        final var context = Utils.parseContextOf(expr);
+        final var parseResult = FuncDeclarationParser.DEFAULT.parse(context);
+
+        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
+
+        Assertions.assertNull(
+                parseResult.value(),
+                "the resulted ast object must be null"
+        );
+
+        Assertions.assertEquals(
+                1,
+                context.messages.handler.errCount(),
+                "there must be exactly one compilation error message"
+        );
+    }
+
+    @Test
+    void invalidNoBodyDescribed() {
+        final var expr = "fun invalid()";
+
+        final var context = Utils.parseContextOf(expr);
+        final var parseResult = FuncDeclarationParser.DEFAULT.parse(context);
+
+        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
+
+        Assertions.assertNull(
+                parseResult.value(),
+                "the resulted ast object must be null"
+        );
+
+        Assertions.assertEquals(
+                1,
+                context.messages.handler.errCount(),
+                "there must be exactly one compilation error message"
+        );
+    }
+
+    @Test
+    void invalidBodyNotFinishedCorrectly() {
+        final var expr = "fun invalid() {";
+
+        final var context = Utils.parseContextOf(expr);
+        final var parseResult = FuncDeclarationParser.DEFAULT.parse(context);
+
+        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
+
+        Assertions.assertNull(
+                parseResult.value(),
+                "the resulted ast object must be null"
+        );
+
+        Assertions.assertEquals(
+                1,
+                context.messages.handler.errCount(),
+                "there must be exactly one compilation error message"
+        );
+    }
 }

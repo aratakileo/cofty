@@ -53,7 +53,6 @@ public final class FuncDeclarationParser implements Parser<FuncDeclarationObject
                         "expected a comma separator here between the argument declarations",
                         Objects.requireNonNull(lineStartsWithToken)
                 );
-                context.goNext();
 
                 isFailed = true;
             }
