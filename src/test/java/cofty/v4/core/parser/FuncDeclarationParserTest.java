@@ -284,6 +284,27 @@ class FuncDeclarationParserTest {
     }
 
     @Test
+    void invalidArgumentDeclarationAsVariable() {
+        final var expr = "fun invalid(var a = 0) {}";
+
+        final var context = Utils.parseContextOf(expr);
+        final var parseResult = FuncDeclarationParser.DEFAULT.parse(context);
+
+        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
+
+        Assertions.assertNull(
+                parseResult.value(),
+                "the resulted ast object must be null"
+        );
+
+        Assertions.assertEquals(
+                1,
+                context.messages.handler.errCount(),
+                "there must be exactly one compilation error message"
+        );
+    }
+
+    @Test
     void invalidNoArgsSectionDescribed() {
         final var expr = "fun invalid";
 
