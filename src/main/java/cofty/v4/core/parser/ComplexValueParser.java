@@ -79,23 +79,18 @@ public final class ComplexValueParser implements Parser<ComplexValueObject> {
             segments.add(segmentParseResult);
         }
 
-        postfixFunctionCallsCounter = checkPostfixFunctionCalls(context, segments, false, postfixFunctionCallsCounter);
+        checkPostfixFunctionCalls(context, segments, false, postfixFunctionCallsCounter);
 
         context.rollbackSkippingNewLinesState();
 
         return ParseResult.successful(new ComplexValueObject(segments));
     }
 
-    private @Nullable ValueSegmentObject parseFuncCallOrFieldAccess(
+    @Deprecated
+    private @Nullable ArrayList<ValueExpressionObject> deprecatedPartOfParseFuncCallOrFieldAccess(
             @NotNull ParseContext context,
             boolean isPostfixFuncCall
     ) {
-        final var name = context.advanceOrThrow().<Simple>strictAs();
-
-        if (!context.currentIs(Bracket.ROUND_OPEN))
-            return isPostfixFuncCall ? new FuncCallObject(name, List.of(), true) : new FieldAccessObject(name);
-
-        final var roundOpeningBracket = context.advanceOrThrow();
         final var args = new ArrayList<ValueExpressionObject>();
 
         var alreadySeparated = true;
@@ -139,16 +134,48 @@ public final class ComplexValueParser implements Parser<ComplexValueObject> {
             alreadySeparated = false;
         }
 
+        return args;
+    }
+
+    private @Nullable ValueSegmentObject parseFuncCallOrFieldAccess(
+            @NotNull ParseContext context,
+            boolean isPostfixFuncCall
+    ) {
+        final var name = context.advanceOrThrow().<Simple>strictAs();
+
+        if (!context.currentIs(Bracket.ROUND_OPEN))
+            return isPostfixFuncCall ? new FuncCallObject(name, List.of(), true) : new FieldAccessObject(name);
+
+        final var roundOpeningBracket = context.advanceOrThrow();
+
+        final var argsParseResult = Parser.parseSeparatedQueue(
+                context,
+                Separator.COMMA,
+                ValueExpressionParser.DEFAULT,
+                null,
+                "expected a comma separator here between the arguments",
+                "expected an argument value here, not the comma"
+        );
+
+        if (argsParseResult.isFailed()) return null;
+
+        if (!context.currentIs(Bracket.ROUND_CLOSE)) {
+            context.messages.addSyntaxErr("expected the ending of the round brackets here");
+            context.goNext();
+
+            return null;
+        }
+
         final var roundClosingBracket = context.advanceOrThrow();
 
-        if (isPostfixFuncCall && args.isEmpty())
+        if (isPostfixFuncCall && argsParseResult.isCanceled())
             context.messages.addInRangeWarn(
                     "a postfix function call without arguments, but with round brackets",
                     roundOpeningBracket,
                     roundClosingBracket
             );
 
-        return new FuncCallObject(name, args.stream().toList(), isPostfixFuncCall);
+        return new FuncCallObject(name, argsParseResult.valueOrDefault(List.of()), isPostfixFuncCall);
     }
 
     private int checkPostfixFunctionCalls(

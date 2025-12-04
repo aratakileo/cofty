@@ -41,7 +41,7 @@ public class FuncDeclarationObject implements AstObject, WithBody, WithAnchor<Ke
         for (final var arg: args)
             if (!(arg instanceof VarDeclarationObject)) throw new IllegalStateException();
 
-        this.args = Cast.unsafe(args);
+        this.args = Cast.quiet(args);
     }
 
     @Override

@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 class BodyParserTest {
+    private final static BodyParser ROOT_NESTED_BODY_PARSER = BodyParser.ROOT_BODY.getNestedBodyParser();
+
     @Test
     void validRootBodyAllAllowedElements() {
         final var expr = """
@@ -44,10 +46,10 @@ class BodyParserTest {
     }
 
     @Test
-    void validSimpleNestedBody() {
+    void validEmptyNestedBody() {
         final var expr = "{}";
         final var context = Utils.parseContextOf(expr);
-        final var parseResult = BodyParser.NESTED_BODY.parse(context);
+        final var parseResult = ROOT_NESTED_BODY_PARSER.parse(context);
 
         Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
 
@@ -67,14 +69,14 @@ class BodyParserTest {
     }
 
     @Test
-    void validSimpleNestedBodyWithNestedFuncCallStartsWithNewLine() {
+    void validNestedBodyWithNestedFuncCallThatSpecifiedRightAfterNewLine() {
         final var expr = """
                 {
                     println('Hello World!')
                 }
                 """;
         final var context = Utils.parseContextOf(expr);
-        final var parseResult = BodyParser.NESTED_BODY.parse(context);
+        final var parseResult = ROOT_NESTED_BODY_PARSER.parse(context);
 
         Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
 
@@ -94,10 +96,10 @@ class BodyParserTest {
     }
 
     @Test
-    void validNestedBodyInSimpleNestedBody() {
+    void validEmptyNestedBodyInNestedBody() {
         final var expr = "{{}}";
         final var context = Utils.parseContextOf(expr);
-        final var parseResult = BodyParser.NESTED_BODY.parse(context);
+        final var parseResult = ROOT_NESTED_BODY_PARSER.parse(context);
 
         Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
 
@@ -117,10 +119,10 @@ class BodyParserTest {
     }
 
     @Test
-    void invalidUnclosedSimpleNestedBody() {
+    void invalidUnclosedEmptyNestedBody() {
         final var expr = "{";
         final var context = Utils.parseContextOf(expr);
-        final var parseResult = BodyParser.NESTED_BODY.parse(context);
+        final var parseResult = ROOT_NESTED_BODY_PARSER.parse(context);
 
         Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
 
@@ -137,10 +139,10 @@ class BodyParserTest {
     }
 
     @Test
-    void invalidUnclosedSimpleNestedBodyWithOtherParseFails() {
+    void invalidUnclosedNestedBodyWithOtherParseFails() {
         final var expr = "{var test =";
         final var context = Utils.parseContextOf(expr);
-        final var parseResult = BodyParser.NESTED_BODY.parse(context);
+        final var parseResult = ROOT_NESTED_BODY_PARSER.parse(context);
 
         Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
 
@@ -148,6 +150,26 @@ class BodyParserTest {
                 2,
                 context.messages.handler.errCount(),
                 "there must be exactly two compilation error message"
+        );
+
+        Assertions.assertNull(
+                parseResult.value(),
+                "the resulted ast object must be null"
+        );
+    }
+
+    @Test
+    void invalidRootNestedBodyFunctionDeclaration() {
+        final var expr = "{fun invalid() {}}";
+        final var context = Utils.parseContextOf(expr);
+        final var parseResult = ROOT_NESTED_BODY_PARSER.parse(context);
+
+        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
+
+        Assertions.assertEquals(
+                1,
+                context.messages.handler.errCount(),
+                "there must be exactly one compilation error message"
         );
 
         Assertions.assertNull(
@@ -173,6 +195,20 @@ class BodyParserTest {
     @Test
     void invalidRootBodyNoSeparatorBetweenExpressions() {
         final var expr = "variable1 variable2";
+        final var context = Utils.parseContextOf(expr);
+        final var parseResult = BodyParser.ROOT_BODY.parse(context);
+
+        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
+
+        Assertions.assertNull(
+                parseResult.value(),
+                "the resulted ast object must be null"
+        );
+    }
+
+    @Test
+    void invalidRootBodyReturnStatement() {
+        final var expr = "return";
         final var context = Utils.parseContextOf(expr);
         final var parseResult = BodyParser.ROOT_BODY.parse(context);
 

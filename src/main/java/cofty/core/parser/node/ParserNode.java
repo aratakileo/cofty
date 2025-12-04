@@ -114,13 +114,13 @@ public interface ParserNode {
             @NotNull NodeModifier modifier,
             @NotNull List<@NotNull T> nodes
     ) {
-        return new AnyOfNode(Cast.unsafe(nodes), modifier);
+        return new AnyOfNode(Cast.quiet(nodes), modifier);
     }
 
     static <T extends ParserNode> @NotNull RepeatedAnyOfNode repeatableAnyOf(
             @NotNull NodeModifier modifier,
             @NotNull List<@NotNull T> nodes
     ) {
-        return new RepeatedAnyOfNode(Cast.unsafe(nodes), modifier);
+        return new RepeatedAnyOfNode(Cast.quiet(nodes), modifier);
     }
 }

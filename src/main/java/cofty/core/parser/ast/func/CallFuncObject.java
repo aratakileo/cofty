@@ -24,7 +24,7 @@ public class CallFuncObject implements AstObject {
         for (final var arg: args)
             if (!(arg instanceof ValueExpressionObject)) throw new IllegalStateException();
 
-        this.args = Cast.unsafe(args);
+        this.args = Cast.quiet(args);
     }
 
     public @NotNull ComplexNameObject name() {

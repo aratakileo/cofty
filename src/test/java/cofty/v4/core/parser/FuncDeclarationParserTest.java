@@ -9,6 +9,8 @@ import java.text.MessageFormat;
 import java.util.Objects;
 
 class FuncDeclarationParserTest {
+    private static final FuncDeclarationParser ROOT_FUNC_DECLARATION_PARSER = FuncDeclarationParser.create(BodyParser.BodyType.ROOT);
+
     @Test
     void validWithSpecifiedArgsAndReturnType() {
         final var funcName = "iWannaGoHomeIWannaCallMyMommy";
@@ -21,7 +23,7 @@ class FuncDeclarationParserTest {
         );
 
         final var context = Utils.parseContextOf(expr);
-        final var parseResult = FuncDeclarationParser.DEFAULT.parse(context);
+        final var parseResult = ROOT_FUNC_DECLARATION_PARSER.parse(context);
 
         Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
 
@@ -92,7 +94,7 @@ class FuncDeclarationParserTest {
         final var expr = String.format("fun %s() {}", funcName);
 
         final var context = Utils.parseContextOf(expr);
-        final var parseResult = FuncDeclarationParser.DEFAULT.parse(context);
+        final var parseResult = ROOT_FUNC_DECLARATION_PARSER.parse(context);
 
         Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
 
@@ -155,7 +157,7 @@ class FuncDeclarationParserTest {
         );
 
         final var context = Utils.parseContextOf(expr);
-        final var parseResult = FuncDeclarationParser.DEFAULT.parse(context);
+        final var parseResult = ROOT_FUNC_DECLARATION_PARSER.parse(context);
 
         Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
 
@@ -221,11 +223,38 @@ class FuncDeclarationParserTest {
     }
 
     @Test
+    void validReturnStatementAtNestedBody() {
+        final var expr = "fun sixtyNine() -> int {{return 69}} ";
+        final var context = Utils.parseContextOf(expr);
+        final var parseResult = ROOT_FUNC_DECLARATION_PARSER.parse(context);
+
+        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
+
+        Assertions.assertDoesNotThrow(
+                parseResult::valueOrThrow,
+                "the resulted ast object must be non null"
+        );
+
+        final var astObject = parseResult.valueOrThrow();
+
+        Assertions.assertEquals(
+                1,
+                astObject.body.residents.size(),
+                String.format(
+                        "the function body must contains exactly one body residents (`%s`)",
+                        Representable.repr(expr, true)
+                )
+        );
+
+        Assertions.assertTrue(astObject.body.finishedWithReturnStatement);
+    }
+
+    @Test
     void invalidNoValueReturnedButReturnValueDeclared() {
         final var expr = "fun invalid() -> int {}";
 
         final var context = Utils.parseContextOf(expr);
-        final var parseResult = FuncDeclarationParser.DEFAULT.parse(context);
+        final var parseResult = ROOT_FUNC_DECLARATION_PARSER.parse(context);
 
         Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
 
@@ -246,7 +275,7 @@ class FuncDeclarationParserTest {
         final var expr = "fun invalid() -> 34 {}";
 
         final var context = Utils.parseContextOf(expr);
-        final var parseResult = FuncDeclarationParser.DEFAULT.parse(context);
+        final var parseResult = ROOT_FUNC_DECLARATION_PARSER.parse(context);
 
         Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
 
@@ -267,7 +296,7 @@ class FuncDeclarationParserTest {
         final var expr = "fun invalid(a = 0 b = 1) {}";
 
         final var context = Utils.parseContextOf(expr);
-        final var parseResult = FuncDeclarationParser.DEFAULT.parse(context);
+        final var parseResult = ROOT_FUNC_DECLARATION_PARSER.parse(context);
 
         Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
 
@@ -288,7 +317,7 @@ class FuncDeclarationParserTest {
         final var expr = "fun invalid(var a = 0) {}";
 
         final var context = Utils.parseContextOf(expr);
-        final var parseResult = FuncDeclarationParser.DEFAULT.parse(context);
+        final var parseResult = ROOT_FUNC_DECLARATION_PARSER.parse(context);
 
         Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
 
@@ -309,7 +338,7 @@ class FuncDeclarationParserTest {
         final var expr = "fun invalid";
 
         final var context = Utils.parseContextOf(expr);
-        final var parseResult = FuncDeclarationParser.DEFAULT.parse(context);
+        final var parseResult = ROOT_FUNC_DECLARATION_PARSER.parse(context);
 
         Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
 
@@ -330,7 +359,7 @@ class FuncDeclarationParserTest {
         final var expr = "fun invalid(";
 
         final var context = Utils.parseContextOf(expr);
-        final var parseResult = FuncDeclarationParser.DEFAULT.parse(context);
+        final var parseResult = ROOT_FUNC_DECLARATION_PARSER.parse(context);
 
         Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
 
@@ -351,7 +380,7 @@ class FuncDeclarationParserTest {
         final var expr = "fun invalid()";
 
         final var context = Utils.parseContextOf(expr);
-        final var parseResult = FuncDeclarationParser.DEFAULT.parse(context);
+        final var parseResult = ROOT_FUNC_DECLARATION_PARSER.parse(context);
 
         Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
 
@@ -372,7 +401,7 @@ class FuncDeclarationParserTest {
         final var expr = "fun invalid() {";
 
         final var context = Utils.parseContextOf(expr);
-        final var parseResult = FuncDeclarationParser.DEFAULT.parse(context);
+        final var parseResult = ROOT_FUNC_DECLARATION_PARSER.parse(context);
 
         Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
 

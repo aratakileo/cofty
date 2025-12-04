@@ -27,7 +27,7 @@ public class IfStatementsObject implements AstObject, WithAnchor<Keyword> {
         for (final var statement: elseIfStatements)
             if (!(statement instanceof StatementObject)) throw new IllegalStateException();
 
-        this.elseIfStatements = Cast.unsafe(elseIfStatements);
+        this.elseIfStatements = Cast.quiet(elseIfStatements);
     }
 
     @Override

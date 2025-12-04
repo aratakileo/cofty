@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public final class FuncDeclarationObject implements BodyResidentObject {
+public final class FuncDeclarationObject implements DeclarationObject {
     public final TypedToken<Simple> name;
     public final List<FieldDeclarationObject> args;
     public final BodyObject body;

@@ -4,17 +4,21 @@ import cofty.core.lexer.token.type.Keyword;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.type.operator.Bracket;
 import cofty.core.lexer.token.type.operator.Separator;
-import cofty.v4.core.parser.ast.FieldDeclarationObject;
 import cofty.v4.core.parser.ast.FuncDeclarationObject;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public final class FuncDeclarationParser implements Parser<FuncDeclarationObject> {
-    public static final FuncDeclarationParser DEFAULT = new FuncDeclarationParser();
+    @Deprecated
+    public static final FuncDeclarationParser DEFAULT = new FuncDeclarationParser(BodyParser.BodyType.ROOT);
 
-    private FuncDeclarationParser() {}
+    public final BodyParser.BodyType parentBody;
+
+    private FuncDeclarationParser(@NotNull BodyParser.BodyType parentBody) {
+        this.parentBody = parentBody;
+    }
 
     @Override
     public @NotNull ParseResult<FuncDeclarationObject> parse(@NotNull ParseContext context) {
@@ -38,33 +42,16 @@ public final class FuncDeclarationParser implements Parser<FuncDeclarationObject
             return ParseResult.failed();
         }
 
-        final var args = new ArrayList<FieldDeclarationObject>();
+        final var argsParseResult = Parser.parseSeparatedQueue(
+                context,
+                Separator.COMMA,
+                FieldDeclarationParser.FUNC_ARG,
+                null,
+                "expected a comma separator here between the argument declarations",
+                "expected an argument declaration here, not the comma"
+        );
 
-        var argParseResult = (ParseResult<FieldDeclarationObject>)null;
-        var lineStartsWithToken = context.current();
-        var commaSeparatorProceed = true;
-        var isFailed = false;
-
-        while (true) {
-            argParseResult = FieldDeclarationParser.FUNC_ARG.parse(context);
-
-            if (!commaSeparatorProceed && !argParseResult.isCanceled()) {
-                context.messages.addSyntaxErrBeforeToken(
-                        "expected a comma separator here between the argument declarations",
-                        Objects.requireNonNull(lineStartsWithToken)
-                );
-
-                isFailed = true;
-            }
-
-            if (argParseResult.isCanceled()) break;
-
-            if (argParseResult.isFailed()) isFailed = true;
-            else args.add(argParseResult.valueOrThrow());
-
-            commaSeparatorProceed = context.goNextIfCurrentIs(Separator.COMMA);
-            lineStartsWithToken = context.current();
-        }
+        var isFailed = argsParseResult.isFailed();
 
         if (!context.goNextIfCurrentIs(Bracket.ROUND_CLOSE)) {
             context.messages.addSyntaxErr(
@@ -87,7 +74,7 @@ public final class FuncDeclarationParser implements Parser<FuncDeclarationObject
             isFailed = true;
         }
 
-        final var bodyParseResult = BodyParser.FUNC_BODY.parse(context);
+        final var bodyParseResult = BodyParser.createFunctionBodyParser(parentBody).parse(context);
 
         if (!bodyParseResult.isSuccessful()) return ParseResult.failed();
 
@@ -103,9 +90,13 @@ public final class FuncDeclarationParser implements Parser<FuncDeclarationObject
 
         return isFailed ? ParseResult.failed() : ParseResult.successful(new FuncDeclarationObject(
                 Objects.requireNonNull(nameToken).strictAs(),
-                args.stream().toList(),
+                argsParseResult.valueOrDefault(List.of()),
                 body,
                 returnType
         ));
+    }
+
+    public static @NotNull FuncDeclarationParser create(@NotNull BodyParser.BodyType parentBody) {
+        return new FuncDeclarationParser(parentBody);
     }
 }

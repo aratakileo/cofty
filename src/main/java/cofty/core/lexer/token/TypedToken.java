@@ -33,7 +33,7 @@ public class TypedToken<T extends TokenType> {
     }
 
     public <_T extends TokenType> @NotNull TypedToken<_T> strictAs() {
-        return Cast.unsafe(this);
+        return Cast.quiet(this);
     }
 
     @Override

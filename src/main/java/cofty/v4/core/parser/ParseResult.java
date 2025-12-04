@@ -34,6 +34,10 @@ public final class ParseResult<R> {
         return Objects.requireNonNull(value);
     }
 
+    public @NotNull R valueOrDefault(@NotNull R defaultValue) {
+        return isSuccessful() ? valueOrThrow() : defaultValue;
+    }
+
     public static <R> @NotNull ParseResult<R> successful(@NotNull R result) {
         return new ParseResult<>(result, false);
     }

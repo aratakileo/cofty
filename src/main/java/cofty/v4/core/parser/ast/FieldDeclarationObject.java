@@ -7,7 +7,7 @@ import cofty.v4.core.parser.ast.value.ValueExpressionObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class FieldDeclarationObject implements BodyResidentObject {
+public final class FieldDeclarationObject implements DeclarationObject {
     public final TypedToken<Keyword> mutable;
     public final TypedToken<Simple> name;
     public final TypeDescriptionObject explicitlySpecifiedType;
