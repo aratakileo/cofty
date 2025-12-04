@@ -17,6 +17,15 @@ public final class FieldValueAssignmentParser implements Parser<FieldValueAssign
         return parse(context, null);
     }
 
+    /*
+     *
+     * Such parse logic implementation is not recommended. All necessary values should be passed
+     * through the parser class constructor as class fields, and not as arguments to the parsing function,
+     * because this violates the principle of universality of the parser interface through one universal parse function.
+     * However, in this particular case, such an implementation is acceptable, since it is an addition
+     * to optimizing processing, and does not distort the basic logic of this type of parser
+     *
+     */
     public @NotNull ParseResult<FieldValueAssignmentObject> parse(
             @NotNull ParseContext context,
             @Nullable ComplexValueObject complexValueObject

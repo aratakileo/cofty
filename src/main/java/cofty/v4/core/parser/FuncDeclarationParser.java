@@ -12,7 +12,7 @@ import java.util.Objects;
 
 public final class FuncDeclarationParser implements Parser<FuncDeclarationObject> {
     @Deprecated
-    public static final FuncDeclarationParser DEFAULT = new FuncDeclarationParser(BodyParser.BodyType.ROOT);
+    public static final FuncDeclarationParser DEFAULT = new FuncDeclarationParser(BodyParser.BodyType.MODULE);
 
     public final BodyParser.BodyType parentBody;
 

@@ -37,7 +37,7 @@ public final class Compiler {
 
         resultLogger.checkInLexer(true);
 
-        final var parseResult = BodyParser.ROOT_BODY.parse(new ParseContext(parsedTokens, text, messages));
+        final var parseResult = BodyParser.MODULE_BODY.parse(new ParseContext(parsedTokens, text, messages));
 
         if (parseResult.isFailed()) {
             resultLogger.checkInParser(false);

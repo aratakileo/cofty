@@ -17,9 +17,9 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class BodyParser implements Parser<BodyObject> {
-    public static final BodyParser ROOT_BODY = new BodyParser(
-            BodyType.ROOT,
-            BodyType.ROOT,
+    public static final BodyParser MODULE_BODY = new BodyParser(
+            BodyType.MODULE,
+            BodyType.MODULE,
             BodyFormat.NOT_WRAPPED_WITH_CURVES
     );
 
@@ -28,8 +28,8 @@ public final class BodyParser implements Parser<BodyObject> {
             BodyType.FUNC,
             BodyType.NESTED,
             BodyFormat.NON_STRICT_WRAPPED_WITH_CURVES
-    ), NESTED_BODY = new BodyParser(BodyType.ROOT, BodyType.NESTED, BodyFormat.NON_STRICT_WRAPPED_WITH_CURVES),
-            FUNC_BODY = new BodyParser(BodyType.ROOT, BodyType.FUNC, BodyFormat.STRICT_WRAPPED_WITH_CURVES);
+    ), NESTED_BODY = new BodyParser(BodyType.MODULE, BodyType.NESTED, BodyFormat.NON_STRICT_WRAPPED_WITH_CURVES),
+            FUNC_BODY = new BodyParser(BodyType.MODULE, BodyType.FUNC, BodyFormat.STRICT_WRAPPED_WITH_CURVES);
 
     @Deprecated
     private final static boolean RUN_LEGACY = false;
@@ -56,13 +56,15 @@ public final class BodyParser implements Parser<BodyObject> {
                 FieldDeclarationParser.DEFAULT,
                 ReturnStatementParser.DEFAULT,
                 FuncDeclarationParser.create(actualBodyType),
+                ClassDeclarationParser.create(actualBodyType),
                 getNestedBodyParser()
         );
     }
 
     @Override
     public @NotNull ParseResult<BodyObject> parse(@NotNull ParseContext context) {
-        final var startsWithCurve = bodyFormat.mayStartsWithCurveBracket() && context.goNextIfCurrentIs(Bracket.CURVE_OPEN);
+        final var startsWithCurve = bodyFormat.mayStartsWithCurveBracket()
+                && context.goNextIfCurrentIs(Bracket.CURVE_OPEN);
 
         if (!startsWithCurve) {
             if (bodyFormat.mustStartsWithCurveBracket()) {
@@ -103,7 +105,7 @@ public final class BodyParser implements Parser<BodyObject> {
 
         var isFailed = residentsParseResult.isFailed();
 
-        if (context.hasCurrent() && actualBodyType == BodyType.ROOT) {
+        if (context.hasCurrent() && actualBodyType == BodyType.MODULE) {
             context.messages.addInvalidSyntaxErr();
             return ParseResult.failed();
         }
@@ -133,12 +135,13 @@ public final class BodyParser implements Parser<BodyObject> {
                 context,
                 Keyword.FUN,
                 FuncDeclarationParser.DEFAULT,
-                BodyType.ROOT
+                BodyType.MODULE
         );
 
         if (!fnParseResult.isCanceled()) return Cast.quiet(fnParseResult);
 
-        final var nestedBodyParseResult = (actualBodyType == BodyType.FUNC ? FUNC_NESTED_BODY : NESTED_BODY).parse(context);
+        final var nestedBodyParseResult = (actualBodyType == BodyType.FUNC ? FUNC_NESTED_BODY : NESTED_BODY)
+                .parse(context);
 
         if (!nestedBodyParseResult.isCanceled())
             return Cast.quiet(nestedBodyParseResult);
@@ -203,17 +206,16 @@ public final class BodyParser implements Parser<BodyObject> {
         return parseResult;
     }
 
+    /*
+     *
+     * This logic was intentionally removed from the general line parsing cycle in order
+     * to avoid double parsing of the value expression, in order to avoid adding the same warnings twice
+     * to the list of compilation messages.
+     *
+     */
     private @NotNull ParseResult<? extends BodyResidentObject> parseValueExpressionOrFieldValueAssignment(
             @NotNull ParseContext context
     ) {
-        /*
-         *
-         * It was intentionally removed from the general line parsing cycle in order
-         * to avoid double parsing of the value expression, in order to avoid adding the same warnings twice
-         * to the list of compilation messages.
-         *
-         */
-
         final var valueExpressionParseResult = ValueExpressionParser.DEFAULT.parse(context);
 
         if (valueExpressionParseResult.isFailed()) return ParseResult.failed();
@@ -237,7 +239,7 @@ public final class BodyParser implements Parser<BodyObject> {
     public @NotNull BodyParser getNestedBodyParser() {
         final var newDominantBodyType = dominantBodyType.mergeWith(actualBodyType);
 
-        // helps avoid infinity recursion of `getNestedBodyParser()`
+        // helps avoid infinity recursion of this function
         if (newDominantBodyType == dominantBodyType && actualBodyType == BodyType.NESTED)
             return this;
 
@@ -248,13 +250,18 @@ public final class BodyParser implements Parser<BodyObject> {
         );
     }
 
+    public static @NotNull BodyParser createClassBodyParser(@NotNull BodyType actualBodyType) {
+        return new BodyParser(actualBodyType, BodyType.CLASS, BodyFormat.STRICT_WRAPPED_WITH_CURVES);
+    }
+
     public static @NotNull BodyParser createFunctionBodyParser(@NotNull BodyType actualBodyType) {
         return new BodyParser(actualBodyType, BodyType.FUNC, BodyFormat.STRICT_WRAPPED_WITH_CURVES);
     }
 
     public enum BodyType implements CompilationMessageRepresentable, AstObjectFilter<BodyResidentObject> {
-        ROOT(true),
+        MODULE(true),
         FUNC(true),
+        CLASS(true),
         NESTED(false);
 
         public final boolean isDominant;
@@ -275,8 +282,9 @@ public final class BodyParser implements Parser<BodyObject> {
         @Override
         public boolean applyFilter(@NotNull BodyResidentObject astObject) {
             return switch (this) {
-                case FUNC, NESTED -> !astObject.is(FuncDeclarationObject.class);
-                case ROOT -> !astObject.is(ReturnStatementObject.class);
+                case FUNC, NESTED -> !astObject.isAny(FuncDeclarationObject.class, ClassDeclarationObject.class);
+                case CLASS -> astObject.is(DeclarationObject.class);
+                case MODULE -> !astObject.is(ReturnStatementObject.class);
             };
         }
     }
