@@ -216,7 +216,7 @@ public final class BodyParser implements Parser<BodyObject> {
     private @NotNull ParseResult<? extends BodyResidentObject> parseValueExpressionOrFieldValueAssignment(
             @NotNull ParseContext context
     ) {
-        final var valueExpressionParseResult = ValueExpressionParser.DEFAULT.parse(context);
+        final var valueExpressionParseResult = ValueExpressionParser.NEWLINES_SENSITIVE.parse(context);
 
         if (valueExpressionParseResult.isFailed()) return ParseResult.failed();
 

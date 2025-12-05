@@ -48,7 +48,7 @@ class ComplexValueParserTest {
     }
 
     @Test
-    void validSingleSimpleIntValue() {
+    void validSingleIntValue() {
         final var expr = "51";
         final var context = Utils.parseContextOf(expr);
         final var parseResult = ComplexValueParser.DEFAULT.parse(context);
@@ -86,7 +86,7 @@ class ComplexValueParserTest {
     }
 
     @Test
-    void validSingleSimpleFuncCall() {
+    void validSingleFuncCall() {
         final var name = "validFuncCall";
         final var expr = String.format("%s()", name);
         final var context = Utils.parseContextOf(expr);
@@ -133,7 +133,7 @@ class ComplexValueParserTest {
     }
 
     @Test
-    void validSingleSimpleFuncCallWithOneArg() {
+    void validSingleFuncCallWithOneArg() {
         final var name = "validFuncCall";
         final var argValue = "'что-то мега крутое на русском (by avi)'";
         final var expr = String.format("%s(%s,)", name, argValue);
@@ -202,11 +202,101 @@ class ComplexValueParserTest {
     }
 
     @Test
-    void validSingleSimpleFuncCallWithTwoArgs() {
+    void validSingleFuncCallWithTwoArgs() {
         final var name = "validFuncCall";
         final var firstArgValue = "'что-то мега крутое на русском (by avi)'";
         final var secondArgValue = "2.9764";
         final var expr = String.format("%s(%s, %s)", name, firstArgValue, secondArgValue);
+        final var context = Utils.parseContextOf(expr);
+        final var parseResult = ComplexValueParser.DEFAULT.parse(context);
+
+        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
+
+        Assertions.assertDoesNotThrow(
+                parseResult::valueOrThrow,
+                "the resulted ast object must be non null"
+        );
+
+        final var astObject = parseResult.valueOrThrow();
+
+        Assertions.assertInstanceOf(
+                FuncCallObject.class,
+                astObject.segments.getFirst(),
+                String.format("`%s` must be function call", expr)
+        );
+
+        Assertions.assertEquals(
+                1,
+                astObject.segments.size(),
+                String.format("`%s` must contain exactly one segment", expr)
+        );
+
+        final var valueObject = (FuncCallObject)astObject.segments.getFirst();
+
+        Assertions.assertEquals(
+                name,
+                valueObject.name.content,
+                String.format("invalid callable function name (`%s`)", expr)
+        );
+
+        Assertions.assertEquals(
+                2,
+                valueObject.args.size(),
+                String.format("the function call must contain exactly one argument (`%s`)", expr)
+        );
+
+        Assertions.assertInstanceOf(
+                ComplexValueObject.class,
+                valueObject.args.getFirst().expr,
+                String.format("the first argument of the function call must be complex value (`%s`)", expr)
+        );
+
+        final var firstComplexValueObject = (ComplexValueObject)valueObject.args.getFirst().expr;
+
+        Assertions.assertInstanceOf(
+                SimpleValue.class,
+                firstComplexValueObject.segments.getFirst(),
+                String.format("the first argument of the function call must be simple str value (`%s`)", expr)
+        );
+
+        Assertions.assertEquals(
+                firstArgValue,
+                ((SimpleValue)firstComplexValueObject.segments.getFirst()).value.content,
+                String.format("invalid first argument value of the function call (`%s`)", expr)
+        );
+
+        Assertions.assertInstanceOf(
+                ComplexValueObject.class,
+                valueObject.args.getLast().expr,
+                String.format("the second argument of the function call must be complex value (`%s`)", expr)
+        );
+
+        final var secondComplexValueObject = (ComplexValueObject)valueObject.args.getLast().expr;
+
+        Assertions.assertInstanceOf(
+                SimpleValue.class,
+                secondComplexValueObject.segments.getFirst(),
+                String.format("the second argument of the function call must be simple double value (`%s`)", expr)
+        );
+
+        Assertions.assertEquals(
+                secondArgValue,
+                ((SimpleValue)secondComplexValueObject.segments.getFirst()).value.content,
+                String.format("invalid second argument value of the function call (`%s`)", expr)
+        );
+
+        Assertions.assertFalse(
+                valueObject.isPostfix,
+                String.format("the function call must not be postfix call (`%s`)", expr)
+        );
+    }
+
+    @Test
+    void validSingleFuncCallWithTwoArgsWhereEverythingStartsWithNewLine() {
+        final var name = "validFuncCall";
+        final var firstArgValue = "'что-то мега крутое на русском (by avi)'";
+        final var secondArgValue = "2.9764";
+        final var expr = String.format("%s\n(\n%s\n,\n%s\n)", name, firstArgValue, secondArgValue);
         final var context = Utils.parseContextOf(expr);
         final var parseResult = ComplexValueParser.DEFAULT.parse(context);
 
@@ -502,7 +592,7 @@ class ComplexValueParserTest {
     }
 
     @Test
-    void invalidSecondSimpleValue() {
+    void invalidSecondValue() {
         final var expr = "'one'.'two'";
         final var context = Utils.parseContextOf(expr);
         final var parseResult = ComplexValueParser.DEFAULT.parse(context);

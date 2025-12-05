@@ -143,7 +143,7 @@ class FuncDeclarationParserTest {
     }
 
     @Test
-    void validAlmostEverythingStartsWithNewLine() {
+    void validEverythingStartsWithNewLine() {
         final var funcName = "iWannaGoHomeIWannaCallMyMommy";
         final var argName = "isEmergency";
         final var funcTypes = "bool";
@@ -151,7 +151,7 @@ class FuncDeclarationParserTest {
         final var expr = String.format(
                 "%s\n{\nprintln('Calling your mom...')\nreturn true\n}",
                 MessageFormat.format(
-                        "fun\n{0}\n(\n{1}\n:\n{2}\n= false\n,\n)\n->\n{2}",
+                        "fun\n{0}\n(\n{1}\n:\n{2}\n=\nfalse\n,\n)\n->\n{2}",
                         funcName,
                         argName,
                         funcTypes

@@ -66,7 +66,7 @@ public final class FieldValueAssignmentParser implements Parser<FieldValueAssign
             return ParseResult.failed();
         }
 
-        final var fieldValueParseResult = ValueExpressionParser.DEFAULT.parse(context);
+        final var fieldValueParseResult = ValueExpressionParser.NEWLINES_SENSITIVE.parse(context);
 
         if (fieldValueParseResult.isFailed()) return ParseResult.failed();
 

@@ -140,6 +140,21 @@ class FieldValueAssignmentParserTest {
     }
 
     @Test
+    void invalidAbsolutelyEverythingStartsWithNewLine() {
+        final var value = "'invalid state of the assignable value ;('";
+        final var expr = String.format("'something'\n!\nconvert\n.\ndoSomething()\n.\nvalidField\n=\n%s", value);
+        final var context = Utils.parseContextOf(expr);
+        final var parseResult = FieldValueAssignmentParser.DEFAULT.parse(context);
+
+        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
+
+        Assertions.assertNull(
+                parseResult.value(),
+                "the resulted ast object must be null"
+        );
+    }
+
+    @Test
     void invalidFieldWithNoAssignableValue() {
         final var expr = "invalidField = ";
         final var context = Utils.parseContextOf(expr);

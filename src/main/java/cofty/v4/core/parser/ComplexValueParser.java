@@ -109,7 +109,7 @@ public final class ComplexValueParser implements Parser<ComplexValueObject> {
                 continue;
             }
 
-            final var parseResult = ValueExpressionParser.DEFAULT.parse(context);
+            final var parseResult = ValueExpressionParser.NEWLINES_SENSITIVE.parse(context);
 
             if (!parseResult.isSuccessful() && !context.currentIs(Bracket.ROUND_CLOSE)) {
                 context.messages.addSyntaxErr("expected the ending of the round brackets here");
@@ -151,7 +151,7 @@ public final class ComplexValueParser implements Parser<ComplexValueObject> {
         final var argsParseResult = Parser.parseSeparatedQueue(
                 context,
                 Separator.COMMA,
-                ValueExpressionParser.DEFAULT,
+                ValueExpressionParser.NEWLINES_INSENSITIVE,
                 null,
                 "expected a comma separator here between the arguments",
                 "expected an argument value here, not the comma"

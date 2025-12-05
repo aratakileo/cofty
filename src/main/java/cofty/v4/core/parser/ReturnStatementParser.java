@@ -18,7 +18,7 @@ public final class ReturnStatementParser implements Parser<ReturnStatementObject
         if (context.currentIs(Simple.NEWLINE))
             return ParseResult.successful(new ReturnStatementObject(null));
 
-        final var valueParseResult = ValueExpressionParser.DEFAULT.parse(context);
+        final var valueParseResult = ValueExpressionParser.NEWLINES_SENSITIVE.parse(context);
 
         if (valueParseResult.isCanceled())
             return ParseResult.successful(new ReturnStatementObject(null));

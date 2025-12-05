@@ -57,7 +57,7 @@ public final class FieldDeclarationParser implements Parser<FieldDeclarationObje
         }
 
         final var valueParseResult = context.goNextIfCurrentIs(Assign.ASSIGN)
-                ? ValueExpressionParser.DEFAULT.parse(context) : null;
+                ? ValueExpressionParser.create(!asFuncArgument).parse(context) : null;
 
         if (valueParseResult != null && !valueParseResult.isSuccessful()) {
             if (valueParseResult.isCanceled())
