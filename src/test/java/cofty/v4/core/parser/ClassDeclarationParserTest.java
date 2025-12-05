@@ -79,10 +79,14 @@ class ClassDeclarationParserTest {
     }
 
     @Test
-    void validEmptyClassInClass() {
+    void validDeclarationResidentsInClassBody() {
         final var expr = """
                 class SixtyNine {
                     class SixtyNine69 {}
+                    var sixtyNine = 69
+                    fun sixtyNine() -> int {
+                        return 69
+                    }
                 }
                 """;
 
@@ -99,12 +103,40 @@ class ClassDeclarationParserTest {
         final var astObject = parseResult.valueOrThrow();
 
         Assertions.assertEquals(
-                1,
+                3,
                 astObject.body.residents.size(),
                 String.format(
-                        "the class body must contains exactly one body resident (`%s`)",
+                        "the class body must contains exactly three body resident (`%s`)",
                         Representable.repr(expr, true)
                 )
+        );
+    }
+
+    @Test
+    void invalidNonDeclarationResidentsInClassBody() {
+        final var expr = """
+                class InvalidResidentsInClass {
+                    someFunctionCall()
+                    someValue = 'newValue'
+                    return 'whaaaat'
+                    {}
+                }
+                """;
+
+        final var context = Utils.parseContextOf(expr);
+        final var parseResult = MODULE_CLASS_DECLARATION_PARSER.parse(context);
+
+        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
+
+        Assertions.assertNull(
+                parseResult.value(),
+                "the resulted ast object must be null"
+        );
+
+        Assertions.assertEquals(
+                4,
+                context.messages.handler.errCount(),
+                "there must be exactly four compilation error message"
         );
     }
 }
