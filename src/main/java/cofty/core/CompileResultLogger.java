@@ -1,6 +1,6 @@
 package cofty.core;
 
-import cofty.v4.core.compiler.message.CompilationMessageHandler;
+import cofty.core.compiler.message.CompilationMessageHandler;
 import org.jetbrains.annotations.NotNull;
 
 public class CompileResultLogger {

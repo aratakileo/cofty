@@ -3,7 +3,7 @@ package cofty.core.lexer;
 import cofty.core.lexer.token.*;
 import cofty.core.lexer.token.type.*;
 import cofty.core.lexer.token.type.operator.*;
-import cofty.v4.core.compiler.message.CompilationMessageHandler;
+import cofty.core.compiler.message.CompilationMessageHandler;
 import cofty.type.TextContent;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

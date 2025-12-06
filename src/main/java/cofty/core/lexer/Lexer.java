@@ -3,11 +3,11 @@ package cofty.core.lexer;
 import cofty.core.lexer.token.*;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.type.TokenType;
-import cofty.v4.core.compiler.message.MessageType;
-import cofty.v4.core.compiler.message.CompilationMessage;
-import cofty.v4.core.compiler.message.CompilationMessageHandler;
+import cofty.core.compiler.message.MessageType;
+import cofty.core.compiler.message.CompilationMessage;
+import cofty.core.compiler.message.CompilationMessageHandler;
 import cofty.type.TextContent;
-import cofty.v4.core.compiler.message.CompilationMessageLabel;
+import cofty.core.compiler.message.CompilationMessageLabel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

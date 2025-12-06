@@ -1,8 +1,8 @@
 package cofty;
 
 import cofty.core.lexer.Lexer;
-import cofty.v4.core.compiler.message.CompilationMessageHandler;
-import cofty.v4.core.parser.ParseContext;
+import cofty.core.compiler.message.CompilationMessageHandler;
+import cofty.core.parser.ParseContext;
 import cofty.type.TextContent;
 
 public final class Utils {

@@ -1,6 +1,6 @@
 package cofty.core.semantics;
 
-import cofty.v4.core.compiler.message.CompilationMessageHandler;
+import cofty.core.compiler.message.CompilationMessageHandler;
 import cofty.type.TextContent;
 import org.jetbrains.annotations.NotNull;
 
