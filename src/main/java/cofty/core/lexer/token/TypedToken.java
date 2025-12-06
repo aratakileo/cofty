@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.regex.MatchResult;
 
 public class TypedToken<T extends TokenType> {
     public final T type;
@@ -56,5 +57,17 @@ public class TypedToken<T extends TokenType> {
             @Nullable TypedToken<T> token
     ) {
         return token == null ? null : token.strictAs();
+    }
+
+    public static <_T extends TokenType> @NotNull TypedToken<_T> build(
+            @NotNull MatchResult matchResult,
+            @NotNull _T tokenType
+    ) {
+        return new TypedToken<>(
+                tokenType,
+                matchResult.group(),
+                matchResult.start(),
+                matchResult.end()
+        );
     }
 }

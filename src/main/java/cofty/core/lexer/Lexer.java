@@ -8,6 +8,7 @@ import cofty.core.compiler.message.CompilationMessage;
 import cofty.core.compiler.message.CompilationMessageHandler;
 import cofty.type.TextContent;
 import cofty.core.compiler.message.CompilationMessageLabel;
+import cofty.util.Cast;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -30,15 +31,15 @@ public class Lexer {
 
     public @NotNull ArrayList<TypedToken<?>> parse() {
         final var tokens = new ArrayList<TypedToken<?>>();
-        var prevToken = (AnyToken) null;
+        var prevToken = (TypedToken<?>)null;
 
         for (final var matchResult: matcher.results().toList()) {
             final var tokenType = TokenType.valueOf(matchResult);
-            final var token = AnyToken.build(matchResult, tokenType);
+            final var token = TypedToken.build(matchResult, tokenType);
 
             if (prevToken != null && prevToken.type.equals(Simple.MISMATCH)) {
                 if (token.type.equals(Simple.MISMATCH)) {
-                    prevToken = (AnyToken) prevToken.merge(token);
+                    prevToken = prevToken.merge(Cast.quiet(token));
                     continue;
                 }
 
@@ -57,7 +58,7 @@ public class Lexer {
         return tokens;
     }
 
-    private void showSyntaxError(@NotNull AnyToken token) {
+    private void showSyntaxError(@NotNull TypedToken<?> token) {
         messages.add(CompilationMessage.create(text, MessageType.ERROR, CompilationMessageLabel.INVALID_SYNTAX, token));
     }
 
