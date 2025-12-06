@@ -1,6 +1,5 @@
 package cofty.v4.core.parser;
 
-import cofty.core.lexer.token.type.Keyword;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.type.TokenType;
 import cofty.core.lexer.token.type.operator.Bracket;
@@ -20,22 +19,6 @@ public final class BodyParser implements Parser<BodyObject> {
             BodyType.MODULE,
             BodyType.MODULE,
             BodyFormat.NOT_WRAPPED_WITH_CURVES
-    );
-
-    @Deprecated
-    public static final BodyParser FUNC_NESTED_BODY = new BodyParser(
-            BodyType.FUNC,
-            BodyType.NESTED,
-            BodyFormat.NON_STRICT_WRAPPED_WITH_CURVES
-    ), NESTED_BODY = new BodyParser(BodyType.MODULE, BodyType.NESTED, BodyFormat.NON_STRICT_WRAPPED_WITH_CURVES),
-            FUNC_BODY = new BodyParser(BodyType.MODULE, BodyType.FUNC, BodyFormat.STRICT_WRAPPED_WITH_CURVES);
-
-    @Deprecated
-    private final static boolean RUN_LEGACY = false;
-
-    @Deprecated
-    private final static List<? extends Parser<? extends BodyResidentObject>> RESIDENT_PARSERS = List.of(
-        FieldDeclarationParser.DEFAULT
     );
 
     private final Set<? extends Parser<? extends BodyResidentObject>> resident_parsers;
@@ -126,50 +109,10 @@ public final class BodyParser implements Parser<BodyObject> {
         ));
     }
 
-    @Deprecated
-    private @NotNull ParseResult<? extends BodyResidentObject> deprecatedPartOfLineParse(
-            @NotNull ParseContext context
-    ) {
-        final var fnParseResult = checkIfItIsAllowed(
-                context,
-                Keyword.FUN,
-                FuncDeclarationParser.DEFAULT,
-                BodyType.MODULE
-        );
-
-        if (!fnParseResult.isCanceled()) return Cast.quiet(fnParseResult);
-
-        final var nestedBodyParseResult = (actualBodyType == BodyType.FUNC ? FUNC_NESTED_BODY : NESTED_BODY)
-                .parse(context);
-
-        if (!nestedBodyParseResult.isCanceled())
-            return Cast.quiet(nestedBodyParseResult);
-
-        final var returnStatementParseResult = checkIfItIsAllowed(
-                context,
-                Keyword.RETURN,
-                ReturnStatementParser.DEFAULT,
-                BodyType.FUNC
-        );
-
-        if (!returnStatementParseResult.isCanceled())
-            return Cast.quiet(returnStatementParseResult);
-
-        for (final var parser: RESIDENT_PARSERS) {
-            final var parseResult = parser.parse(context);
-
-            if (!parseResult.isCanceled()) return Cast.quiet(parseResult);
-        }
-
-        return ParseResult.canceled();
-    }
-
     private @NotNull ParseResult<BodyResidentObject> parseLine(@NotNull ParseContext context) {
         final var complexParseResult = parseValueExpressionOrFieldValueAssignment(context);
 
         if (!complexParseResult.isCanceled()) return Cast.quiet(complexParseResult);
-
-        if (RUN_LEGACY) return Cast.quiet(deprecatedPartOfLineParse(context));
 
         for (final var parser: resident_parsers) {
             final var parseResult = parser.parse(context);

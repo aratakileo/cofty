@@ -92,57 +92,6 @@ public final class ComplexValueParser implements Parser<ExpressionValueObject> {
         return ParseResult.successful(new ComplexValueObject(segments));
     }
 
-    @Deprecated
-    private @Nullable ArrayList<ExpressionValueObject> deprecatedPartOfParseFuncCallOrFieldAccess(
-            @NotNull ParseContext context,
-            boolean isPostfixFuncCall
-    ) {
-        final var args = new ArrayList<ExpressionValueObject>();
-
-        var alreadySeparated = true;
-
-        while (!context.currentIs(Bracket.ROUND_CLOSE)) {
-            if (context.currentIs(Separator.COMMA)) {
-                if (alreadySeparated) {
-                    context.messages.addSyntaxErr("expected an argument value here, not the comma");
-                    context.goNext();
-
-                    return null;
-                }
-
-                alreadySeparated = true;
-                context.goNext();
-                continue;
-            }
-
-            final var parseResult = ValueExpressionParser.create(true).parse(context);
-
-            if (!parseResult.isSuccessful() && !context.currentIs(Bracket.ROUND_CLOSE)) {
-                context.messages.addSyntaxErr("expected the ending of the round brackets here");
-                context.goNext();
-
-                return null;
-            }
-
-            if (!alreadySeparated && !parseResult.isCanceled()) {
-                context.messages.addSyntaxErrBeforeToken(
-                        "expected a comma separator here between arguments",
-                        ((ComplexValueObject)parseResult.valueOrThrow()).segments.getFirst().failAnchor()
-                );
-
-                return null;
-            }
-
-            if (parseResult.isFailed()) return null;
-            if (parseResult.isCanceled()) continue;
-
-            args.add(parseResult.valueOrThrow());
-            alreadySeparated = false;
-        }
-
-        return args;
-    }
-
     private @Nullable ValueSegmentObject parseFuncCallOrFieldAccess(
             @NotNull ParseContext context,
             boolean isPostfixFuncCall

@@ -11,9 +11,6 @@ import java.util.List;
 import java.util.Objects;
 
 public final class FuncDeclarationParser implements Parser<FuncDeclarationObject> {
-    @Deprecated
-    public static final FuncDeclarationParser DEFAULT = new FuncDeclarationParser(BodyParser.BodyType.MODULE);
-
     public final BodyParser.BodyType parentBody;
 
     private FuncDeclarationParser(@NotNull BodyParser.BodyType parentBody) {
