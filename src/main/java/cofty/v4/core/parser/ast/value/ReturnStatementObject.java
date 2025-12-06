@@ -4,9 +4,9 @@ import cofty.v4.core.parser.ast.BodyResidentObject;
 import org.jetbrains.annotations.Nullable;
 
 public final class ReturnStatementObject implements BodyResidentObject {
-    public final ValueExpressionObject value;
+    public final ExpressionValueObject value;
 
-    public ReturnStatementObject(@Nullable ValueExpressionObject value) {
+    public ReturnStatementObject(@Nullable ExpressionValueObject value) {
         this.value = value;
     }
 }

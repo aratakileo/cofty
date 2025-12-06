@@ -1,11 +1,11 @@
 package cofty.v4.core.parser.ast.value.complex;
 
-import cofty.v4.core.parser.ast.value.ExpressionValue;
+import cofty.v4.core.parser.ast.value.ExpressionValueObject;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public final class ComplexValueObject implements ExpressionValue {
+public final class ComplexValueObject implements ExpressionValueObject {
     public final List<ValueSegmentObject> segments;
 
     public ComplexValueObject(@NotNull List<ValueSegmentObject> segments) {

@@ -268,7 +268,7 @@ public class OperatorExpressionParser {
     private void addOperatorToStack(@NotNull TokenType tokenType) {
         operatorStack.add(tokenType);
 
-        if (tokenType.isIn(Binary.IS_NOT, Binary.NOT_IN)) {
+        if (tokenType.isAny(Binary.IS_NOT, Binary.NOT_IN)) {
             operatorTokensStack.add(List.of(context.currentOrThrow(), context.goNextOrThrow()));
             return;
         }

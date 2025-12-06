@@ -12,6 +12,6 @@ public enum ModifierType implements Containable<ModifierType> {
     PREVIEW;
 
     public boolean isBasic() {
-        return isIn(GENERAL, PEEK, FAIL);
+        return isAny(GENERAL, PEEK, FAIL);
     }
 }

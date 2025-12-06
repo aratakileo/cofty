@@ -6,7 +6,7 @@ import cofty.core.lexer.token.type.TokenType;
 import cofty.core.lexer.token.type.operator.Bracket;
 import cofty.core.lexer.token.type.operator.Separator;
 import cofty.util.Lists;
-import cofty.v4.core.parser.ast.value.ValueExpressionObject;
+import cofty.v4.core.parser.ast.value.ExpressionValueObject;
 import cofty.v4.core.parser.ast.value.complex.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public final class ComplexValueParser implements Parser<ComplexValueObject> {
+public final class ComplexValueParser implements Parser<ExpressionValueObject> {
     public static final ComplexValueParser DEFAULT = new ComplexValueParser();
 
     private static final Set<TokenType> PRIMITIVE_VALUE_TYPES = Set.of(
@@ -31,7 +31,7 @@ public final class ComplexValueParser implements Parser<ComplexValueObject> {
     private ComplexValueParser() {}
 
     @Override
-    public @NotNull ParseResult<ComplexValueObject> parse(@NotNull ParseContext context) {
+    public @NotNull ParseResult<ExpressionValueObject> parse(@NotNull ParseContext context) {
         if (!context.currentIs(Simple.WORD) && !context.currentIsAny(PRIMITIVE_VALUE_TYPES))
             return ParseResult.canceled();
 
@@ -83,15 +83,21 @@ public final class ComplexValueParser implements Parser<ComplexValueObject> {
 
         context.rollbackSkippingNewLinesState();
 
+        if (segments.size() == 1)
+            return ParseResult.successful(segments.getFirst());
+
+        if (segments.isEmpty())
+            throw new IllegalStateException();
+
         return ParseResult.successful(new ComplexValueObject(segments));
     }
 
     @Deprecated
-    private @Nullable ArrayList<ValueExpressionObject> deprecatedPartOfParseFuncCallOrFieldAccess(
+    private @Nullable ArrayList<ExpressionValueObject> deprecatedPartOfParseFuncCallOrFieldAccess(
             @NotNull ParseContext context,
             boolean isPostfixFuncCall
     ) {
-        final var args = new ArrayList<ValueExpressionObject>();
+        final var args = new ArrayList<ExpressionValueObject>();
 
         var alreadySeparated = true;
 
@@ -109,7 +115,7 @@ public final class ComplexValueParser implements Parser<ComplexValueObject> {
                 continue;
             }
 
-            final var parseResult = ValueExpressionParser.NEWLINES_SENSITIVE.parse(context);
+            final var parseResult = ValueExpressionParser.create(true).parse(context);
 
             if (!parseResult.isSuccessful() && !context.currentIs(Bracket.ROUND_CLOSE)) {
                 context.messages.addSyntaxErr("expected the ending of the round brackets here");
@@ -121,7 +127,7 @@ public final class ComplexValueParser implements Parser<ComplexValueObject> {
             if (!alreadySeparated && !parseResult.isCanceled()) {
                 context.messages.addSyntaxErrBeforeToken(
                         "expected a comma separator here between arguments",
-                        ((ComplexValueObject)parseResult.valueOrThrow().expr).segments.getFirst().failAnchor()
+                        ((ComplexValueObject)parseResult.valueOrThrow()).segments.getFirst().failAnchor()
                 );
 
                 return null;
@@ -151,7 +157,7 @@ public final class ComplexValueParser implements Parser<ComplexValueObject> {
         final var argsParseResult = Parser.parseSeparatedQueue(
                 context,
                 Separator.COMMA,
-                ValueExpressionParser.NEWLINES_INSENSITIVE,
+                ValueExpressionParser.create(false),
                 null,
                 "expected a comma separator here between the arguments",
                 "expected an argument value here, not the comma"

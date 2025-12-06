@@ -19,6 +19,10 @@ public interface TokenType extends Containable<TokenType>, Representable {
                 && Objects.equals(type.content(), content());
     }
 
+    default boolean isValueOperator() {
+        return this instanceof Binary || this instanceof Unary || this instanceof ContextSensitive;
+    }
+
     static boolean isKeywordLike(@NotNull String word) {
         return Keyword.is(word) || Modifier.is(word) || Unary.is(word) || Binary.is(word);
     }

@@ -25,15 +25,19 @@ class FieldValueAssignmentParserTest {
 
         final var astObject = parseResult.valueOrThrow();
 
+        Assertions.assertInstanceOf(FieldAccessObject.class, astObject.field);
+
         Assertions.assertEquals(
                 "validField",
-                ((FieldAccessObject)astObject.field.segments.getFirst()).name.content,
+                ((FieldAccessObject)astObject.field).name.content,
                 String.format("invalid assignable field name (`%s`)", expr)
         );
 
+        Assertions.assertInstanceOf(SimpleValue.class, astObject.value);
+
         Assertions.assertEquals(
                 value,
-                ((SimpleValue)((ComplexValueObject)astObject.value.expr).segments.getFirst()).value.content,
+                ((SimpleValue)astObject.value).value.content,
                 String.format("invalid assignable value (`%s`)", expr)
         );
     }
@@ -54,21 +58,29 @@ class FieldValueAssignmentParserTest {
 
         final var astObject = parseResult.valueOrThrow();
 
+        Assertions.assertInstanceOf(ComplexValueObject.class, astObject.field);
+
+        final var fieldObject = (ComplexValueObject)astObject.field;
+
         Assertions.assertEquals(
                 4,
-                astObject.field.segments.size(),
+                fieldObject.segments.size(),
                 String.format("the complex description of the field must contain four elements (`%s`)", expr)
         );
 
+        Assertions.assertInstanceOf(FieldAccessObject.class, fieldObject.segments.getLast());
+
         Assertions.assertEquals(
                 "validField",
-                ((FieldAccessObject)astObject.field.segments.getLast()).name.content,
+                ((FieldAccessObject)fieldObject.segments.getLast()).name.content,
                 String.format("invalid assignable field name (`%s`)", expr)
         );
 
+        Assertions.assertInstanceOf(SimpleValue.class, astObject.value);
+
         Assertions.assertEquals(
                 value,
-                ((SimpleValue)((ComplexValueObject)astObject.value.expr).segments.getFirst()).value.content,
+                ((SimpleValue)astObject.value).value.content,
                 String.format("invalid assignable value (`%s`)", expr)
         );
     }
@@ -89,24 +101,32 @@ class FieldValueAssignmentParserTest {
 
         final var astObject = parseResult.valueOrThrow();
 
+        Assertions.assertInstanceOf(ComplexValueObject.class, astObject.field);
+
+        final var fieldObject = (ComplexValueObject)astObject.field;
+
         Assertions.assertEquals(
                 4,
-                astObject.field.segments.size(),
+                fieldObject.segments.size(),
                 String.format(
                         "the complex description of the field must contain four elements (`%s`)",
                         Representable.repr(expr, true)
                 )
         );
 
+        Assertions.assertInstanceOf(FieldAccessObject.class, fieldObject.segments.getLast());
+
         Assertions.assertEquals(
                 "validField",
-                ((FieldAccessObject)astObject.field.segments.getLast()).name.content,
+                ((FieldAccessObject)fieldObject.segments.getLast()).name.content,
                 String.format("invalid assignable field name (`%s`)", Representable.repr(expr, true))
         );
 
+        Assertions.assertInstanceOf(SimpleValue.class, astObject.value);
+
         Assertions.assertEquals(
                 value,
-                ((SimpleValue)((ComplexValueObject)astObject.value.expr).segments.getFirst()).value.content,
+                ((SimpleValue)astObject.value).value.content,
                 String.format("invalid assignable value (`%s`)", Representable.repr(expr, true))
         );
     }
@@ -169,8 +189,36 @@ class FieldValueAssignmentParserTest {
     }
 
     @Test
+    void invalidTryAssignValueToBinaryOperatorExpression() {
+        final var expr = "a + b = 'it won\\'t work ;('";
+        final var context = Utils.parseContextOf(expr);
+        final var parseResult = FieldValueAssignmentParser.DEFAULT.parse(context);
+
+        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
+
+        Assertions.assertNull(
+                parseResult.value(),
+                "the resulted ast object must be null"
+        );
+    }
+
+    @Test
+    void invalidTryAssignValueToUnaryOperatorExpression() {
+        final var expr = "+value = 'it won\\'t work ;('";
+        final var context = Utils.parseContextOf(expr);
+        final var parseResult = FieldValueAssignmentParser.DEFAULT.parse(context);
+
+        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
+
+        Assertions.assertNull(
+                parseResult.value(),
+                "the resulted ast object must be null"
+        );
+    }
+
+    @Test
     void invalidTryAssignValueToNonField() {
-        final var expr = "functionCall() = 'it won't work ;('";
+        final var expr = "functionCall() = 'it won\\'t work ;('";
         final var context = Utils.parseContextOf(expr);
         final var parseResult = FieldValueAssignmentParser.DEFAULT.parse(context);
 

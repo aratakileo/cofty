@@ -9,7 +9,6 @@ import cofty.util.Cast;
 import cofty.v4.core.parser.ast.*;
 import cofty.v4.core.compiler.message.CompilationMessageRepresentable;
 import cofty.v4.core.parser.ast.value.ReturnStatementObject;
-import cofty.v4.core.parser.ast.value.complex.ComplexValueObject;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -216,19 +215,17 @@ public final class BodyParser implements Parser<BodyObject> {
     private @NotNull ParseResult<? extends BodyResidentObject> parseValueExpressionOrFieldValueAssignment(
             @NotNull ParseContext context
     ) {
-        final var valueExpressionParseResult = ValueExpressionParser.NEWLINES_SENSITIVE.parse(context);
+        final var valueExpressionParseResult = ValueExpressionParser.create(true).parse(context);
 
         if (valueExpressionParseResult.isFailed()) return ParseResult.failed();
 
         if (valueExpressionParseResult.isSuccessful()) {
-            if (valueExpressionParseResult.valueOrThrow().expr instanceof ComplexValueObject complexValueObject) {
-                final var fieldValueAssignmentParseResult = FieldValueAssignmentParser.DEFAULT.parse(
-                        context,
-                        complexValueObject
-                );
+            final var fieldValueAssignmentParseResult = FieldValueAssignmentParser.DEFAULT.parse(
+                    context,
+                    valueExpressionParseResult.valueOrThrow()
+            );
 
-                if (!fieldValueAssignmentParseResult.isCanceled()) return fieldValueAssignmentParseResult;
-            }
+            if (!fieldValueAssignmentParseResult.isCanceled()) return fieldValueAssignmentParseResult;
 
             return valueExpressionParseResult;
         }
@@ -303,7 +300,7 @@ public final class BodyParser implements Parser<BodyObject> {
         SINGLE_LINE_ONLY;
 
         boolean mayStartsWithCurveBracket() {
-            return isIn(STRICT_WRAPPED_WITH_CURVES, NON_STRICT_WRAPPED_WITH_CURVES, SINGLE_LINE_OR_WRAPPED_WITH_CURVES);
+            return isAny(STRICT_WRAPPED_WITH_CURVES, NON_STRICT_WRAPPED_WITH_CURVES, SINGLE_LINE_OR_WRAPPED_WITH_CURVES);
         }
 
         boolean mustStartsWithCurveBracket() {

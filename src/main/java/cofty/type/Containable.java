@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 
 public interface Containable<T> {
-    default boolean isIn(@NotNull T... values) {
+    default boolean isAny(@NotNull T... values) {
         return Arrays.asList(values).contains(this);
     }
 }

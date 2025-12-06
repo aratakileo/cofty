@@ -8,7 +8,7 @@ public enum Modifier implements TokenType {
     STATIC;
 
     public boolean isAccessModifier() {
-        return isIn(PUBLIC, PRIVATE);
+        return isAny(PUBLIC, PRIVATE);
     }
 
     @Override

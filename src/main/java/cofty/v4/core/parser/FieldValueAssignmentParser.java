@@ -2,8 +2,12 @@ package cofty.v4.core.parser;
 
 import cofty.core.lexer.token.type.operator.Assign;
 import cofty.v4.core.parser.ast.FieldValueAssignmentObject;
+import cofty.v4.core.parser.ast.value.BinaryExpressionObject;
+import cofty.v4.core.parser.ast.value.ExpressionValueObject;
+import cofty.v4.core.parser.ast.value.UnaryExpressionObject;
 import cofty.v4.core.parser.ast.value.complex.ComplexValueObject;
 import cofty.v4.core.parser.ast.value.complex.FieldAccessObject;
+import cofty.v4.core.parser.ast.value.complex.ValueSegmentObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,12 +32,12 @@ public final class FieldValueAssignmentParser implements Parser<FieldValueAssign
      */
     public @NotNull ParseResult<FieldValueAssignmentObject> parse(
             @NotNull ParseContext context,
-            @Nullable ComplexValueObject complexValueObject
+            @Nullable ExpressionValueObject expressionValueObject
     ) {
         context.createIndexSnapshot();
 
-        final var fieldNameParseResult = complexValueObject == null
-                ? ComplexValueParser.DEFAULT.parse(context) : ParseResult.successful(complexValueObject);
+        final var fieldNameParseResult = expressionValueObject == null
+                ? ValueExpressionParser.create(true).parse(context) : ParseResult.successful(expressionValueObject);
 
         if (fieldNameParseResult.isCanceled()) {
             context.rollbackIndex();
@@ -50,7 +54,43 @@ public final class FieldValueAssignmentParser implements Parser<FieldValueAssign
             return ParseResult.canceled();
         }
 
-        final var lastSegment = fieldNameParseResult.valueOrThrow().segments.getLast();
+        if (fieldNameParseResult.valueOrThrow() instanceof BinaryExpressionObject binaryExpressionObject) {
+            if (binaryExpressionObject.operators.size() == 1) {
+                context.messages.addSyntaxErr(
+                        String.format(
+                                "this operator `%s` is not allowed here before the assignment",
+                                binaryExpressionObject.operators.getFirst().content
+                        ),
+                        binaryExpressionObject.operators.getLast()
+                );
+                return ParseResult.failed();
+            }
+
+            context.messages.addInRangeSyntaxErr(
+                    String.format(
+                            "this operator `%s %s` is not allowed here before the assignment",
+                            binaryExpressionObject.operators.getFirst().content,
+                            binaryExpressionObject.operators.getLast().content
+                    ),
+                    binaryExpressionObject.operators.getFirst(),
+                    binaryExpressionObject.operators.getLast()
+            );
+            return ParseResult.failed();
+        }
+
+        if (fieldNameParseResult.valueOrThrow() instanceof UnaryExpressionObject unaryExpressionObject) {
+            context.messages.addSyntaxErr(
+                    String.format(
+                            "this operator `%s` is not allowed here before the assignment",
+                            unaryExpressionObject.operator.content
+                    ),
+                    unaryExpressionObject.operator
+            );
+            return ParseResult.failed();
+        }
+
+        final var lastSegment = fieldNameParseResult.valueOrThrow() instanceof ComplexValueObject complexValue
+                ? complexValue.segments.getLast() : (ValueSegmentObject)fieldNameParseResult.valueOrThrow();
 
         context.removeIndexSnapshot();
 
@@ -66,7 +106,7 @@ public final class FieldValueAssignmentParser implements Parser<FieldValueAssign
             return ParseResult.failed();
         }
 
-        final var fieldValueParseResult = ValueExpressionParser.NEWLINES_SENSITIVE.parse(context);
+        final var fieldValueParseResult = ValueExpressionParser.create(true).parse(context);
 
         if (fieldValueParseResult.isFailed()) return ParseResult.failed();
 

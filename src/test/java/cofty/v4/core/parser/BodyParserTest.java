@@ -24,6 +24,8 @@ class BodyParserTest {
                 fun sum(a: int, b = 5) -> int {
                     return 7
                 }
+                
+                2 ** 2 * 2 ** 2 ** 2 / 4 + 1
                 """;
         final var context = Utils.parseContextOf(expr);
         final var parseResult = BodyParser.MODULE_BODY.parse(context);
@@ -36,7 +38,7 @@ class BodyParserTest {
         );
 
         final var astObject = parseResult.valueOrThrow();
-        final var countOfResidents = 5;
+        final var countOfResidents = 6;
 
         Assertions.assertEquals(
                 countOfResidents,

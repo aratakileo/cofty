@@ -60,6 +60,19 @@ public final class ParseContext {
         skipNewLines = skipNewLinesStack.removeLast();
     }
 
+    public void rollbackSkippingNewLinesState(int index) {
+        if (skipNewLinesStack.isEmpty())
+            throw new IllegalStateException();
+
+        skipNewLines = skipNewLinesStack.get(index);
+
+        skipNewLinesStack.subList(index + 1, skipNewLinesStack.size()).clear();
+    }
+
+    public int skippingNewLineStatesSize() {
+        return skipNewLinesStack.size();
+    }
+
     public int snapshotStackSize() {
         return indexSnapshotStack.size();
     }
@@ -106,6 +119,15 @@ public final class ParseContext {
 
         if (canSkipNewLine(except))
             skipNewLine();
+
+        return current();
+    }
+
+    public @Nullable TypedToken<?> current(boolean canTrySkipNewLines) {
+        if (!hasCurrent()) return null;
+        if (!canTrySkipNewLines || !canSkipNewLine()) return current();
+
+        skipNewLine();
 
         return current();
     }
@@ -193,18 +215,20 @@ public final class ParseContext {
         return true;
     }
 
-    private boolean canSkipNewLine(@NotNull TokenType type) {
+    private boolean canSkipNewLine() {
         return skipNewLines
                 && hasNext()
-                && currentOrThrow().type.equals(Simple.NEWLINE)
+                && currentOrThrow().type.equals(Simple.NEWLINE);
+    }
+
+    private boolean canSkipNewLine(@NotNull TokenType type) {
+        return canSkipNewLine()
                 && !type.equals(Simple.NEWLINE)
                 && nextOrThrow().type.equals(type);
     }
 
     private boolean canSkipNewLine(@NotNull Collection<TokenType> types) {
-        return skipNewLines
-                && hasNext()
-                && currentOrThrow().type.equals(Simple.NEWLINE)
+        return canSkipNewLine()
                 && !types.contains(Simple.NEWLINE)
                 && types.contains(nextOrThrow().type);
     }

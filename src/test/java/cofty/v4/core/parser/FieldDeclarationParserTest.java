@@ -58,15 +58,9 @@ class FieldDeclarationParserTest {
 
         assert astObject.value != null;
 
-        Assertions.assertInstanceOf(ComplexValueObject.class, astObject.value.expr);
+        Assertions.assertInstanceOf(SimpleValue.class, astObject.value);
 
-        final var segmentsObject = (ComplexValueObject)astObject.value.expr;
-
-        Assertions.assertInstanceOf(SimpleValue.class, segmentsObject.segments.getFirst());
-
-        Assertions.assertEquals(1, segmentsObject.segments.size());
-
-        final var valueObject = (SimpleValue)segmentsObject.segments.getFirst();
+        final var valueObject = (SimpleValue)astObject.value;
 
         Assertions.assertEquals(
                 "true",
@@ -132,15 +126,9 @@ class FieldDeclarationParserTest {
 
         assert astObject.value != null;
 
-        Assertions.assertInstanceOf(ComplexValueObject.class, astObject.value.expr);
+        Assertions.assertInstanceOf(SimpleValue.class, astObject.value);
 
-        final var segmentsObject = (ComplexValueObject)astObject.value.expr;
-
-        Assertions.assertInstanceOf(SimpleValue.class, segmentsObject.segments.getFirst());
-
-        Assertions.assertEquals(1, segmentsObject.segments.size());
-
-        final var valueObject = (SimpleValue)segmentsObject.segments.getFirst();
+        final var valueObject = (SimpleValue)astObject.value;
 
         Assertions.assertEquals(
                 "true",
@@ -214,15 +202,9 @@ class FieldDeclarationParserTest {
 
         assert astObject.value != null;
 
-        Assertions.assertInstanceOf(ComplexValueObject.class, astObject.value.expr);
+        Assertions.assertInstanceOf(SimpleValue.class, astObject.value);
 
-        final var segmentsObject = (ComplexValueObject)astObject.value.expr;
-
-        Assertions.assertInstanceOf(SimpleValue.class, segmentsObject.segments.getFirst());
-
-        Assertions.assertEquals(1, segmentsObject.segments.size());
-
-        final var valueObject = (SimpleValue)segmentsObject.segments.getFirst();
+        final var valueObject = (SimpleValue)astObject.value;
 
         Assertions.assertEquals(
                 "true",

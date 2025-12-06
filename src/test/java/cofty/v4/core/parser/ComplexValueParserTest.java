@@ -24,25 +24,13 @@ class ComplexValueParserTest {
                 "the resulted ast object must be non null"
         );
 
-        final var astObject = parseResult.valueOrThrow();
+        Assertions.assertInstanceOf(FieldAccessObject.class, parseResult.valueOrThrow());
 
-        Assertions.assertInstanceOf(
-                FieldAccessObject.class,
-                astObject.segments.getFirst(),
-                String.format("`%s` must be field access", expr)
-        );
-
-        Assertions.assertEquals(
-                1,
-                astObject.segments.size(),
-                String.format("`%s` must contain exactly one segment", expr)
-        );
-
-        final var valueObject = (FieldAccessObject)astObject.segments.getFirst();
+        final var astObject = (FieldAccessObject)parseResult.valueOrThrow();
 
         Assertions.assertEquals(
                 "validField",
-                valueObject.name.content,
+                astObject.name.content,
                 String.format("invalid field name (`%s`)", expr)
         );
     }
@@ -60,27 +48,15 @@ class ComplexValueParserTest {
                 "the resulted ast object must be non null"
         );
 
-        final var astObject = parseResult.valueOrThrow();
+        Assertions.assertInstanceOf(SimpleValue.class, parseResult.valueOrThrow());
 
-        Assertions.assertInstanceOf(
-                SimpleValue.class,
-                astObject.segments.getFirst(),
-                String.format("`%s` must be simple int value", expr)
-        );
+        final var astObject = (SimpleValue)parseResult.valueOrThrow();
 
-        Assertions.assertEquals(
-                1,
-                astObject.segments.size(),
-                String.format("`%s` must contain exactly one segment", expr)
-        );
-
-        final var valueObject = (SimpleValue)astObject.segments.getFirst();
-
-        Assertions.assertEquals(Simple.INT, valueObject.value.type);
+        Assertions.assertEquals(Simple.INT, astObject.value.type);
 
         Assertions.assertEquals(
                 "51",
-                valueObject.value.content,
+                astObject.value.content,
                 String.format("invalid value, expected `%s`", expr)
         );
     }
@@ -99,35 +75,23 @@ class ComplexValueParserTest {
                 "the resulted ast object must be non null"
         );
 
-        final var astObject = parseResult.valueOrThrow();
+        Assertions.assertInstanceOf(FuncCallObject.class, parseResult.valueOrThrow());
 
-        Assertions.assertInstanceOf(
-                FuncCallObject.class,
-                astObject.segments.getFirst(),
-                String.format("`%s` must be function call", expr)
-        );
-
-        Assertions.assertEquals(
-                1,
-                astObject.segments.size(),
-                String.format("`%s` must contain exactly one segment", expr)
-        );
-
-        final var valueObject = (FuncCallObject)astObject.segments.getFirst();
+        final var astObject = (FuncCallObject)parseResult.valueOrThrow();
 
         Assertions.assertEquals(
                 name,
-                valueObject.name.content,
+                astObject.name.content,
                 String.format("invalid callable function name (`%s`)", expr)
         );
 
         Assertions.assertTrue(
-                valueObject.args.isEmpty(),
+                astObject.args.isEmpty(),
                 String.format("the function call must contain no arguments (`%s`)", expr)
         );
 
         Assertions.assertFalse(
-                valueObject.isPostfix,
+                astObject.isPostfix,
                 String.format("the function call must not be postfix call (`%s`)", expr)
         );
     }
@@ -147,56 +111,36 @@ class ComplexValueParserTest {
                 "the resulted ast object must be non null"
         );
 
-        final var astObject = parseResult.valueOrThrow();
+        Assertions.assertInstanceOf(FuncCallObject.class, parseResult.valueOrThrow());
 
-        Assertions.assertInstanceOf(
-                FuncCallObject.class,
-                astObject.segments.getFirst(),
-                String.format("`%s` must be function call", expr)
-        );
-
-        Assertions.assertEquals(
-                1,
-                astObject.segments.size(),
-                String.format("`%s` must contain exactly one segment", expr)
-        );
-
-        final var valueObject = (FuncCallObject)astObject.segments.getFirst();
+        final var astObject = (FuncCallObject)parseResult.valueOrThrow();
 
         Assertions.assertEquals(
                 name,
-                valueObject.name.content,
+                astObject.name.content,
                 String.format("invalid callable function name (`%s`)", expr)
         );
 
         Assertions.assertEquals(
                 1,
-                valueObject.args.size(),
+                astObject.args.size(),
                 String.format("the function call must contain exactly one argument (`%s`)", expr)
         );
 
         Assertions.assertInstanceOf(
-                ComplexValueObject.class,
-                valueObject.args.getFirst().expr,
-                String.format("the argument of the function call must be complex value (`%s`)", expr)
-        );
-
-        final var complexValueObject = (ComplexValueObject)valueObject.args.getFirst().expr;
-
-        Assertions.assertInstanceOf(
                 SimpleValue.class,
-                complexValueObject.segments.getFirst(),
+                astObject.args.getFirst(),
                 String.format("the argument of the function call must be simple str value (`%s`)", expr)
         );
 
         Assertions.assertEquals(
                 argValue,
-                ((SimpleValue)complexValueObject.segments.getFirst()).value.content,
+                ((SimpleValue)astObject.args.getFirst()).value.content,
                 String.format("invalid argument value of the function call (`%s`)", expr)
         );
 
         Assertions.assertFalse(
-                valueObject.isPostfix,
+                astObject.isPostfix,
                 String.format("the function call must not be postfix call (`%s`)", expr)
         );
     }
@@ -217,76 +161,44 @@ class ComplexValueParserTest {
                 "the resulted ast object must be non null"
         );
 
-        final var astObject = parseResult.valueOrThrow();
+        Assertions.assertInstanceOf(FuncCallObject.class, parseResult.valueOrThrow());
 
-        Assertions.assertInstanceOf(
-                FuncCallObject.class,
-                astObject.segments.getFirst(),
-                String.format("`%s` must be function call", expr)
-        );
-
-        Assertions.assertEquals(
-                1,
-                astObject.segments.size(),
-                String.format("`%s` must contain exactly one segment", expr)
-        );
-
-        final var valueObject = (FuncCallObject)astObject.segments.getFirst();
+        final var astObject = (FuncCallObject)parseResult.valueOrThrow();
 
         Assertions.assertEquals(
                 name,
-                valueObject.name.content,
+                astObject.name.content,
                 String.format("invalid callable function name (`%s`)", expr)
         );
 
         Assertions.assertEquals(
                 2,
-                valueObject.args.size(),
+                astObject.args.size(),
                 String.format("the function call must contain exactly one argument (`%s`)", expr)
         );
 
         Assertions.assertInstanceOf(
-                ComplexValueObject.class,
-                valueObject.args.getFirst().expr,
-                String.format("the first argument of the function call must be complex value (`%s`)", expr)
-        );
-
-        final var firstComplexValueObject = (ComplexValueObject)valueObject.args.getFirst().expr;
-
-        Assertions.assertInstanceOf(
                 SimpleValue.class,
-                firstComplexValueObject.segments.getFirst(),
+                astObject.args.getFirst(),
                 String.format("the first argument of the function call must be simple str value (`%s`)", expr)
         );
 
         Assertions.assertEquals(
                 firstArgValue,
-                ((SimpleValue)firstComplexValueObject.segments.getFirst()).value.content,
+                ((SimpleValue)astObject.args.getFirst()).value.content,
                 String.format("invalid first argument value of the function call (`%s`)", expr)
         );
 
-        Assertions.assertInstanceOf(
-                ComplexValueObject.class,
-                valueObject.args.getLast().expr,
-                String.format("the second argument of the function call must be complex value (`%s`)", expr)
-        );
-
-        final var secondComplexValueObject = (ComplexValueObject)valueObject.args.getLast().expr;
-
-        Assertions.assertInstanceOf(
-                SimpleValue.class,
-                secondComplexValueObject.segments.getFirst(),
-                String.format("the second argument of the function call must be simple double value (`%s`)", expr)
-        );
+        final var secondSimpleValueObject = (SimpleValue)astObject.args.getLast();
 
         Assertions.assertEquals(
                 secondArgValue,
-                ((SimpleValue)secondComplexValueObject.segments.getFirst()).value.content,
+                secondSimpleValueObject.value.content,
                 String.format("invalid second argument value of the function call (`%s`)", expr)
         );
 
         Assertions.assertFalse(
-                valueObject.isPostfix,
+                astObject.isPostfix,
                 String.format("the function call must not be postfix call (`%s`)", expr)
         );
     }
@@ -307,76 +219,50 @@ class ComplexValueParserTest {
                 "the resulted ast object must be non null"
         );
 
-        final var astObject = parseResult.valueOrThrow();
+        Assertions.assertInstanceOf(FuncCallObject.class, parseResult.valueOrThrow());
 
-        Assertions.assertInstanceOf(
-                FuncCallObject.class,
-                astObject.segments.getFirst(),
-                String.format("`%s` must be function call", expr)
-        );
-
-        Assertions.assertEquals(
-                1,
-                astObject.segments.size(),
-                String.format("`%s` must contain exactly one segment", expr)
-        );
-
-        final var valueObject = (FuncCallObject)astObject.segments.getFirst();
+        final var astObject = (FuncCallObject)parseResult.valueOrThrow();
 
         Assertions.assertEquals(
                 name,
-                valueObject.name.content,
+                astObject.name.content,
                 String.format("invalid callable function name (`%s`)", expr)
         );
 
         Assertions.assertEquals(
                 2,
-                valueObject.args.size(),
+                astObject.args.size(),
                 String.format("the function call must contain exactly one argument (`%s`)", expr)
         );
 
         Assertions.assertInstanceOf(
-                ComplexValueObject.class,
-                valueObject.args.getFirst().expr,
-                String.format("the first argument of the function call must be complex value (`%s`)", expr)
-        );
-
-        final var firstComplexValueObject = (ComplexValueObject)valueObject.args.getFirst().expr;
-
-        Assertions.assertInstanceOf(
                 SimpleValue.class,
-                firstComplexValueObject.segments.getFirst(),
+                astObject.args.getFirst(),
                 String.format("the first argument of the function call must be simple str value (`%s`)", expr)
         );
 
         Assertions.assertEquals(
                 firstArgValue,
-                ((SimpleValue)firstComplexValueObject.segments.getFirst()).value.content,
+                ((SimpleValue)astObject.args.getFirst()).value.content,
                 String.format("invalid first argument value of the function call (`%s`)", expr)
         );
 
         Assertions.assertInstanceOf(
-                ComplexValueObject.class,
-                valueObject.args.getLast().expr,
-                String.format("the second argument of the function call must be complex value (`%s`)", expr)
-        );
-
-        final var secondComplexValueObject = (ComplexValueObject)valueObject.args.getLast().expr;
-
-        Assertions.assertInstanceOf(
                 SimpleValue.class,
-                secondComplexValueObject.segments.getFirst(),
-                String.format("the second argument of the function call must be simple double value (`%s`)", expr)
+                astObject.args.getLast(),
+                String.format("the second argument of the function call must be simple value (`%s`)", expr)
         );
+
+        final var secondSimpleValueObject = (SimpleValue)astObject.args.getLast();
 
         Assertions.assertEquals(
                 secondArgValue,
-                ((SimpleValue)secondComplexValueObject.segments.getFirst()).value.content,
+                secondSimpleValueObject.value.content,
                 String.format("invalid second argument value of the function call (`%s`)", expr)
         );
 
         Assertions.assertFalse(
-                valueObject.isPostfix,
+                astObject.isPostfix,
                 String.format("the function call must not be postfix call (`%s`)", expr)
         );
     }
@@ -396,12 +282,14 @@ class ComplexValueParserTest {
                 "the resulted ast object must be non null"
         );
 
-        final var astObject = parseResult.valueOrThrow();
+        Assertions.assertInstanceOf(ComplexValueObject.class, parseResult.valueOrThrow());
+
+        final var astObject = (ComplexValueObject)parseResult.valueOrThrow();
 
         Assertions.assertEquals(
                 2,
                 astObject.segments.size(),
-                String.format("`%s` must contain exactly two segment", expr)
+                String.format("`%s` must consists of exactly two segment", expr)
         );
 
         Assertions.assertInstanceOf(
@@ -455,12 +343,14 @@ class ComplexValueParserTest {
                 "the resulted ast object must be non null"
         );
 
-        final var astObject = parseResult.valueOrThrow();
+        Assertions.assertInstanceOf(ComplexValueObject.class, parseResult.valueOrThrow());
+
+        final var astObject = (ComplexValueObject)parseResult.valueOrThrow();
 
         Assertions.assertEquals(
                 2,
                 astObject.segments.size(),
-                String.format("`%s` must contain exactly two segment", expr)
+                String.format("`%s` must consists of exactly two segment", expr)
         );
 
         Assertions.assertInstanceOf(
@@ -512,12 +402,14 @@ class ComplexValueParserTest {
                 "the resulted ast object must be non null"
         );
 
-        final var astObject = parseResult.valueOrThrow();
+        Assertions.assertInstanceOf(ComplexValueObject.class, parseResult.valueOrThrow());
+
+        final var astObject = (ComplexValueObject)parseResult.valueOrThrow();
 
         Assertions.assertEquals(
                 3,
                 astObject.segments.size(),
-                String.format("`%s` must contain exactly two segment", Representable.repr(expr, true))
+                String.format("`%s` must consists of exactly two segment", Representable.repr(expr, true))
         );
     }
 

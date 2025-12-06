@@ -45,7 +45,7 @@ public class Lexer {
                 showSyntaxError(prevToken);
             }
 
-            if (!tokenType.isIn(Simple.SKIP, Simple.MISMATCH) && (tokenType != Simple.NEWLINE || !tokens.isEmpty()))
+            if (!tokenType.isAny(Simple.SKIP, Simple.MISMATCH) && (tokenType != Simple.NEWLINE || !tokens.isEmpty()))
                 tokens.add(token);
 
             prevToken = token;

@@ -3,7 +3,7 @@ package cofty.v4.core.parser.ast;
 import cofty.core.lexer.token.TypedToken;
 import cofty.core.lexer.token.type.Keyword;
 import cofty.core.lexer.token.type.Simple;
-import cofty.v4.core.parser.ast.value.ValueExpressionObject;
+import cofty.v4.core.parser.ast.value.ExpressionValueObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,13 +11,13 @@ public final class FieldDeclarationObject implements DeclarationObject {
     public final TypedToken<Keyword> mutable;
     public final TypedToken<Simple> name;
     public final TypeDescriptionObject explicitlySpecifiedType;
-    public final ValueExpressionObject value;
+    public final ExpressionValueObject value;
 
     private FieldDeclarationObject(
             @Nullable TypedToken<Keyword> mutable,
             @NotNull TypedToken<Simple> name,
             @Nullable TypeDescriptionObject explicitlySpecifiedType,
-            @Nullable ValueExpressionObject value
+            @Nullable ExpressionValueObject value
     ) {
         this.mutable = mutable;
         this.name = name;
@@ -36,7 +36,7 @@ public final class FieldDeclarationObject implements DeclarationObject {
     public static @NotNull FieldDeclarationObject create(
             @Nullable TypedToken<Keyword> mutable,
             @NotNull TypedToken<Simple> name,
-            @NotNull ValueExpressionObject value
+            @NotNull ExpressionValueObject value
     ) {
         return new FieldDeclarationObject(mutable, name, null, value);
     }
@@ -45,7 +45,7 @@ public final class FieldDeclarationObject implements DeclarationObject {
             @Nullable TypedToken<Keyword> mutable,
             @NotNull TypedToken<Simple> name,
             @NotNull TypeDescriptionObject explicitlySpecifiedType,
-            @NotNull ValueExpressionObject value
+            @NotNull ExpressionValueObject value
     ) {
         return new FieldDeclarationObject(mutable, name, explicitlySpecifiedType, value);
     }
