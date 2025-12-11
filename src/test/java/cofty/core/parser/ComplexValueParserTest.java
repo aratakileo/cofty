@@ -2,12 +2,11 @@ package cofty.core.parser;
 
 import cofty.Utils;
 import cofty.core.lexer.token.type.Simple;
-import cofty.core.parser.ComplexValueParser;
 import cofty.type.Representable;
 import cofty.core.parser.ast.value.complex.ComplexValueObject;
 import cofty.core.parser.ast.value.complex.FieldAccessObject;
 import cofty.core.parser.ast.value.complex.FuncCallObject;
-import cofty.core.parser.ast.value.complex.SimpleValue;
+import cofty.core.parser.ast.value.complex.SimpleValueObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -49,9 +48,9 @@ class ComplexValueParserTest {
                 "the resulted ast object must be non null"
         );
 
-        Assertions.assertInstanceOf(SimpleValue.class, parseResult.valueOrThrow());
+        Assertions.assertInstanceOf(SimpleValueObject.class, parseResult.valueOrThrow());
 
-        final var astObject = (SimpleValue)parseResult.valueOrThrow();
+        final var astObject = (SimpleValueObject)parseResult.valueOrThrow();
 
         Assertions.assertEquals(Simple.INT, astObject.value.type);
 
@@ -129,14 +128,14 @@ class ComplexValueParserTest {
         );
 
         Assertions.assertInstanceOf(
-                SimpleValue.class,
+                SimpleValueObject.class,
                 astObject.args.getFirst(),
                 String.format("the argument of the function call must be simple str value (`%s`)", expr)
         );
 
         Assertions.assertEquals(
                 argValue,
-                ((SimpleValue)astObject.args.getFirst()).value.content,
+                ((SimpleValueObject)astObject.args.getFirst()).value.content,
                 String.format("invalid argument value of the function call (`%s`)", expr)
         );
 
@@ -179,18 +178,18 @@ class ComplexValueParserTest {
         );
 
         Assertions.assertInstanceOf(
-                SimpleValue.class,
+                SimpleValueObject.class,
                 astObject.args.getFirst(),
                 String.format("the first argument of the function call must be simple str value (`%s`)", expr)
         );
 
         Assertions.assertEquals(
                 firstArgValue,
-                ((SimpleValue)astObject.args.getFirst()).value.content,
+                ((SimpleValueObject)astObject.args.getFirst()).value.content,
                 String.format("invalid first argument value of the function call (`%s`)", expr)
         );
 
-        final var secondSimpleValueObject = (SimpleValue)astObject.args.getLast();
+        final var secondSimpleValueObject = (SimpleValueObject)astObject.args.getLast();
 
         Assertions.assertEquals(
                 secondArgValue,
@@ -237,24 +236,24 @@ class ComplexValueParserTest {
         );
 
         Assertions.assertInstanceOf(
-                SimpleValue.class,
+                SimpleValueObject.class,
                 astObject.args.getFirst(),
                 String.format("the first argument of the function call must be simple str value (`%s`)", expr)
         );
 
         Assertions.assertEquals(
                 firstArgValue,
-                ((SimpleValue)astObject.args.getFirst()).value.content,
+                ((SimpleValueObject)astObject.args.getFirst()).value.content,
                 String.format("invalid first argument value of the function call (`%s`)", expr)
         );
 
         Assertions.assertInstanceOf(
-                SimpleValue.class,
+                SimpleValueObject.class,
                 astObject.args.getLast(),
                 String.format("the second argument of the function call must be simple value (`%s`)", expr)
         );
 
-        final var secondSimpleValueObject = (SimpleValue)astObject.args.getLast();
+        final var secondSimpleValueObject = (SimpleValueObject)astObject.args.getLast();
 
         Assertions.assertEquals(
                 secondArgValue,
@@ -294,12 +293,12 @@ class ComplexValueParserTest {
         );
 
         Assertions.assertInstanceOf(
-                SimpleValue.class,
+                SimpleValueObject.class,
                 astObject.segments.getFirst(),
                 String.format("`%s` must be simple str value", expr)
         );
 
-        final var valueObject = (SimpleValue)astObject.segments.getFirst();
+        final var valueObject = (SimpleValueObject)astObject.segments.getFirst();
 
         Assertions.assertEquals(Simple.STR, valueObject.value.type);
 
@@ -355,12 +354,12 @@ class ComplexValueParserTest {
         );
 
         Assertions.assertInstanceOf(
-                SimpleValue.class,
+                SimpleValueObject.class,
                 astObject.segments.getFirst(),
                 String.format("`%s` must be simple str value", expr)
         );
 
-        final var valueObject = (SimpleValue)astObject.segments.getFirst();
+        final var valueObject = (SimpleValueObject)astObject.segments.getFirst();
 
         Assertions.assertEquals(Simple.STR, valueObject.value.type);
 

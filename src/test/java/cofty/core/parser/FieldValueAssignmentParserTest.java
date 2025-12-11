@@ -1,11 +1,10 @@
 package cofty.core.parser;
 
 import cofty.Utils;
-import cofty.core.parser.FieldValueAssignmentParser;
 import cofty.type.Representable;
 import cofty.core.parser.ast.value.complex.ComplexValueObject;
 import cofty.core.parser.ast.value.complex.FieldAccessObject;
-import cofty.core.parser.ast.value.complex.SimpleValue;
+import cofty.core.parser.ast.value.complex.SimpleValueObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -34,11 +33,11 @@ class FieldValueAssignmentParserTest {
                 String.format("invalid assignable field name (`%s`)", expr)
         );
 
-        Assertions.assertInstanceOf(SimpleValue.class, astObject.value);
+        Assertions.assertInstanceOf(SimpleValueObject.class, astObject.value);
 
         Assertions.assertEquals(
                 value,
-                ((SimpleValue)astObject.value).value.content,
+                ((SimpleValueObject)astObject.value).value.content,
                 String.format("invalid assignable value (`%s`)", expr)
         );
     }
@@ -77,11 +76,11 @@ class FieldValueAssignmentParserTest {
                 String.format("invalid assignable field name (`%s`)", expr)
         );
 
-        Assertions.assertInstanceOf(SimpleValue.class, astObject.value);
+        Assertions.assertInstanceOf(SimpleValueObject.class, astObject.value);
 
         Assertions.assertEquals(
                 value,
-                ((SimpleValue)astObject.value).value.content,
+                ((SimpleValueObject)astObject.value).value.content,
                 String.format("invalid assignable value (`%s`)", expr)
         );
     }
@@ -123,11 +122,11 @@ class FieldValueAssignmentParserTest {
                 String.format("invalid assignable field name (`%s`)", Representable.repr(expr, true))
         );
 
-        Assertions.assertInstanceOf(SimpleValue.class, astObject.value);
+        Assertions.assertInstanceOf(SimpleValueObject.class, astObject.value);
 
         Assertions.assertEquals(
                 value,
-                ((SimpleValue)astObject.value).value.content,
+                ((SimpleValueObject)astObject.value).value.content,
                 String.format("invalid assignable value (`%s`)", Representable.repr(expr, true))
         );
     }

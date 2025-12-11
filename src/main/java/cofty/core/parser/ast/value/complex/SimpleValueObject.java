@@ -6,10 +6,10 @@ import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.type.TokenType;
 import org.jetbrains.annotations.NotNull;
 
-public final class SimpleValue implements ValueSegmentObject {
+public final class SimpleValueObject implements ValueSegmentObject {
     public final TypedToken<?> value;
 
-    public SimpleValue(TypedToken<?> value) {
+    public SimpleValueObject(TypedToken<?> value) {
         this.value = value;
     }
 
@@ -27,5 +27,9 @@ public final class SimpleValue implements ValueSegmentObject {
     @Override
     public @NotNull TypedToken<?> failAnchor() {
         return value;
+    }
+
+    public @NotNull String valueTypeName() {
+        return ((Enum<?>)value.type).name().toLowerCase();
     }
 }

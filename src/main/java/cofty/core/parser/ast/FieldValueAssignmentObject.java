@@ -1,5 +1,6 @@
 package cofty.core.parser.ast;
 
+import cofty.core.parser.ast.body.BodyResidentObject;
 import cofty.core.parser.ast.value.ExpressionValueObject;
 import org.jetbrains.annotations.NotNull;
 

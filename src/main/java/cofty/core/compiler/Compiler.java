@@ -1,14 +1,18 @@
 package cofty.core.compiler;
 
-import cofty.core.CompileResultLogger;
 import cofty.core.lexer.Lexer;
 import cofty.core.compiler.message.CompilationMessageHandler;
 import cofty.core.parser.ParseContext;
-import cofty.core.semantics.SemanticsContext;
+import cofty.core.semantics.ModuleContext;
+import cofty.core.semantics.ModuleDeepAnalyzer;
+import cofty.core.semantics.ModuleQuickAnalyzer;
+import cofty.core.semantics.symbol.scope.RootScope;
 import cofty.type.TextContent;
 import cofty.core.parser.BodyParser;
-import cofty.core.semantics.SemanticAnalyzer;
 import org.jetbrains.annotations.NotNull;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public final class Compiler {
     public final TextContent text;
@@ -19,7 +23,7 @@ public final class Compiler {
         this.text = text;
     }
 
-    public boolean compile() {
+    public boolean compile(boolean semanticTreeOutput) {
         if (text.text.isEmpty()) {
             resultLogger.setLexerStageMessage("the input file is empty");
             return true;
@@ -46,20 +50,43 @@ public final class Compiler {
 
         resultLogger.checkInParser(true);
 
-        final var semanticAnalyzer = new SemanticAnalyzer(
-                new SemanticsContext(text, messages),
-                parseResult.valueOrThrow()
-        );
+        final var moduleContext = ModuleContext.create(text, messages, new RootScope(), parseResult.valueOrThrow());
+        final var quickAnalyzer = new ModuleQuickAnalyzer(moduleContext);
+
+        if (!quickAnalyzer.analyze()) {
+            resultLogger.checkInQuickSemanticAnalyzer(false);
+            return false;
+        }
+
+        resultLogger.checkInQuickSemanticAnalyzer(true);
+
+        if (semanticTreeOutput)
+            tryWriteScopeTreeSnapshot(moduleContext, true);
+
+        final var deepAnalyzer = new ModuleDeepAnalyzer(moduleContext);
+
+        if (!deepAnalyzer.analyze()) {
+            resultLogger.checkInDeepSemanticAnalyzer(false);
+            return false;
+        }
+
+        resultLogger.checkInDeepSemanticAnalyzer(true);
+
+        if (semanticTreeOutput)
+            tryWriteScopeTreeSnapshot(moduleContext, false);
 
         return true;
+    }
 
-//        if (!semanticAnalyzer.analyze()) {
-//            resultLogger.checkInSemanticAnalyzer(false);
-//            return false;
-//        }
-//
-//        resultLogger.checkInSemanticAnalyzer(true);
-//
-//        return true;
+    private static void tryWriteScopeTreeSnapshot(@NotNull ModuleContext context, boolean isQuick) {
+        final var writePath = context.text.dirPath() + '/' + context.scope.name() + (isQuick ? ".qscope" : ".scope");
+
+        try {
+            Files.writeString(Paths.get(writePath), context.scope.represented());
+        } catch (Exception e) {
+            System.out.printf("Failed to write scope file \"%s\":%n", writePath);
+            e.printStackTrace(System.out);
+            System.out.println();
+        }
     }
 }

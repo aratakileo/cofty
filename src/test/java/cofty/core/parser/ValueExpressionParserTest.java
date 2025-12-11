@@ -2,10 +2,9 @@ package cofty.core.parser;
 
 import cofty.Utils;
 import cofty.core.lexer.token.type.Simple;
-import cofty.core.parser.ValueExpressionParser;
 import cofty.core.parser.ast.value.BinaryExpressionObject;
 import cofty.core.parser.ast.value.UnaryExpressionObject;
-import cofty.core.parser.ast.value.complex.SimpleValue;
+import cofty.core.parser.ast.value.complex.SimpleValueObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -57,18 +56,18 @@ class ValueExpressionParserTest {
                 "invalid last part of operator"
         );
 
-        Assertions.assertInstanceOf(SimpleValue.class, astObject.leftValue);
-        Assertions.assertInstanceOf(SimpleValue.class, astObject.rightValue);
+        Assertions.assertInstanceOf(SimpleValueObject.class, astObject.leftValue);
+        Assertions.assertInstanceOf(SimpleValueObject.class, astObject.rightValue);
 
         Assertions.assertEquals(
                 leftValue,
-                ((SimpleValue)astObject.leftValue).value.content,
+                ((SimpleValueObject)astObject.leftValue).value.content,
                 "invalid expression left value"
         );
 
         Assertions.assertEquals(
                 rightValue,
-                ((SimpleValue)astObject.rightValue).value.content,
+                ((SimpleValueObject)astObject.rightValue).value.content,
                 "invalid expression right value"
         );
     }
@@ -109,18 +108,18 @@ class ValueExpressionParserTest {
                 "invalid operator"
         );
 
-        Assertions.assertInstanceOf(SimpleValue.class, astObject.leftValue);
-        Assertions.assertInstanceOf(SimpleValue.class, astObject.rightValue);
+        Assertions.assertInstanceOf(SimpleValueObject.class, astObject.leftValue);
+        Assertions.assertInstanceOf(SimpleValueObject.class, astObject.rightValue);
 
         Assertions.assertEquals(
                 leftValue,
-                ((SimpleValue)astObject.leftValue).value.content,
+                ((SimpleValueObject)astObject.leftValue).value.content,
                 "invalid expression left value"
         );
 
         Assertions.assertEquals(
                 rightValue,
-                ((SimpleValue)astObject.rightValue).value.content,
+                ((SimpleValueObject)astObject.rightValue).value.content,
                 "invalid expression right value"
         );
     }
@@ -161,18 +160,18 @@ class ValueExpressionParserTest {
                 "invalid operator"
         );
 
-        Assertions.assertInstanceOf(SimpleValue.class, astObject.leftValue);
-        Assertions.assertInstanceOf(SimpleValue.class, astObject.rightValue);
+        Assertions.assertInstanceOf(SimpleValueObject.class, astObject.leftValue);
+        Assertions.assertInstanceOf(SimpleValueObject.class, astObject.rightValue);
 
         Assertions.assertEquals(
                 leftValue,
-                ((SimpleValue)astObject.leftValue).value.content,
+                ((SimpleValueObject)astObject.leftValue).value.content,
                 "invalid expression left value"
         );
 
         Assertions.assertEquals(
                 rightValue,
-                ((SimpleValue)astObject.rightValue).value.content,
+                ((SimpleValueObject)astObject.rightValue).value.content,
                 "invalid expression right value"
         );
     }
@@ -206,11 +205,11 @@ class ValueExpressionParserTest {
                 "invalid operator"
         );
 
-        Assertions.assertInstanceOf(SimpleValue.class, astObject.value);
+        Assertions.assertInstanceOf(SimpleValueObject.class, astObject.value);
 
         Assertions.assertEquals(
                 value,
-                ((SimpleValue)astObject.value).value.content,
+                ((SimpleValueObject)astObject.value).value.content,
                 "invalid expression value"
         );
     }
@@ -254,11 +253,11 @@ class ValueExpressionParserTest {
         );
 
         Assertions.assertInstanceOf(BinaryExpressionObject.class, firstOperatorExpressionObject.leftValue);
-        Assertions.assertInstanceOf(SimpleValue.class, firstOperatorExpressionObject.rightValue);
+        Assertions.assertInstanceOf(SimpleValueObject.class, firstOperatorExpressionObject.rightValue);
 
         Assertions.assertEquals(
                 lastValue,
-                ((SimpleValue)firstOperatorExpressionObject.rightValue).value.content,
+                ((SimpleValueObject)firstOperatorExpressionObject.rightValue).value.content,
                 "invalid expression last value"
         );
 
@@ -276,18 +275,18 @@ class ValueExpressionParserTest {
                 "invalid first operator"
         );
 
-        Assertions.assertInstanceOf(SimpleValue.class, lastOperatorExpressionObject.leftValue);
-        Assertions.assertInstanceOf(SimpleValue.class, lastOperatorExpressionObject.rightValue);
+        Assertions.assertInstanceOf(SimpleValueObject.class, lastOperatorExpressionObject.leftValue);
+        Assertions.assertInstanceOf(SimpleValueObject.class, lastOperatorExpressionObject.rightValue);
 
         Assertions.assertEquals(
                 firstValue,
-                ((SimpleValue)lastOperatorExpressionObject.leftValue).value.content,
+                ((SimpleValueObject)lastOperatorExpressionObject.leftValue).value.content,
                 "invalid expression first value"
         );
 
         Assertions.assertEquals(
                 middleValue,
-                ((SimpleValue)lastOperatorExpressionObject.rightValue).value.content,
+                ((SimpleValueObject)lastOperatorExpressionObject.rightValue).value.content,
                 "invalid expression middle value"
         );
     }
@@ -330,12 +329,12 @@ class ValueExpressionParserTest {
                 "invalid first operator"
         );
 
-        Assertions.assertInstanceOf(SimpleValue.class, firstOperatorExpressionObject.leftValue);
+        Assertions.assertInstanceOf(SimpleValueObject.class, firstOperatorExpressionObject.leftValue);
         Assertions.assertInstanceOf(BinaryExpressionObject.class, firstOperatorExpressionObject.rightValue);
 
         Assertions.assertEquals(
                 firstValue,
-                ((SimpleValue)firstOperatorExpressionObject.leftValue).value.content,
+                ((SimpleValueObject)firstOperatorExpressionObject.leftValue).value.content,
                 "invalid expression first value"
         );
 
@@ -353,18 +352,18 @@ class ValueExpressionParserTest {
                 "invalid last operator"
         );
 
-        Assertions.assertInstanceOf(SimpleValue.class, lastOperatorExpressionObject.leftValue);
-        Assertions.assertInstanceOf(SimpleValue.class, lastOperatorExpressionObject.rightValue);
+        Assertions.assertInstanceOf(SimpleValueObject.class, lastOperatorExpressionObject.leftValue);
+        Assertions.assertInstanceOf(SimpleValueObject.class, lastOperatorExpressionObject.rightValue);
 
         Assertions.assertEquals(
                 middleValue,
-                ((SimpleValue)lastOperatorExpressionObject.leftValue).value.content,
+                ((SimpleValueObject)lastOperatorExpressionObject.leftValue).value.content,
                 "invalid expression middle value"
         );
 
         Assertions.assertEquals(
                 lastValue,
-                ((SimpleValue)lastOperatorExpressionObject.rightValue).value.content,
+                ((SimpleValueObject)lastOperatorExpressionObject.rightValue).value.content,
                 "invalid expression last value"
         );
     }
@@ -408,11 +407,11 @@ class ValueExpressionParserTest {
         );
 
         Assertions.assertInstanceOf(BinaryExpressionObject.class, firstOperatorExpressionObject.leftValue);
-        Assertions.assertInstanceOf(SimpleValue.class, firstOperatorExpressionObject.rightValue);
+        Assertions.assertInstanceOf(SimpleValueObject.class, firstOperatorExpressionObject.rightValue);
 
         Assertions.assertEquals(
                 lastValue,
-                ((SimpleValue)firstOperatorExpressionObject.rightValue).value.content,
+                ((SimpleValueObject)firstOperatorExpressionObject.rightValue).value.content,
                 "invalid expression last value"
         );
 
@@ -430,18 +429,18 @@ class ValueExpressionParserTest {
                 "invalid first operator"
         );
 
-        Assertions.assertInstanceOf(SimpleValue.class, lastOperatorExpressionObject.leftValue);
-        Assertions.assertInstanceOf(SimpleValue.class, lastOperatorExpressionObject.rightValue);
+        Assertions.assertInstanceOf(SimpleValueObject.class, lastOperatorExpressionObject.leftValue);
+        Assertions.assertInstanceOf(SimpleValueObject.class, lastOperatorExpressionObject.rightValue);
 
         Assertions.assertEquals(
                 firstValue,
-                ((SimpleValue)lastOperatorExpressionObject.leftValue).value.content,
+                ((SimpleValueObject)lastOperatorExpressionObject.leftValue).value.content,
                 "invalid expression first value"
         );
 
         Assertions.assertEquals(
                 middleValue,
-                ((SimpleValue)lastOperatorExpressionObject.rightValue).value.content,
+                ((SimpleValueObject)lastOperatorExpressionObject.rightValue).value.content,
                 "invalid expression middle value"
         );
     }
@@ -461,12 +460,12 @@ class ValueExpressionParserTest {
         );
 
         Assertions.assertInstanceOf(
-                SimpleValue.class,
+                SimpleValueObject.class,
                 parseResult.valueOrThrow(),
                 String.format("the resulted ast object must be the binary expression object (`%s`)", expr)
         );
 
-        final var astObject = (SimpleValue)parseResult.valueOrThrow();
+        final var astObject = (SimpleValueObject)parseResult.valueOrThrow();
 
         Assertions.assertEquals(leftValue, astObject.value.content);
         Assertions.assertNotNull(context.current());

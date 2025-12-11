@@ -44,3 +44,5 @@ bin/
 ### Other ###
 /.idea
 *.cft
+*.scope
+*.qscope

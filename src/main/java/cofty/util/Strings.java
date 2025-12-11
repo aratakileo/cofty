@@ -15,8 +15,8 @@ public final class Strings {
         return count;
     }
 
-    public static int getLineNumber(@NotNull String source, int charIndex) {
-        return count(source.substring(0, charIndex), "\n") + 1;
+    public static int getLineNumber(@NotNull String source, int until) {
+        return count(source.substring(0, until), "\n") + 1;
     }
 
     public static void println(Object... values) {

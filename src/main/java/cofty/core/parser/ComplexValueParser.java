@@ -38,7 +38,7 @@ public final class ComplexValueParser implements Parser<ExpressionValueObject> {
         context.startSkippingNewLines();
 
         final var firstSegmentParseResult = context.currentIs(Simple.WORD)
-                ? parseFuncCallOrFieldAccess(context, false) : new SimpleValue(context.advanceOrThrow());
+                ? parseFuncCallOrFieldAccess(context, false) : new SimpleValueObject(context.advanceOrThrow());
 
         if (firstSegmentParseResult == null) {
             context.rollbackSkippingNewLinesState();

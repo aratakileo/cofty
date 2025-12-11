@@ -1,8 +1,6 @@
 package cofty.core.parser;
 
 import cofty.Utils;
-import cofty.core.parser.BodyParser;
-import cofty.core.parser.FuncDeclarationParser;
 import cofty.type.Representable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -64,7 +62,7 @@ class FuncDeclarationParserTest {
 
         Assertions.assertEquals(
                 funcTypes,
-                Objects.requireNonNull(astObject.args.getFirst().explicitlySpecifiedType).name.getFirst().content,
+                Objects.requireNonNull(astObject.args.getFirst().valueType).name.getFirst().content,
                 String.format(
                         "invalid value type of the function first argument (`%s`)",
                         Representable.repr(expr, true)
@@ -198,7 +196,7 @@ class FuncDeclarationParserTest {
 
         Assertions.assertEquals(
                 funcTypes,
-                Objects.requireNonNull(astObject.args.getFirst().explicitlySpecifiedType).name.getFirst().content,
+                Objects.requireNonNull(astObject.args.getFirst().valueType).name.getFirst().content,
                 String.format(
                         "invalid value type of the function first argument (`%s`)",
                         Representable.repr(expr, true)
@@ -319,6 +317,27 @@ class FuncDeclarationParserTest {
     @Test
     void invalidArgumentDeclarationAsVariable() {
         final var expr = "fun invalid(var a = 0) {}";
+
+        final var context = Utils.parseContextOf(expr);
+        final var parseResult = MODULE_FUNC_DECLARATION_PARSER.parse(context);
+
+        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
+
+        Assertions.assertNull(
+                parseResult.value(),
+                "the resulted ast object must be null"
+        );
+
+        Assertions.assertEquals(
+                1,
+                context.messages.handler.errCount(),
+                "there must be exactly one compilation error message"
+        );
+    }
+
+    @Test
+    void invalidArgumentWithNoExplicitlyDeclaredValueTypeAndAssignedWithNonSimpleValue() {
+        final var expr = "fun invalid(a = invalid()) {}";
 
         final var context = Utils.parseContextOf(expr);
         final var parseResult = MODULE_FUNC_DECLARATION_PARSER.parse(context);

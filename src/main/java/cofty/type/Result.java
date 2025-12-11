@@ -44,6 +44,14 @@ public class Result<OK, ERR> {
         return new Result<>(mapper.apply(ok), null);
     }
 
+    @SuppressWarnings("unchecked")
+    public <NEW_ERR> @NotNull Result<OK, NEW_ERR> mapErr(@NotNull Function<ERR, NEW_ERR> mapper) {
+        if (isOk())
+            return (Result<OK, NEW_ERR>)this;
+
+        return new Result<>(null, mapper.apply(err));
+    }
+
     public static <OK, ERR> Result<OK, ERR> ok(@NotNull OK ok) {
         return new Result<>(ok, null);
     }

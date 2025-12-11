@@ -4,6 +4,9 @@ import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.type.TokenType;
 import cofty.core.lexer.token.type.operator.Bracket;
 import cofty.core.parser.ast.*;
+import cofty.core.parser.ast.body.BodyObject;
+import cofty.core.parser.ast.body.BodyResidentObject;
+import cofty.core.parser.ast.body.NotSpecializedBodyObject;
 import cofty.type.Containable;
 import cofty.util.Cast;
 import cofty.core.compiler.message.CompilationMessageRepresentable;
@@ -35,7 +38,7 @@ public final class BodyParser implements Parser<BodyObject> {
         this.bodyFormat = bodyFormat;
 
         this.resident_parsers = Set.of(
-                FieldDeclarationParser.DEFAULT,
+                actualBodyType == BodyType.CLASS ? FieldDeclarationParser.CLASS_FIELD : FieldDeclarationParser.VARIABLE,
                 ReturnStatementParser.DEFAULT,
                 FuncDeclarationParser.create(actualBodyType),
                 ClassDeclarationParser.create(actualBodyType),
@@ -103,10 +106,11 @@ public final class BodyParser implements Parser<BodyObject> {
             return ParseResult.failed();
         }
 
-        return isFailed ? ParseResult.failed() : ParseResult.successful(new BodyObject(
-                residentsParseResult.valueOrDefault(List.of()),
-                bodyFinishedWithReturn.get()
-        ));
+        if (isFailed) return ParseResult.failed();
+
+        final var residents = residentsParseResult.valueOrDefault(List.of());
+
+        return ParseResult.successful(new NotSpecializedBodyObject(residents, bodyFinishedWithReturn.get()));
     }
 
     private @NotNull ParseResult<BodyResidentObject> parseLine(@NotNull ParseContext context) {

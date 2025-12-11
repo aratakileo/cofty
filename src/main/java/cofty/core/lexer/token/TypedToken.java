@@ -2,7 +2,9 @@ package cofty.core.lexer.token;
 
 import cofty.core.lexer.token.type.TokenType;
 import cofty.type.Representable;
+import cofty.type.TextContent;
 import cofty.util.Cast;
+import cofty.util.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,5 +71,9 @@ public class TypedToken<T extends TokenType> {
                 matchResult.start(),
                 matchResult.end()
         );
+    }
+
+    public int getLineNumber(@NotNull TextContent text) {
+        return Strings.getLineNumber(text.text, end);
     }
 }

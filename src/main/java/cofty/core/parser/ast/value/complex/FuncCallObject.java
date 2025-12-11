@@ -2,12 +2,13 @@ package cofty.core.parser.ast.value.complex;
 
 import cofty.core.lexer.token.TypedToken;
 import cofty.core.lexer.token.type.Simple;
+import cofty.core.parser.ast.WithName;
 import cofty.core.parser.ast.value.ExpressionValueObject;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public final class FuncCallObject implements ValueSegmentObject {
+public final class FuncCallObject implements ValueSegmentObject, WithName {
     public final TypedToken<Simple> name;
     public final List<ExpressionValueObject> args;
     public final boolean isPostfix;
@@ -29,6 +30,11 @@ public final class FuncCallObject implements ValueSegmentObject {
 
     @Override
     public @NotNull TypedToken<?> failAnchor() {
+        return name;
+    }
+
+    @Override
+    public @NotNull TypedToken<Simple> nameToken() {
         return name;
     }
 }

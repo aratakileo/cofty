@@ -6,6 +6,7 @@ import cofty.core.parser.ParseContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public final class CompilationMessageHandler {
     private final ArrayList<CompilationMessage> errors = new ArrayList<>(), warnings = new ArrayList<>();
@@ -119,6 +120,57 @@ public final class CompilationMessageHandler {
                     CompilationMessageLabel.syntaxError(label),
                     firstToken.start,
                     lastToken.end
+            ));
+        }
+
+        public void addInRangeErr(
+                @NotNull CompilationMessageLabel label,
+                @NotNull List<TypedToken<?>> tokens
+        ) {
+            handler.add(CompilationMessage.create(
+                    text,
+                    MessageType.ERROR,
+                    label,
+                    tokens.getFirst().start,
+                    tokens.getLast().end
+            ));
+        }
+
+        public void addInRangeErr(
+                @NotNull CompilationMessageLabel label,
+                @NotNull TypedToken<?> firstToken,
+                @NotNull TypedToken<?> lastToken
+        ) {
+            handler.add(CompilationMessage.create(
+                    text,
+                    MessageType.ERROR,
+                    label,
+                    firstToken.start,
+                    lastToken.end
+            ));
+        }
+
+        public void addErr(
+                @NotNull String label,
+                @NotNull TypedToken<?> token
+        ) {
+            handler.add(CompilationMessage.create(
+                    text,
+                    MessageType.ERROR,
+                    CompilationMessageLabel.create(label),
+                    token
+            ));
+        }
+
+        public void addErr(
+                @NotNull CompilationMessageLabel label,
+                @NotNull TypedToken<?> token
+        ) {
+            handler.add(CompilationMessage.create(
+                    text,
+                    MessageType.ERROR,
+                    label,
+                    token
             ));
         }
 

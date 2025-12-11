@@ -3,9 +3,8 @@ package cofty.core.parser;
 import cofty.Utils;
 import cofty.core.lexer.token.type.Keyword;
 import cofty.core.lexer.token.type.Simple;
-import cofty.core.parser.FieldDeclarationParser;
 import cofty.type.Representable;
-import cofty.core.parser.ast.value.complex.SimpleValue;
+import cofty.core.parser.ast.value.complex.SimpleValueObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +13,7 @@ class FieldDeclarationParserTest {
     void validWithSpecifiedTypeAndValue() {
         final var expr = "var mut isValid: bool = true";
         final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldDeclarationParser.DEFAULT.parse(context);
+        final var parseResult = FieldDeclarationParser.VARIABLE.parse(context);
 
         Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
 
@@ -48,19 +47,19 @@ class FieldDeclarationParserTest {
                 String.format("invalid field name (`%s`)", expr)
         );
 
-        assert astObject.explicitlySpecifiedType != null;
+        assert astObject.valueType != null;
 
         Assertions.assertEquals(
                 "bool",
-                astObject.explicitlySpecifiedType.name.getFirst().content,
+                astObject.valueType.name.getFirst().content,
                 String.format("invalid field value type (`%s`)", expr)
         );
 
         assert astObject.value != null;
 
-        Assertions.assertInstanceOf(SimpleValue.class, astObject.value);
+        Assertions.assertInstanceOf(SimpleValueObject.class, astObject.value);
 
-        final var valueObject = (SimpleValue)astObject.value;
+        final var valueObject = (SimpleValueObject)astObject.value;
 
         Assertions.assertEquals(
                 "true",
@@ -73,7 +72,7 @@ class FieldDeclarationParserTest {
     void validEverythingWithNewLineExceptValue() {
         final var expr = "var\nmut\nisValid\n:\nbool\n= true";
         final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldDeclarationParser.DEFAULT.parse(context);
+        final var parseResult = FieldDeclarationParser.VARIABLE.parse(context);
 
         Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
 
@@ -116,19 +115,19 @@ class FieldDeclarationParserTest {
                 String.format("invalid field name (`%s`)", Representable.repr(expr, true))
         );
 
-        assert astObject.explicitlySpecifiedType != null;
+        assert astObject.valueType != null;
 
         Assertions.assertEquals(
                 "bool",
-                astObject.explicitlySpecifiedType.name.getFirst().content,
+                astObject.valueType.name.getFirst().content,
                 String.format("invalid field value type (`%s`)", Representable.repr(expr, true))
         );
 
         assert astObject.value != null;
 
-        Assertions.assertInstanceOf(SimpleValue.class, astObject.value);
+        Assertions.assertInstanceOf(SimpleValueObject.class, astObject.value);
 
-        final var valueObject = (SimpleValue)astObject.value;
+        final var valueObject = (SimpleValueObject)astObject.value;
 
         Assertions.assertEquals(
                 "true",
@@ -141,7 +140,7 @@ class FieldDeclarationParserTest {
     void validWithOnlyTypeSpecified() {
         final var expr = "var isValid: bool";
         final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldDeclarationParser.DEFAULT.parse(context);
+        final var parseResult = FieldDeclarationParser.VARIABLE.parse(context);
 
         Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
 
@@ -164,11 +163,11 @@ class FieldDeclarationParserTest {
                 String.format("invalid field name (`%s`)", expr)
         );
 
-        assert astObject.explicitlySpecifiedType != null;
+        assert astObject.valueType != null;
 
         Assertions.assertEquals(
                 "bool",
-                astObject.explicitlySpecifiedType.name.getFirst().content,
+                astObject.valueType.name.getFirst().content,
                 String.format("invalid field value type (`%s`)", expr)
         );
     }
@@ -177,7 +176,7 @@ class FieldDeclarationParserTest {
     void validWithOnlyValueSpecified() {
         final var expr = "var isValid = true";
         final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldDeclarationParser.DEFAULT.parse(context);
+        final var parseResult = FieldDeclarationParser.VARIABLE.parse(context);
 
         Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
 
@@ -202,9 +201,9 @@ class FieldDeclarationParserTest {
 
         assert astObject.value != null;
 
-        Assertions.assertInstanceOf(SimpleValue.class, astObject.value);
+        Assertions.assertInstanceOf(SimpleValueObject.class, astObject.value);
 
-        final var valueObject = (SimpleValue)astObject.value;
+        final var valueObject = (SimpleValueObject)astObject.value;
 
         Assertions.assertEquals(
                 "true",
@@ -217,7 +216,7 @@ class FieldDeclarationParserTest {
     void invalidWithNoTypeSpecifiedAfterColonOperator() {
         final var expr = "var isInvalid:";
         final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldDeclarationParser.DEFAULT.parse(context);
+        final var parseResult = FieldDeclarationParser.VARIABLE.parse(context);
 
         Assertions.assertTrue(parseResult.isFailed(), "the parse result must be failed");
 
@@ -231,7 +230,7 @@ class FieldDeclarationParserTest {
     void invalidWithNoValueSpecifiedAfterAssignOperator() {
         final var expr = "var isInvalid =";
         final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldDeclarationParser.DEFAULT.parse(context);
+        final var parseResult = FieldDeclarationParser.VARIABLE.parse(context);
 
         Assertions.assertTrue(parseResult.isFailed(), "the parse result must be failed");
 
@@ -245,7 +244,7 @@ class FieldDeclarationParserTest {
     void invalidValueStartsWithNewLine() {
         final var expr = "var isInvalid =\ntrue";
         final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldDeclarationParser.DEFAULT.parse(context);
+        final var parseResult = FieldDeclarationParser.VARIABLE.parse(context);
 
         Assertions.assertTrue(parseResult.isFailed(), "the parse result must be failed");
 
@@ -259,7 +258,7 @@ class FieldDeclarationParserTest {
     void invalidWithNoSpecifiedTypeOrValue() {
         final var expr = "var isInvalid";
         final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldDeclarationParser.DEFAULT.parse(context);
+        final var parseResult = FieldDeclarationParser.VARIABLE.parse(context);
 
         Assertions.assertTrue(parseResult.isFailed(), "the parse result must be failed");
 
@@ -273,7 +272,7 @@ class FieldDeclarationParserTest {
     void validParseCancellation() {
         final var expr = "";
         final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldDeclarationParser.DEFAULT.parse(context);
+        final var parseResult = FieldDeclarationParser.VARIABLE.parse(context);
 
         Assertions.assertTrue(parseResult.isCanceled(), "the parse result must be specified as cancelled");
 

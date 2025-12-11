@@ -1,6 +1,6 @@
 package cofty.core.parser.ast.value;
 
-import cofty.core.parser.ast.BodyResidentObject;
+import cofty.core.parser.ast.body.BodyResidentObject;
 import org.jetbrains.annotations.Nullable;
 
 public final class ReturnStatementObject implements BodyResidentObject {

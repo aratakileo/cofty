@@ -1,8 +1,6 @@
 package cofty.core.parser;
 
 import cofty.Utils;
-import cofty.core.parser.BodyParser;
-import cofty.core.parser.ClassDeclarationParser;
 import cofty.type.Representable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -111,6 +109,27 @@ class ClassDeclarationParserTest {
                         "the class body must contains exactly three body resident (`%s`)",
                         Representable.repr(expr, true)
                 )
+        );
+    }
+
+    @Test
+    void invalidFieldWithNoExplicitlyDeclaredValueTypeAndAssignedWithNonSimpleValue() {
+        final var expr = "class SixtyNine {var ermmm = invalid()}";
+
+        final var context = Utils.parseContextOf(expr);
+        final var parseResult = MODULE_CLASS_DECLARATION_PARSER.parse(context);
+
+        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
+
+        Assertions.assertNull(
+                parseResult.value(),
+                "the resulted ast object must be null"
+        );
+
+        Assertions.assertEquals(
+                1,
+                context.messages.handler.errCount(),
+                "there must be exactly one compilation error message"
         );
     }
 

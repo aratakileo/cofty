@@ -27,9 +27,16 @@ public final class CompilationMessageLabel {
     public static @NotNull CompilationMessageLabel create(@NotNull String fullLabel) {
         if (!fullLabel.contains(":")) return new CompilationMessageLabel(null, fullLabel);
 
-        final var splitted = fullLabel.split("\\s+:\\s+");
+        final var splitted = fullLabel.split("\\s*:\\s*");
 
         return getPredefined(splitted[0], splitted[1]).orElse(new CompilationMessageLabel(splitted[0], splitted[1]));
+    }
+
+    public static @NotNull CompilationMessageLabel createFormated(
+            @NotNull String fullLabel,
+            @NotNull Object @NotNull... args
+    ) {
+        return create(String.format(fullLabel, args));
     }
 
     public static @NotNull CompilationMessageLabel create(@NotNull String prefix, @NotNull String content) {

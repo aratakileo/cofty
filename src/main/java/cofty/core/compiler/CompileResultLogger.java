@@ -1,4 +1,4 @@
-package cofty.core;
+package cofty.core.compiler;
 
 import cofty.core.compiler.message.CompilationMessageHandler;
 import org.jetbrains.annotations.NotNull;
@@ -8,7 +8,8 @@ public class CompileResultLogger {
 
     private StageState lexerStageState = StageState.CANCELED,
             parserStageState = StageState.CANCELED,
-            semanticAnalyzerState = StageState.CANCELED;
+            quickSemanticAnalyzerState = StageState.CANCELED,
+            deepSemanticAnalyzerState = StageState.CANCELED;
 
     private String lexerStageMessage = null;
 
@@ -28,8 +29,12 @@ public class CompileResultLogger {
         parserStageState = successfully ? StageState.SUCCESSFULLY : StageState.FAILED;
     }
 
-    public void checkInSemanticAnalyzer(boolean successfully) {
-        semanticAnalyzerState = successfully ? StageState.SUCCESSFULLY : StageState.FAILED;
+    public void checkInQuickSemanticAnalyzer(boolean successfully) {
+        quickSemanticAnalyzerState = successfully ? StageState.SUCCESSFULLY : StageState.FAILED;
+    }
+
+    public void checkInDeepSemanticAnalyzer(boolean successfully) {
+        deepSemanticAnalyzerState = successfully ? StageState.SUCCESSFULLY : StageState.FAILED;
     }
 
     public void print() {
@@ -37,11 +42,14 @@ public class CompileResultLogger {
                 "Stages:%n" +
                         " - Splitting into tokens (lexer): %s%s%n" +
                         " - Parsing tokens into AST objects (parser): %s%n" +
-                        " - Analyzing AST objects (semantic analyzer): %s%n",
+                        " - Analyzing AST objects (semantic analyzer):%n" +
+                        "   - Quick analyzing: %s%n" +
+                        "   - Deep analyzing: %s%n",
                 lexerStageState,
                 (lexerStageMessage == null ? "" : " [" + lexerStageMessage + ']'),
                 parserStageState,
-                semanticAnalyzerState
+                quickSemanticAnalyzerState,
+                deepSemanticAnalyzerState
         );
 
         if (messages.isEmpty()) return;

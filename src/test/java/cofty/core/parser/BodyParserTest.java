@@ -1,7 +1,6 @@
 package cofty.core.parser;
 
 import cofty.Utils;
-import cofty.core.parser.BodyParser;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
