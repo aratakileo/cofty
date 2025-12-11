@@ -44,6 +44,27 @@ class LexerTest {
     }
 
     @Test
+    void validSingleLineCommentBlockParsed() {
+        final var lexer = lexerOfText("first # some nonsense, just ignore it\nlast");
+        final var tokens = lexer.parse();
+
+        Assertions.assertEquals(3, tokens.size());
+
+        Assertions.assertEquals("first", tokens.get(0).content);
+        Assertions.assertEquals("\n", tokens.get(1).content);
+        Assertions.assertEquals("last", tokens.get(2).content);
+    }
+
+    @Test
+    void validSingleLineCommentBlockAtTheEndOfFileParsed() {
+        final var lexer = lexerOfText("first # some nonsense, just ignore it");
+        final var tokens = lexer.parse();
+
+        Assertions.assertEquals(1, tokens.size());
+        Assertions.assertEquals("first", tokens.getFirst().content);
+    }
+
+    @Test
     void validStringValueParsed() {
         Assertions.assertEquals(Simple.STR, firstToken("'Hello world!\\n'").type);
         Assertions.assertEquals(Simple.STR, firstToken("\"Hello world!\\n\"").type);
@@ -104,6 +125,15 @@ class LexerTest {
                 tokens.getFirst().type,
                 "the resulted token type must be " + Simple.NEWLINE.toReprString()
         );
+    }
+
+    @Test
+    void invalidStringWithNewLine() {
+        final var lexer = lexerOfText("'invalid \n string'");
+        final var tokens = lexer.parse();
+
+        Assertions.assertEquals(3, tokens.size());
+        Assertions.assertEquals(2, lexer.messages.errCount());
     }
 
     private Lexer lexerOfText(String text) {

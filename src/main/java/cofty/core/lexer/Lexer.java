@@ -19,8 +19,9 @@ import java.util.regex.Pattern;
 public class Lexer {
     private static final Pattern PATTERN;
 
-    private final TextContent text;
-    private final CompilationMessageHandler messages;
+    public final TextContent text;
+    public final CompilationMessageHandler messages;
+
     private final Matcher matcher;
 
     public Lexer(@NotNull TextContent text, @NotNull CompilationMessageHandler messages) {
@@ -66,18 +67,19 @@ public class Lexer {
         var patternTexts = new ArrayList<String>();
 
         final var patterns = new LinkedHashMap<Simple, String>();
-        patterns.put(Simple.STR, "'(?:\\\\.|[^'])*'|\"(?:\\\\.|[^\"])*\"");
-        patterns.put(Simple.DOUBLE, "_*\\d+[\\d_]*(?:\\.[\\d_]*|[dD])");
-        patterns.put(Simple.INT, "_*(?:0_*[xX][\\da-fA-F_]+|\\d+[\\d_]*)");
-        patterns.put(Simple.WORD, "(?!_*\\d+)[A-Za-z\\d_]+");
-        patterns.put(Simple.OP, "<=|>=|\\!=|==|=|<<|>>|->|>|<|-|\\+|\\*\\*|\\*|\\^|%|/|~|&|:|\\.|,|\\!|\\|");
-        patterns.put(Simple.BRACKETS, "\\(|\\)|\\{|\\}");
+        patterns.put(Simple.STR, "'(?:\\\\.|[^'\n])*'|\"(?:\\\\.|[^\"\n])*\"");
 
         // [ \t]* - to avoid NEWLINE token splitting
         patterns.put(Simple.NEWLINE, "([ \t]*\n[ \t]*)+");
 
         // [ \t] instead of \\s to avoid absorption NEWLINE token by SKIP token
-        patterns.put(Simple.SKIP, "[ \t]+");
+        patterns.put(Simple.SKIP, "[ \t]+|#[^\n]*");
+
+        patterns.put(Simple.DOUBLE, "_*\\d+[\\d_]*(?:\\.[\\d_]*|[dD])");
+        patterns.put(Simple.INT, "_*(?:0_*[xX][\\da-fA-F_]+|\\d+[\\d_]*)");
+        patterns.put(Simple.WORD, "(?!_*\\d+)[A-Za-z\\d_]+");
+        patterns.put(Simple.OP, "<=|>=|\\!=|==|=|<<|>>|->|>|<|-|\\+|\\*\\*|\\*|\\^|%|/|~|&|:|\\.|,|\\!|\\|");
+        patterns.put(Simple.BRACKETS, "\\(|\\)|\\{|\\}");
         patterns.put(Simple.MISMATCH, ".");
 
         for (var pattern: patterns.entrySet())
