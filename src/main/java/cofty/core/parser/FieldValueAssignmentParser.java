@@ -1,5 +1,6 @@
 package cofty.core.parser;
 
+import cofty.core.compiler.diagnostic.Errors;
 import cofty.core.lexer.token.type.operator.Assign;
 import cofty.core.parser.ast.FieldValueAssignmentObject;
 import cofty.core.parser.ast.value.BinaryExpressionObject;
@@ -37,11 +38,11 @@ public final class FieldValueAssignmentParser implements Parser<FieldValueAssign
         context.createIndexSnapshot();
 
         final var fieldNameParseResult = expressionValueObject == null
-                ? ValueExpressionParser.create(true).parse(context) : ParseResult.successful(expressionValueObject);
+                ? ValueExpressionParser.create(true).parse(context) : ParseResult.OK(expressionValueObject);
 
-        if (fieldNameParseResult.isCanceled()) {
+        if (fieldNameParseResult.isSkipped()) {
             context.rollbackIndex();
-            return ParseResult.canceled();
+            return ParseResult.skipped();
         }
 
         if (fieldNameParseResult.isFailed()) {
@@ -51,41 +52,39 @@ public final class FieldValueAssignmentParser implements Parser<FieldValueAssign
 
         if (!context.goNextIfCurrentIs(Assign.ASSIGN)) {
             context.rollbackIndex();
-            return ParseResult.canceled();
+            return ParseResult.skipped();
         }
 
         if (fieldNameParseResult.valueOrThrow() instanceof BinaryExpressionObject binaryExpressionObject) {
             if (binaryExpressionObject.operators.size() == 1) {
-                context.messages.addSyntaxErr(
-                        String.format(
-                                "this operator `%s` is not allowed here before the assignment",
-                                binaryExpressionObject.operators.getFirst().content
-                        ),
-                        binaryExpressionObject.operators.getLast()
+                context.messages.report(
+                        binaryExpressionObject.operators.getLast(),
+                        Errors.DISALLOWED_OPERATOR_BEFORE_ASSIGN,
+                        binaryExpressionObject.operators.getFirst().content
                 );
+
                 return ParseResult.failed();
             }
 
-            context.messages.addInRangeSyntaxErr(
-                    String.format(
-                            "this operator `%s %s` is not allowed here before the assignment",
+            context.messages.reportRange(
+                    binaryExpressionObject.operators.getFirst(),
+                    binaryExpressionObject.operators.getLast(),
+                    Errors.DISALLOWED_OPERATOR_BEFORE_ASSIGN,
+                    "%s %s".formatted(
                             binaryExpressionObject.operators.getFirst().content,
                             binaryExpressionObject.operators.getLast().content
-                    ),
-                    binaryExpressionObject.operators.getFirst(),
-                    binaryExpressionObject.operators.getLast()
+                    )
             );
             return ParseResult.failed();
         }
 
         if (fieldNameParseResult.valueOrThrow() instanceof UnaryExpressionObject unaryExpressionObject) {
-            context.messages.addSyntaxErr(
-                    String.format(
-                            "this operator `%s` is not allowed here before the assignment",
-                            unaryExpressionObject.operator.content
-                    ),
-                    unaryExpressionObject.operator
+            context.messages.report(
+                    unaryExpressionObject.operator,
+                    Errors.DISALLOWED_OPERATOR_BEFORE_ASSIGN,
+                    unaryExpressionObject.operator.content
             );
+
             return ParseResult.failed();
         }
 
@@ -95,14 +94,7 @@ public final class FieldValueAssignmentParser implements Parser<FieldValueAssign
         context.removeIndexSnapshot();
 
         if (!(lastSegment instanceof FieldAccessObject)) {
-            context.messages.addSyntaxErr(
-                    String.format(
-                            "expected exactly a field here to assign a new value, not the %s",
-                            lastSegment.represent()
-                    ),
-                    lastSegment.failAnchor()
-            );
-
+            context.messages.report(lastSegment.failAnchor(), Errors.EXPECTED_ASSIGNABLE_FIELD, lastSegment);
             return ParseResult.failed();
         }
 
@@ -110,12 +102,12 @@ public final class FieldValueAssignmentParser implements Parser<FieldValueAssign
 
         if (fieldValueParseResult.isFailed()) return ParseResult.failed();
 
-        if (fieldValueParseResult.isCanceled()) {
-            context.messages.addSyntaxErr("expected the field value here");
+        if (fieldValueParseResult.isSkipped()) {
+            context.messages.report(Errors.EXPECTED_ASSIGNABLE_VALUE);
             return ParseResult.failed();
         }
 
-        return ParseResult.successful(new FieldValueAssignmentObject(
+        return ParseResult.OK(new FieldValueAssignmentObject(
                 fieldNameParseResult.valueOrThrow(),
                 fieldValueParseResult.valueOrThrow()
         ));

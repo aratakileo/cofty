@@ -1,8 +1,8 @@
 package cofty.core.semantics.symbol.scope;
 
-import cofty.core.semantics.symbol.ChildSymbol;
-import cofty.core.semantics.symbol.IncompletedSymbol;
-import cofty.core.semantics.symbol.Symbol;
+import cofty.core.lexer.token.TypedToken;
+import cofty.core.lexer.token.type.Simple;
+import cofty.core.semantics.symbol.*;
 import cofty.core.semantics.symbol.path.AbsSymbolPath;
 import cofty.core.semantics.symbol.path.RelativeSymbolPath;
 import org.jetbrains.annotations.NotNull;
@@ -15,11 +15,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public final class FuncSignaturesScope extends ChildSymbol implements Scope {
+public final class FuncSignaturesScope extends NamedSymbol implements Scope {
     private final ArrayList<FuncScope<?>> funcs = new ArrayList<>();
-//    private boolean isCompleted = true;
 
-    public FuncSignaturesScope(@NotNull String name) {
+    public FuncSignaturesScope(@NotNull TypedToken<Simple> name) {
         super(name);
     }
 
@@ -31,10 +30,6 @@ public final class FuncSignaturesScope extends ChildSymbol implements Scope {
         if (symbol instanceof FuncScope<?> newFuncScope) {
             newFuncScope.setParent(this);
             funcs.add(newFuncScope);
-
-//            if (newFuncScope instanceof IncompletedFuncScope)
-//                isCompleted = false;
-
             return;
         }
 
@@ -73,6 +68,19 @@ public final class FuncSignaturesScope extends ChildSymbol implements Scope {
         return null;
     }
 
+    public @Nullable IncompletedFuncScope resolveIncompleted(@NotNull List<RelativeSymbolPath> argSignatures) {
+        for (final var funcScope: funcs)
+            if (funcScope instanceof IncompletedFuncScope incompletedFuncScope)
+                if (incompletedFuncScope.canReceive(argSignatures))
+                    return incompletedFuncScope;
+
+        return null;
+    }
+
+    public @NotNull IncompletedFuncScope resolveIncompletedOrThrow(@NotNull List<RelativeSymbolPath> argSignatures) {
+        return Objects.requireNonNull(resolveIncompleted(argSignatures));
+    }
+
     public @Nullable CompletedFuncScope resolveCompleted(@NotNull List<RelativeSymbolPath> argSignatures) {
         for (final var funcScope: funcs)
             if (funcScope instanceof CompletedFuncScope completedFuncScope)
@@ -82,22 +90,10 @@ public final class FuncSignaturesScope extends ChildSymbol implements Scope {
         return null;
     }
 
-    public @NotNull CompletedFuncScope resolveCompletedOrThrow(@NotNull List<RelativeSymbolPath> argSignatures) {
-        return Objects.requireNonNull(resolveCompleted(argSignatures));
-    }
-
     @Override
     public @NotNull Set<String> childNames() {
         return IntStream.range(0, funcs.size()).mapToObj(String::valueOf).collect(Collectors.toSet());
     }
-
-//    public boolean isCompleted() {
-//        return isCompleted;
-//    }
-
-//    public boolean contains(@NotNull FuncScope<?> funcScope) {
-//        return funcs.contains(funcScope);
-//    }
 
     public void remove(@NotNull FuncScope<?> funcScope) {
         if (!funcScope.name().equals(name()))
@@ -129,18 +125,4 @@ public final class FuncSignaturesScope extends ChildSymbol implements Scope {
 
         throw new IllegalArgumentException();
     }
-
-//    public @NotNull IncompletedSymbol.CompletionResult tryCompleteAll() {
-//        for (final var func: funcs)
-//            if (func instanceof IncompletedFuncScope incompletedFuncScope) {
-//                final var completionResult = incompletedFuncScope.tryComplete();
-//
-//                if (completionResult.status != IncompletedSymbol.CompletionResult.Status.SUCCESSFUL)
-//                    return completionResult;
-//            }
-//
-//        isCompleted = true;
-//
-//        return IncompletedSymbol.CompletionResult.successful();
-//    }
 }

@@ -1,6 +1,6 @@
 package cofty.core.semantics;
 
-import cofty.core.compiler.message.CompilationMessageLabel;
+import cofty.core.compiler.diagnostic.Errors;
 import cofty.core.parser.ast.ClassDeclarationObject;
 import cofty.core.parser.ast.FieldDeclarationObject;
 import cofty.core.parser.ast.FuncDeclarationObject;
@@ -40,7 +40,7 @@ public final class ModuleDeepAnalyzer extends ModuleAnalyzer {
                             funcDeclarationObject.getArgSignatures()
                     );
 
-                    if (completionResult.status != IncompletedSymbol.CompletionResult.Status.SUCCESSFUL) {
+                    if (completionResult.status != IncompletedSymbol.CompletionResult.Status.OK) {
                         addCompletionFailErr(completionResult);
                         isFailed = true;
                         continue;
@@ -72,7 +72,7 @@ public final class ModuleDeepAnalyzer extends ModuleAnalyzer {
         if (fieldSymbol instanceof IncompletedFieldSymbol incompletedFieldSymbol) {
             final var completionResult = incompletedFieldSymbol.tryComplete();
 
-            if (completionResult.status != IncompletedSymbol.CompletionResult.Status.SUCCESSFUL) {
+            if (completionResult.status != IncompletedSymbol.CompletionResult.Status.OK) {
                 addCompletionFailErr(completionResult);
                 isFailed = true;
                 return;
@@ -89,32 +89,24 @@ public final class ModuleDeepAnalyzer extends ModuleAnalyzer {
 
     private void addCompletionFailErr(@NotNull IncompletedSymbol.CompletionResult<?> completionResult) {
         switch (completionResult.status) {
-            case NON_TYPE -> context.messages.addInRangeErr(
-                    CompilationMessageLabel.create("TypeError: not a type"),
-                    completionResult.invalidTokens
+            case NON_TYPE -> context.messages.reportRange(completionResult.invalidTokens, Errors.NOT_A_TYPE);
+            case NON_VALUE -> context.messages.reportRange(
+                    completionResult.invalidTokens,
+                    Errors.NOT_A_VALUE,
+                    completionResult.expected.name().toLowerCase(),
+                    completionResult.resolved.name().toLowerCase()
             );
 
-            case NON_VALUE -> context.messages.addInRangeErr(
-                    CompilationMessageLabel.createFormated(
-                            "ValueError: not a value (expected %s, got %s)",
-                            completionResult.expected.name().toLowerCase(),
-                            completionResult.resolved.name().toLowerCase()
-                    ),
-                    completionResult.invalidTokens
+            case UNDEFINED_VALUE, UNDEFINED_TYPE -> context.messages.reportRange(
+                    completionResult.invalidTokens,
+                    Errors.UNRESOLVED_REFERENCE
             );
 
-            case UNDEFINED_VALUE, UNDEFINED_TYPE -> context.messages.addInRangeErr(
-                    CompilationMessageLabel.create("NameError: does not exist"),
-                    completionResult.invalidTokens
-            );
-
-            case NOT_SUITABLE_VALUE_TYPE -> context.messages.addInRangeErr(
-                    CompilationMessageLabel.createFormated(
-                            "TypeError: expected %s value, got %s value",
-                            completionResult.invalidTokens.getFirst().content,
-                            Objects.requireNonNull(completionResult.notSuitableTypePath)
-                    ),
-                    completionResult.invalidTokens
+            case NOT_SUITABLE_VALUE_TYPE -> context.messages.reportRange(
+                    completionResult.invalidTokens,
+                    Errors.INCOMPATIBLE_TYPES,
+                    completionResult.invalidTokens.getFirst().content,
+                    Objects.requireNonNull(completionResult.notSuitableTypePath)
             );
         }
     }

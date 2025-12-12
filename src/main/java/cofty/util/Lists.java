@@ -6,6 +6,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public final class Lists {
+    private Lists() {}
+
     @SafeVarargs
     public static <T> @NotNull ArrayList<T> arrayListOf(T... args) {
         final var arrayList = new ArrayList<T>();
@@ -39,6 +41,4 @@ public final class Lists {
 
         return false;
     }
-
-    private Lists() {}
 }

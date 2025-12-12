@@ -1,5 +1,6 @@
 package cofty.core.semantics;
 
+import cofty.core.compiler.diagnostic.Errors;
 import cofty.core.lexer.token.TypedToken;
 import cofty.core.parser.ast.*;
 import cofty.core.semantics.symbol.*;
@@ -49,10 +50,12 @@ public sealed abstract class ModuleAnalyzer permits ModuleQuickAnalyzer, ModuleD
     }
 
     protected void addAlreadyDefinedNameError(@NotNull NamedSymbol problematicSymbol, @NotNull TypedToken<?> problematicName) {
-        context.messages.addErr(String.format(
-                "NameError: this name has been already defined as the %s earlier at line %s",
-                Scope.ResolveTypeResult.ValueType.of(problematicSymbol).name().toLowerCase(),
+        context.messages.report(
+                problematicName,
+                Errors.DUPLICATE_NAME,
+                problematicSymbol.name(),
+                Scope.ResolveTypeResult.NamedSymbol.of(problematicSymbol).name().toLowerCase(),
                 problematicSymbol.nameToken().getLineNumber(context.text)
-        ), problematicName);
+        );
     }
 }

@@ -1,5 +1,6 @@
 package cofty.core.semantics;
 
+import cofty.core.compiler.diagnostic.Errors;
 import cofty.core.parser.ast.*;
 import cofty.core.semantics.symbol.IncompletedFieldSymbol;
 import cofty.core.semantics.symbol.NamedSymbol;
@@ -45,18 +46,20 @@ public final class ModuleQuickAnalyzer extends ModuleAnalyzer {
                             continue;
                         }
                     } else {
-                        _newScope = new FuncSignaturesScope(funcDeclarationObject.name.content);
+                        _newScope = new FuncSignaturesScope(funcDeclarationObject.name);
                         currentScope.put(_newScope);
                     }
 
                     final var newScope = new IncompletedFuncScope(funcDeclarationObject);
 
                     if (_newScope.containsIncompletedSignature(newScope.getArgSignatures())) {
-                        context.messages.addErr(
-                                "NameError: the function with those name and arguments signature has been already defined",
-                                funcDeclarationObject.name
+                        context.messages.report(
+                                funcDeclarationObject.nameToken(),
+                                Errors.DUPLICATE_FUNC_SIGNATURE,
+                                _newScope.resolveIncompletedOrThrow(newScope.getArgSignatures())
+                                        .nameToken()
+                                        .getLineNumber(context.text)
                         );
-
                         isFailed = true;
                         continue;
                     }

@@ -1,5 +1,7 @@
 package cofty.core.parser;
 
+import cofty.core.compiler.diagnostic.DiagnosticCode;
+import cofty.core.compiler.diagnostic.Errors;
 import cofty.core.lexer.token.TypedToken;
 import cofty.core.lexer.token.type.TokenType;
 import cofty.core.parser.ast.AstObject;
@@ -7,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -18,8 +21,9 @@ public interface Parser<R> {
             @NotNull TokenType separator,
             @NotNull Parser<_R> separatedObjectParser,
             @Nullable AstObjectFilter<_R> separatedObjectFilter,
-            @NotNull String noSeparatorFailMessage,
-            @Nullable String duplicatedSeparatorFailMessage
+            @NotNull DiagnosticCode noSeparatorError,
+            @Nullable DiagnosticCode duplicatedSeparatorError,
+            @NotNull Object @NotNull... formatArgs
     ) {
         final var separatedObjects = new ArrayList<_R>();
 
@@ -30,8 +34,11 @@ public interface Parser<R> {
 
         while ((separatedObjectStartsWithToken = context.current()) != null) {
             if (isAlreadySeparated && context.currentIs(separator)) {
-                if (duplicatedSeparatorFailMessage != null)
-                    context.messages.addSyntaxErr(duplicatedSeparatorFailMessage);
+                if (duplicatedSeparatorError != null)
+                    context.messages.report(
+                            duplicatedSeparatorError,
+                            Arrays.copyOfRange(formatArgs, noSeparatorError.acceptableArguments(), formatArgs.length)
+                    );
 
                 context.goNext();
 
@@ -40,16 +47,17 @@ public interface Parser<R> {
 
             separatedObjectParseResult = separatedObjectParser.parse(context);
 
-            if (!isAlreadySeparated && !separatedObjectParseResult.isCanceled()) {
-                context.messages.addSyntaxErrBeforeToken(
-                        noSeparatorFailMessage,
-                        Objects.requireNonNull(separatedObjectStartsWithToken)
+            if (!isAlreadySeparated && !separatedObjectParseResult.isSkipped()) {
+                context.messages.report(
+                        Objects.requireNonNull(separatedObjectStartsWithToken),
+                        noSeparatorError,
+                        Arrays.copyOfRange(formatArgs, 0, noSeparatorError.acceptableArguments())
                 );
 
                 isFailed = true;
             }
 
-            if (separatedObjectParseResult.isCanceled()) break;
+            if (separatedObjectParseResult.isSkipped()) break;
 
             isAlreadySeparated = context.goNextIfCurrentIs(separator);
 
@@ -65,7 +73,7 @@ public interface Parser<R> {
                 continue;
             }
 
-            context.messages.addSyntaxErr("not allowed here", separatedObjectStartsWithToken);
+            context.messages.report(separatedObjectStartsWithToken, Errors.NOT_ALLOWED);
             isFailed = true;
         }
 
@@ -73,8 +81,8 @@ public interface Parser<R> {
             return ParseResult.failed();
 
         if (separatedObjects.isEmpty())
-            return ParseResult.canceled();
+            return ParseResult.skipped();
 
-        return ParseResult.successful(separatedObjects.stream().toList());
+        return ParseResult.OK(separatedObjects.stream().toList());
     }
 }

@@ -1,24 +1,25 @@
-package cofty.core.compiler.message;
+package cofty.core.compiler.diagnostic;
 
 import cofty.core.lexer.token.TypedToken;
 import cofty.type.Representable;
 import cofty.type.TextContent;
+import cofty.util.Integers;
 import cofty.util.Strings;
 import org.jetbrains.annotations.NotNull;
 
-public final class CompilationMessage {
+public final class DiagnosticMsg {
     private final static int TAB_SIZE = 4;
 
     private final TextContent textContent;
+    public final DiagnosticCode code;
+    public final DiagnosticDescriptor descriptor;
 
-    public final MessageType type;
-    public final CompilationMessageLabel label;
     public final int lineStartNumber, start, end, cursorStart, cursorEnd;
 
-    public CompilationMessage(
+    public DiagnosticMsg(
             @NotNull TextContent textContent,
-            @NotNull MessageType type,
-            @NotNull CompilationMessageLabel label,
+            @NotNull DiagnosticCode code,
+            @NotNull DiagnosticDescriptor descriptor,
             int lineStartNumber,
             int start,
             int end,
@@ -26,8 +27,8 @@ public final class CompilationMessage {
             int cursorEnd
     ) {
         this.textContent = textContent;
-        this.type = type;
-        this.label = label;
+        this.code = code;
+        this.descriptor = descriptor;
         this.lineStartNumber = lineStartNumber;
         this.start = start;
         this.end = end;
@@ -61,7 +62,7 @@ public final class CompilationMessage {
 
         if (!isCodePreviewMutline()) return " ".repeat(TAB_SIZE) + rawCodePreview;
 
-        final var maxNumberLength = numLength(lineStartNumber + codePreviewNewLines());
+        final var maxNumberLength = Integers.digitsCount(lineStartNumber + codePreviewNewLines());
 
         var lineNumber = lineStartNumber;
         var lastDemonstratedLineNumber = lineStartNumber;
@@ -80,7 +81,7 @@ public final class CompilationMessage {
             if (lineNumber - lastDemonstratedLineNumber > 1)
                 codePreview.append(" ".repeat(TAB_SIZE + maxNumberLength - 1)).append("...\n");
 
-            codePreview.append(" ".repeat(TAB_SIZE + maxNumberLength - numLength(lineNumber)))
+            codePreview.append(" ".repeat(TAB_SIZE + maxNumberLength - Integers.digitsCount(lineNumber)))
                     .append(lineNumber)
                     .append(" | ")
                     .append(" ".repeat(offset))
@@ -95,7 +96,7 @@ public final class CompilationMessage {
     }
 
     private @NotNull String cursorContent() {
-        final var additionalOffset = isCodePreviewMutline() ? numLength(lineStartNumber + codePreviewNewLines()) + 3 : 0;
+        final var additionalOffset = isCodePreviewMutline() ? Integers.digitsCount(lineStartNumber + codePreviewNewLines()) + 3 : 0;
 
         return " ".repeat(cursorStart + Math.max(start - lineStart(), 0) + TAB_SIZE + additionalOffset)
                 + "^".repeat(cursorEnd - cursorStart - (isCodePreviewMutline() ? codePreviewNewLines() : 0));
@@ -124,79 +125,52 @@ public final class CompilationMessage {
                 linesRange(),
                 codePreview(),
                 cursorContent(),
-                label
+                descriptor.with(code)
         );
     }
 
-    public static @NotNull CompilationMessage create(
+    public static @NotNull DiagnosticMsg create(
             @NotNull TextContent textContent,
-            @NotNull MessageType type,
-            @NotNull CompilationMessageLabel label,
-            @NotNull TypedToken<?> token
-    ) {
-        return create(textContent, type, label, token.start, token.end);
-    }
-
-    public static @NotNull CompilationMessage create(
-            @NotNull TextContent textContent,
-            @NotNull MessageType type,
-            @NotNull CompilationMessageLabel label,
             int inTextCursorStart,
-            int inTextCursorEnd
+            int inTextCursorEnd,
+            @NotNull DiagnosticCode diagnosticCode,
+            @NotNull Object @NotNull... formatArgs
     ) {
-        return new Builder(type, textContent)
-                .setLabel(label)
+        return new Builder(textContent, diagnosticCode, formatArgs)
                 .fillCursor(inTextCursorStart, inTextCursorEnd)
                 .build();
     }
 
-    public static @NotNull CompilationMessage createAfter(
+    public static @NotNull DiagnosticMsg createAfter(
             @NotNull TextContent textContent,
-            @NotNull MessageType type,
-            @NotNull CompilationMessageLabel label,
-            @NotNull TypedToken<?> token
+            @NotNull TypedToken<?> token,
+            @NotNull DiagnosticCode diagnosticCode,
+            @NotNull Object @NotNull... formatArgs
     ) {
-        return new Builder(type, textContent)
-                .setLabel(label)
+        return new Builder(textContent, diagnosticCode, formatArgs)
                 .fillCursor(token)
                 .setCursorLengthByRight(1)
                 .moveCursor(1)
                 .build();
     }
 
-    public static @NotNull CompilationMessage createBefore(
-            @NotNull TextContent textContent,
-            @NotNull MessageType type,
-            @NotNull CompilationMessageLabel label,
-            @NotNull TypedToken<?> token
-    ) {
-        return new Builder(type, textContent)
-                .setLabel(label)
-                .fillCursor(token)
-                .setCursorLengthByLeft(1)
-                .moveCursor(-1)
-                .build();
-    }
-
-    private static int numLength(int num) {
-        return (int)(Math.log10(num) + 1);
-    }
-
     public static final class Builder {
-        private final MessageType messageType;
+        private final DiagnosticCode code;
         private final TextContent textContent;
-        private CompilationMessageLabel label = null;
+        private DiagnosticDescriptor descriptor = null;
         private int start;
         private int end;
         private int cursorStart;
         private int cursorEnd;
 
         public Builder(
-                @NotNull MessageType messageType,
-                @NotNull TextContent textContent
+                @NotNull TextContent textContent,
+                @NotNull DiagnosticCode code,
+                @NotNull Object @NotNull... formatArgs
         ) {
-            this.messageType = messageType;
+            this.code = code;
             this.textContent = textContent;
+            this.descriptor = code.formatted(formatArgs);
         }
 
         public @NotNull Builder setRange(int start, int end) {
@@ -244,11 +218,6 @@ public final class CompilationMessage {
             return this;
         }
 
-        public @NotNull Builder setLabel(@NotNull CompilationMessageLabel label) {
-            this.label = label;
-            return this;
-        }
-
         private int lineNumberByStart() {
             return Strings.getLineNumber(textContent.text, start);
         }
@@ -257,14 +226,14 @@ public final class CompilationMessage {
             return Strings.getLineNumber(textContent.text, end);
         }
 
-        public @NotNull CompilationMessage build() {
-            if (label == null)
+        public @NotNull DiagnosticMsg build() {
+            if (descriptor == null)
                 throw new IllegalStateException("Message content is not set");
 
-            return new CompilationMessage(
+            return new DiagnosticMsg(
                     textContent,
-                    messageType,
-                    label,
+                    code,
+                    descriptor,
                     lineNumberByStart(),
                     start,
                     end,
@@ -276,14 +245,19 @@ public final class CompilationMessage {
         @Override
         public String toString() {
             return "MessageBuilder{" +
-                    "messageType=" + messageType +
+                    "messageType=" + code +
                     ", textContent=" + textContent +
-                    ", label=" + Representable.repr(label.toString()) +
+                    ", descriptor=" + Representable.repr(descriptor.toString()) +
                     ", start=" + start +
                     ", end=" + end +
                     ", cursorStart=" + cursorStart +
                     ", cursorEnd=" + cursorEnd +
                     '}';
         }
+    }
+
+    public enum Severity {
+        ERR,
+        WARN
     }
 }

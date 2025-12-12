@@ -1,6 +1,7 @@
 package cofty.core.parser;
 
-import cofty.Utils;
+import cofty.ParseResultAssert;
+import cofty.core.compiler.diagnostic.Errors;
 import cofty.type.Representable;
 import cofty.core.parser.ast.value.complex.ComplexValueObject;
 import cofty.core.parser.ast.value.complex.FieldAccessObject;
@@ -12,18 +13,11 @@ class FieldValueAssignmentParserTest {
     @Test
     void validAssigningValueToSimpleDescribedField() {
         final var value = "'ofc it is'";
-        final var expr = String.format("validField = %s", value);
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldValueAssignmentParser.DEFAULT.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        final var astObject = parseResult.valueOrThrow();
+        final var expr = "validField = %s".formatted(value);
+        final var astObject = ParseResultAssert.parse(expr, FieldValueAssignmentParser.DEFAULT)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value();
 
         Assertions.assertInstanceOf(FieldAccessObject.class, astObject.field);
 
@@ -46,17 +40,10 @@ class FieldValueAssignmentParserTest {
     void validAssigningValueToComplexDescribedField() {
         final var value = "'ofc it is'";
         final var expr = String.format("'something'!convert.doSomething().validField = %s", value);
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldValueAssignmentParser.DEFAULT.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        final var astObject = parseResult.valueOrThrow();
+        final var astObject = ParseResultAssert.parse(expr, FieldValueAssignmentParser.DEFAULT)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value();
 
         Assertions.assertInstanceOf(ComplexValueObject.class, astObject.field);
 
@@ -89,17 +76,10 @@ class FieldValueAssignmentParserTest {
     void validAssigningValueToComplexDescribedFieldWithNewLinesUntilAssignment() {
         final var value = "'ofc it is'";
         final var expr = String.format("'something'\n!\nconvert\n.\ndoSomething()\n.\nvalidField\n= %s", value);
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldValueAssignmentParser.DEFAULT.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        final var astObject = parseResult.valueOrThrow();
+        final var astObject = ParseResultAssert.parse(expr, FieldValueAssignmentParser.DEFAULT)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value();
 
         Assertions.assertInstanceOf(ComplexValueObject.class, astObject.field);
 
@@ -133,100 +113,53 @@ class FieldValueAssignmentParserTest {
 
     @Test
     void validParseCancellationCuzNoAssignmentOperatorAfterHypotheticalFieldDescription() {
-        final var expr = "hypotheticalField";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldValueAssignmentParser.DEFAULT.parse(context);
-
-        Assertions.assertTrue(parseResult.isCanceled(), "the parse result must be specified as cancelled");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
+        ParseResultAssert.parse("hypotheticalField", FieldValueAssignmentParser.DEFAULT)
+                .skipped()
+                .hasNoDiagnosticMessages();
     }
 
     @Test
     void validParseCancellationCuzExprIsEmpty() {
-        final var expr = "";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldValueAssignmentParser.DEFAULT.parse(context);
-
-        Assertions.assertTrue(parseResult.isCanceled(), "the parse result must be specified as cancelled");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
+        ParseResultAssert.parse("", FieldValueAssignmentParser.DEFAULT)
+                .skipped()
+                .hasNoDiagnosticMessages();
     }
 
     @Test
     void invalidAbsolutelyEverythingStartsWithNewLine() {
         final var value = "'invalid state of the assignable value ;('";
         final var expr = String.format("'something'\n!\nconvert\n.\ndoSomething()\n.\nvalidField\n=\n%s", value);
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldValueAssignmentParser.DEFAULT.parse(context);
 
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
+        ParseResultAssert.parse(expr, FieldValueAssignmentParser.DEFAULT)
+                .failed()
+                .hasErrors(Errors.EXPECTED_ASSIGNABLE_VALUE);
     }
 
     @Test
     void invalidFieldWithNoAssignableValue() {
-        final var expr = "invalidField = ";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldValueAssignmentParser.DEFAULT.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
+        ParseResultAssert.parse("invalidField = ", FieldValueAssignmentParser.DEFAULT)
+                .failed()
+                .hasErrors(Errors.EXPECTED_ASSIGNABLE_VALUE);
     }
 
     @Test
     void invalidTryAssignValueToBinaryOperatorExpression() {
-        final var expr = "a + b = 'it won\\'t work ;('";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldValueAssignmentParser.DEFAULT.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
+        ParseResultAssert.parse("a + b = 'it won\\'t work ;('", FieldValueAssignmentParser.DEFAULT)
+                .failed()
+                .hasErrors(Errors.DISALLOWED_OPERATOR_BEFORE_ASSIGN);
     }
 
     @Test
     void invalidTryAssignValueToUnaryOperatorExpression() {
-        final var expr = "+value = 'it won\\'t work ;('";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldValueAssignmentParser.DEFAULT.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
+        ParseResultAssert.parse("+value = 'it won\\'t work ;('", FieldValueAssignmentParser.DEFAULT)
+                .failed()
+                .hasErrors(Errors.DISALLOWED_OPERATOR_BEFORE_ASSIGN);
     }
 
     @Test
     void invalidTryAssignValueToNonField() {
-        final var expr = "functionCall() = 'it won\\'t work ;('";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldValueAssignmentParser.DEFAULT.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
+        ParseResultAssert.parse("functionCall() = 'it won\\'t work ;('", FieldValueAssignmentParser.DEFAULT)
+                .failed()
+                .hasErrors(Errors.EXPECTED_ASSIGNABLE_FIELD);
     }
 }

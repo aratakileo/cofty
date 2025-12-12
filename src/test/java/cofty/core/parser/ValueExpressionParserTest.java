@@ -1,6 +1,7 @@
 package cofty.core.parser;
 
-import cofty.Utils;
+import cofty.ParseResultAssert;
+import cofty.core.compiler.diagnostic.Errors;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.parser.ast.value.BinaryExpressionObject;
 import cofty.core.parser.ast.value.UnaryExpressionObject;
@@ -18,23 +19,10 @@ class ValueExpressionParserTest {
         final var rightValue = "'Hello world!'";
         final var operator = "not in";
         final var expr = String.format("%s %s %s", leftValue, operator, rightValue);
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = NEW_LINES_SENSITIVE.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        Assertions.assertInstanceOf(
-                BinaryExpressionObject.class,
-                parseResult.valueOrThrow(),
-                String.format("the resulted ast object must be the binary expression object (`%s`)", expr)
-        );
-
-        final var astObject = (BinaryExpressionObject)parseResult.valueOrThrow();
+        final var astObject = ParseResultAssert.parse(expr, NEW_LINES_SENSITIVE)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value(BinaryExpressionObject.class);
 
         Assertions.assertEquals(
                 2,
@@ -78,23 +66,10 @@ class ValueExpressionParserTest {
         final var rightValue = "77";
         final var operator = "+";
         final var expr = String.format("%s %s %s", leftValue, operator, rightValue);
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = NEW_LINES_SENSITIVE.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        Assertions.assertInstanceOf(
-                BinaryExpressionObject.class,
-                parseResult.valueOrThrow(),
-                String.format("the resulted ast object must be the binary expression object (`%s`)", expr)
-        );
-
-        final var astObject = (BinaryExpressionObject)parseResult.valueOrThrow();
+        final var astObject = ParseResultAssert.parse(expr, NEW_LINES_SENSITIVE)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value(BinaryExpressionObject.class);
 
         Assertions.assertEquals(
                 1,
@@ -130,23 +105,10 @@ class ValueExpressionParserTest {
         final var rightValue = "0.1";
         final var operator = "*";
         final var expr = String.format("%s\n%s\n%s", leftValue, operator, rightValue);
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = NEW_LINES_INSENSITIVE.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        Assertions.assertInstanceOf(
-                BinaryExpressionObject.class,
-                parseResult.valueOrThrow(),
-                String.format("the resulted ast object must be the binary expression object (`%s`)", expr)
-        );
-
-        final var astObject = (BinaryExpressionObject)parseResult.valueOrThrow();
+        final var astObject = ParseResultAssert.parse(expr, NEW_LINES_INSENSITIVE)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value(BinaryExpressionObject.class);
 
         Assertions.assertEquals(
                 1,
@@ -181,23 +143,10 @@ class ValueExpressionParserTest {
         final var value = "69";
         final var operator = "-";
         final var expr = String.format("%s%s", operator, value);
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = NEW_LINES_SENSITIVE.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        Assertions.assertInstanceOf(
-                UnaryExpressionObject.class,
-                parseResult.valueOrThrow(),
-                String.format("the resulted ast object must be the binary expression object (`%s`)", expr)
-        );
-
-        final var astObject = (UnaryExpressionObject)parseResult.valueOrThrow();
+        final var astObject = ParseResultAssert.parse(expr, NEW_LINES_SENSITIVE)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value(UnaryExpressionObject.class);
 
         Assertions.assertEquals(
                 operator,
@@ -222,23 +171,10 @@ class ValueExpressionParserTest {
         final var firstOperator = "-";
         final var lastOperator = "*";
         final var expr = String.format("(%s %s %s) %s %s", firstValue, firstOperator, middleValue, lastOperator, lastValue);
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = NEW_LINES_SENSITIVE.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        Assertions.assertInstanceOf(
-                BinaryExpressionObject.class,
-                parseResult.valueOrThrow(),
-                String.format("the resulted ast object must be the binary expression object (`%s`)", expr)
-        );
-
-        final var firstOperatorExpressionObject = (BinaryExpressionObject)parseResult.valueOrThrow();
+        final var firstOperatorExpressionObject = ParseResultAssert.parse(expr, NEW_LINES_SENSITIVE)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value(BinaryExpressionObject.class);
 
         Assertions.assertEquals(
                 1,
@@ -299,23 +235,10 @@ class ValueExpressionParserTest {
         final var firstOperator = "-";
         final var lastOperator = "*";
         final var expr = String.format("%s %s %s %s %s", firstValue, firstOperator, middleValue, lastOperator, lastValue);
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = NEW_LINES_SENSITIVE.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        Assertions.assertInstanceOf(
-                BinaryExpressionObject.class,
-                parseResult.valueOrThrow(),
-                String.format("the resulted ast object must be the binary expression object (`%s`)", expr)
-        );
-
-        final var firstOperatorExpressionObject = (BinaryExpressionObject)parseResult.valueOrThrow();
+        final var firstOperatorExpressionObject = ParseResultAssert.parse(expr, NEW_LINES_SENSITIVE)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value(BinaryExpressionObject.class);
 
         Assertions.assertEquals(
                 1,
@@ -376,23 +299,10 @@ class ValueExpressionParserTest {
         final var firstOperator = "**";
         final var lastOperator = "*";
         final var expr = String.format("%s %s %s %s %s", firstValue, firstOperator, middleValue, lastOperator, lastValue);
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = NEW_LINES_SENSITIVE.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        Assertions.assertInstanceOf(
-                BinaryExpressionObject.class,
-                parseResult.valueOrThrow(),
-                String.format("the resulted ast object must be the binary expression object (`%s`)", expr)
-        );
-
-        final var firstOperatorExpressionObject = (BinaryExpressionObject)parseResult.valueOrThrow();
+        final var firstOperatorExpressionObject = ParseResultAssert.parse(expr, NEW_LINES_SENSITIVE)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value(BinaryExpressionObject.class);
 
         Assertions.assertEquals(
                 1,
@@ -449,186 +359,70 @@ class ValueExpressionParserTest {
     void invalidBinaryExpressionWhereEverythingStartsWithNewLine() {
         final var leftValue = "9.9";
         final var expr = String.format("%s\n*\n0.1\n/\n5\n**\n100", leftValue);
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = NEW_LINES_SENSITIVE.parse(context);
+        final var parseResultAssert = ParseResultAssert.parse(expr, NEW_LINES_SENSITIVE)
+                .ok()
+                .hasNoDiagnosticMessages();
 
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        Assertions.assertInstanceOf(
-                SimpleValueObject.class,
-                parseResult.valueOrThrow(),
-                String.format("the resulted ast object must be the binary expression object (`%s`)", expr)
-        );
-
-        final var astObject = (SimpleValueObject)parseResult.valueOrThrow();
+        final var astObject = parseResultAssert.value(SimpleValueObject.class);
 
         Assertions.assertEquals(leftValue, astObject.value.content);
-        Assertions.assertNotNull(context.current());
-        Assertions.assertEquals(Simple.NEWLINE, context.currentOrThrow().type);
+        Assertions.assertNotNull(parseResultAssert.context.current());
+        Assertions.assertEquals(Simple.NEWLINE, parseResultAssert.context.currentOrThrow().type);
     }
 
     @Test
     void invalidNeverClosedRoundBrackets() {
-        final var expr = "(6969";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = NEW_LINES_SENSITIVE.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
-
-        Assertions.assertEquals(
-                1,
-                context.messages.handler.errCount(),
-                "there must be exactly one compilation error message"
-        );
+        ParseResultAssert.parse("(6969", NEW_LINES_SENSITIVE)
+                .failed()
+                .hasErrors(Errors.UNCLOSED_PARENTHESIS);
     }
 
     @Test
     void invalidEmptyBrackets() {
-        final var expr = "()";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = NEW_LINES_SENSITIVE.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
-
-        Assertions.assertEquals(
-                1,
-                context.messages.handler.errCount(),
-                "there must be exactly one compilation error message"
-        );
+        ParseResultAssert.parse("()", NEW_LINES_SENSITIVE)
+                .failed()
+                .hasErrors(Errors.EXPECTED_OPERAND_NOT_CLOSING_PARENT);
     }
 
     @Test
     void invalidClosingBracketOnOperandPLace() {
-        final var expr = "(6969 / )";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = NEW_LINES_SENSITIVE.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
-
-        Assertions.assertEquals(
-                1,
-                context.messages.handler.errCount(),
-                "there must be exactly one compilation error message"
-        );
+        ParseResultAssert.parse("(6969 / )", NEW_LINES_SENSITIVE)
+                .failed()
+                .hasErrors(Errors.EXPECTED_OPERAND_NOT_CLOSING_PARENT);
     }
 
     @Test
     void invalidNoOperandForUnaryOperator() {
-        final var expr = "not";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = NEW_LINES_SENSITIVE.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
-
-        Assertions.assertEquals(
-                1,
-                context.messages.handler.errCount(),
-                "there must be exactly one compilation error message"
-        );
+        ParseResultAssert.parse("not", NEW_LINES_SENSITIVE)
+                .failed()
+                .hasErrors(Errors.EXPECTED_OPERAND);
     }
 
     @Test
     void invalidNoSecondOperandForBinaryOperator() {
-        final var expr = "6969 /";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = NEW_LINES_SENSITIVE.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
-
-        Assertions.assertEquals(
-                1,
-                context.messages.handler.errCount(),
-                "there must be exactly one compilation error message"
-        );
+        ParseResultAssert.parse("6969 /", NEW_LINES_SENSITIVE)
+                .failed()
+                .hasErrors(Errors.EXPECTED_OPERAND);
     }
 
     @Test
     void invalidUnaryOperatorOnBinaryOperatorPlace() {
-        final var expr = "6969 not";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = NEW_LINES_SENSITIVE.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
-
-        Assertions.assertEquals(
-                1,
-                context.messages.handler.errCount(),
-                "there must be exactly one compilation error message"
-        );
+        ParseResultAssert.parse("6969 not", NEW_LINES_SENSITIVE)
+                .failed()
+                .hasErrors(Errors.INVALID_OPERATOR_FOR_CONTEXT);
     }
 
     @Test
     void invalidBinaryOperatorOnUnaryOperatorPlace() {
-        final var expr = "is 6969";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = NEW_LINES_SENSITIVE.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
-
-        Assertions.assertEquals(
-                1,
-                context.messages.handler.errCount(),
-                "there must be exactly one compilation error message"
-        );
+        ParseResultAssert.parse("is 6969", NEW_LINES_SENSITIVE)
+                .failed()
+                .hasErrors(Errors.INVALID_OPERATOR_FOR_CONTEXT);
     }
 
     @Test
     void invalidOpeningBracketOnBinaryOperatorPlace() {
-        final var expr = "6969()";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = NEW_LINES_SENSITIVE.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
-
-        Assertions.assertEquals(
-                1,
-                context.messages.handler.errCount(),
-                "there must be exactly one compilation error message"
-        );
+        ParseResultAssert.parse("6969()", NEW_LINES_SENSITIVE)
+                .failed()
+                .hasErrors(Errors.EXPECTED_BINARY_OPERATOR);
     }
 }

@@ -11,7 +11,6 @@ import cofty.core.parser.ast.value.complex.SimpleValueObject;
 import cofty.core.semantics.symbol.*;
 import cofty.core.semantics.symbol.path.AbsSymbolPath;
 import cofty.core.semantics.symbol.path.RelativeSymbolPath;
-import cofty.core.semantics.symbol.path.SymbolPath;
 import cofty.type.Result;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,7 +125,7 @@ public interface Scope extends Symbol {
                 yield switch (resolvedFunctionSymbol) {
                     case null -> ResolveTypeResult.undefinedValue(
                             List.of(funcCallObject.name),
-                            ResolveTypeResult.ValueType.FUNCTION
+                            ResolveTypeResult.NamedSymbol.FUNCTION
                     );
                     case FuncSignaturesScope funcSignaturesScope -> {
                         final var argsSignature = new ArrayList<AbsSymbolPath>();
@@ -134,7 +133,7 @@ public interface Scope extends Symbol {
                         for (final var argValue: funcCallObject.args) {
                             final var resolveTypeResult = resolveTypePath(argValue);
 
-                            if (resolveTypeResult.status != ResolveTypeResult.Status.SUCCESSFUL)
+                            if (resolveTypeResult.status != ResolveTypeResult.Status.OK)
                                 yield resolveTypeResult;
 
                             argsSignature.add(resolveTypeResult.successfullyResolvedPath);
@@ -145,7 +144,7 @@ public interface Scope extends Symbol {
                         if (resolvedFunctionScope == null)
                             yield ResolveTypeResult.undefinedValue(
                                     List.of(funcCallObject.nameToken()),
-                                    ResolveTypeResult.ValueType.FUNCTION
+                                    ResolveTypeResult.NamedSymbol.FUNCTION
                             );
 
                         yield ResolveTypeResult.successful(resolvedFunctionScope.valueType());
@@ -153,8 +152,8 @@ public interface Scope extends Symbol {
                     case IncompletedSymbol<?, ?> incompletedSymbol -> ResolveTypeResult.incompleteSymbol(incompletedSymbol);
                     default -> ResolveTypeResult.nonValue(
                             List.of(funcCallObject.name),
-                            ResolveTypeResult.ValueType.FUNCTION,
-                            ResolveTypeResult.ValueType.of(resolvedFunctionSymbol)
+                            ResolveTypeResult.NamedSymbol.FUNCTION,
+                            ResolveTypeResult.NamedSymbol.of(resolvedFunctionSymbol)
                     );
                 };
             }
@@ -165,14 +164,14 @@ public interface Scope extends Symbol {
                 yield switch (resolvedFieldSymbol) {
                     case null -> ResolveTypeResult.undefinedValue(
                             List.of(fieldAccessObject.name),
-                            ResolveTypeResult.ValueType.FIELD
+                            ResolveTypeResult.NamedSymbol.FIELD
                     );
                     case CompletedFieldSymbol fieldSymbol -> ResolveTypeResult.successful(fieldSymbol.valueType());
                     case IncompletedSymbol<?, ?> incompletedSymbol -> ResolveTypeResult.incompleteSymbol(incompletedSymbol);
                     default -> ResolveTypeResult.nonValue(
                             List.of(fieldAccessObject.name),
-                            ResolveTypeResult.ValueType.FIELD,
-                            ResolveTypeResult.ValueType.of(resolvedFieldSymbol)
+                            ResolveTypeResult.NamedSymbol.FIELD,
+                            ResolveTypeResult.NamedSymbol.of(resolvedFieldSymbol)
                     );
                 };
             }
@@ -235,13 +234,13 @@ public interface Scope extends Symbol {
         public final List<TypedToken<T>> invalidTokens;
         public final AbsSymbolPath successfullyResolvedPath;
         public final IncompletedSymbol<?, ?> incompletedSymbol;
-        public final ValueType expected, resolved;
+        public final NamedSymbol expected, resolved;
 
         private ResolveTypeResult(
                 @NotNull Status status,
                 @Nullable List<TypedToken<T>> invalidTokens,
                 @Nullable AbsSymbolPath successfullyResolvedPath,
-                @Nullable IncompletedSymbol<?, ?> incompletedSymbol, ValueType expected, ValueType resolved
+                @Nullable IncompletedSymbol<?, ?> incompletedSymbol, NamedSymbol expected, NamedSymbol resolved
         ) {
             this.status = status;
             this.invalidTokens = invalidTokens;
@@ -253,7 +252,7 @@ public interface Scope extends Symbol {
 
         public static @NotNull ResolveTypeResult<?> successful(@NotNull AbsSymbolPath successfullyResolvedPath) {
             return new ResolveTypeResult<>(
-                    Status.SUCCESSFUL,
+                    Status.OK,
                     null,
                     successfullyResolvedPath,
                     null,
@@ -286,7 +285,7 @@ public interface Scope extends Symbol {
 
         public static <_T extends TokenType> @NotNull ResolveTypeResult<_T> undefinedValue(
                 @NotNull List<TypedToken<_T>> typeTokens,
-                @NotNull ValueType expected
+                @NotNull Scope.ResolveTypeResult.NamedSymbol expected
         ) {
             return new ResolveTypeResult<>(
                     Status.UNDEFINED_VALUE,
@@ -300,8 +299,8 @@ public interface Scope extends Symbol {
 
         public static <_T extends TokenType> @NotNull ResolveTypeResult<_T> nonValue(
                 @NotNull List<TypedToken<_T>> typeTokens,
-                @NotNull ValueType expected,
-                @NotNull ValueType resolved
+                @NotNull Scope.ResolveTypeResult.NamedSymbol expected,
+                @NotNull Scope.ResolveTypeResult.NamedSymbol resolved
         ) {
             return new ResolveTypeResult<>(
                     Status.NON_VALUE,
@@ -315,18 +314,18 @@ public interface Scope extends Symbol {
 
         public enum Status {
             INCOMPLETE_SYMBOL,
-            SUCCESSFUL,
+            OK,
             UNDEFINED_TYPE,
             NON_VALUE,
             UNDEFINED_VALUE
         }
 
-        public enum ValueType {
+        public enum NamedSymbol {
             FUNCTION,
             FIELD,
             CLASS;
 
-            public static @NotNull ValueType of(@NotNull Symbol symbol) {
+            public static @NotNull Scope.ResolveTypeResult.NamedSymbol of(@NotNull Symbol symbol) {
                 return switch (symbol) {
                     case ClassScope _ -> CLASS;
                     case FuncSignaturesScope _, FuncScope<?> _ -> FUNCTION;

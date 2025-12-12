@@ -1,5 +1,6 @@
 package cofty.core.parser;
 
+import cofty.core.compiler.diagnostic.Errors;
 import cofty.core.lexer.token.TypedToken;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.type.operator.Separator;
@@ -14,13 +15,13 @@ public final class TypeDescriptionParser implements Parser<TypeDescriptionObject
 
     @Override
     public @NotNull ParseResult<TypeDescriptionObject> parse(@NotNull ParseContext context) {
-        if (!context.currentIs(Simple.WORD)) return ParseResult.canceled();
+        if (!context.currentIs(Simple.WORD)) return ParseResult.skipped();
 
         final var words = Lists.<TypedToken<Simple>>arrayListOf(context.advanceOrThrow().strictAs());
 
         while (context.goNextIfCurrentIs(Separator.DOT)) {
             if (!context.currentIs(Simple.WORD)) {
-                context.messages.addInvalidSyntaxErr();
+                context.messages.report(Errors.PARSER_INVALID_SYNTAX);
                 context.goNext();
 
                 return ParseResult.failed();
@@ -29,6 +30,6 @@ public final class TypeDescriptionParser implements Parser<TypeDescriptionObject
             words.add(context.advanceOrThrow().strictAs());
         }
 
-        return ParseResult.successful(new TypeDescriptionObject(words));
+        return ParseResult.OK(new TypeDescriptionObject(words));
     }
 }

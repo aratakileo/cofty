@@ -1,5 +1,7 @@
 package cofty.core.parser;
 
+import cofty.core.compiler.diagnostic.Errors;
+import cofty.core.compiler.diagnostic.Warnings;
 import cofty.core.lexer.token.type.Keyword;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.type.TokenType;
@@ -33,12 +35,13 @@ public final class ComplexValueParser implements Parser<ExpressionValueObject> {
     @Override
     public @NotNull ParseResult<ExpressionValueObject> parse(@NotNull ParseContext context) {
         if (!context.currentIs(Simple.WORD) && !context.currentIsAny(PRIMITIVE_VALUE_TYPES))
-            return ParseResult.canceled();
+            return ParseResult.skipped();
 
         context.startSkippingNewLines();
 
         final var firstSegmentParseResult = context.currentIs(Simple.WORD)
-                ? parseFuncCallOrFieldAccess(context, false) : new SimpleValueObject(context.advanceOrThrow());
+                ? parseFuncCallOrFieldAccess(context, false)
+                : new SimpleValueObject(context.advanceOrThrow());
 
         if (firstSegmentParseResult == null) {
             context.rollbackSkippingNewLinesState();
@@ -62,7 +65,7 @@ public final class ComplexValueParser implements Parser<ExpressionValueObject> {
             context.goNext();
 
             if (!context.currentIs(Simple.WORD)) {
-                context.messages.addSyntaxErr("expected a field access or a function call here");
+                context.messages.report(Errors.EXPECTED_MEMBER_ACCESS);
                 context.rollbackSkippingNewLinesState();
                 context.goNext();
 
@@ -84,12 +87,12 @@ public final class ComplexValueParser implements Parser<ExpressionValueObject> {
         context.rollbackSkippingNewLinesState();
 
         if (segments.size() == 1)
-            return ParseResult.successful(segments.getFirst());
+            return ParseResult.OK(segments.getFirst());
 
         if (segments.isEmpty())
             throw new IllegalStateException();
 
-        return ParseResult.successful(new ComplexValueObject(segments));
+        return ParseResult.OK(new ComplexValueObject(segments));
     }
 
     private @Nullable ValueSegmentObject parseFuncCallOrFieldAccess(
@@ -108,26 +111,35 @@ public final class ComplexValueParser implements Parser<ExpressionValueObject> {
                 Separator.COMMA,
                 ValueExpressionParser.create(false),
                 null,
-                "expected a comma separator here between the arguments",
-                "expected an argument value here, not the comma"
+                Errors.MISSING_SEPARATOR,
+                Errors.UNEXPECTED_SEPARATOR,
+                "comma",
+                "arguments",
+                "an argument",
+                "comma"
         );
 
         if (argsParseResult.isFailed()) return null;
 
         if (!context.currentIs(Bracket.ROUND_CLOSE)) {
-            context.messages.addSyntaxErr("expected the ending of the round brackets here");
-            context.goNext();
+            context.messages.report(
+                    Errors.UNCLOSED_BRACKETS,
+                    "arguments description of the function call",
+                    "round",
+                    ")"
+            );
 
+            context.goNext();
             return null;
         }
 
         final var roundClosingBracket = context.advanceOrThrow();
 
-        if (isPostfixFuncCall && argsParseResult.isCanceled())
-            context.messages.addInRangeWarn(
-                    "a postfix function call without arguments, but with round brackets",
+        if (isPostfixFuncCall && argsParseResult.isSkipped())
+            context.messages.reportRange(
                     roundOpeningBracket,
-                    roundClosingBracket
+                    roundClosingBracket,
+                    Warnings.POSTFIX_FUNC_CALL_WITH_NO_ARGS
             );
 
         return new FuncCallObject(name, argsParseResult.valueOrDefault(List.of()), isPostfixFuncCall);
@@ -140,10 +152,10 @@ public final class ComplexValueParser implements Parser<ExpressionValueObject> {
             int postfixFunctionCallsCounter
     ) {
         if (!isPostfixFuncCall) {
-            if (postfixFunctionCallsCounter > 3) context.messages.addInRangeWarn(
-                    "more than three postfix function calls in a row",
+            if (postfixFunctionCallsCounter > 3) context.messages.reportRange(
                     segments.get(segments.size() - postfixFunctionCallsCounter).failAnchor(),
-                    segments.getLast().failAnchor()
+                    segments.getLast().failAnchor(),
+                    Warnings.LONG_POSTFIX_CHAIN
             );
 
             postfixFunctionCallsCounter = 0;

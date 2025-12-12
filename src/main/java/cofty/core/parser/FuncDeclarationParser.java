@@ -1,5 +1,6 @@
 package cofty.core.parser;
 
+import cofty.core.compiler.diagnostic.Errors;
 import cofty.core.lexer.token.type.Keyword;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.type.operator.Bracket;
@@ -19,23 +20,26 @@ public final class FuncDeclarationParser implements Parser<FuncDeclarationObject
 
     @Override
     public @NotNull ParseResult<FuncDeclarationObject> parse(@NotNull ParseContext context) {
-        if (!context.goNextIfCurrentIs(Keyword.FUN)) return ParseResult.canceled();
+        if (!context.goNextIfCurrentIs(Keyword.FUN)) return ParseResult.skipped();
 
         final var nameToken = context.current(Simple.WORD);
 
         if (!context.goNextIfCurrentIs(Simple.WORD)) {
-            context.messages.addSyntaxErr("expected a function name here");
+            context.messages.report(Errors.EXPECTED_NAME, "function");
             context.goNext();
 
             return ParseResult.failed();
         }
 
         if (!context.goNextIfCurrentIs(Bracket.ROUND_OPEN)) {
-            context.messages.addSyntaxErr(
-                    "expected the beginning of the description of the arguments here using the round bracket `(`"
+            context.messages.report(
+                    Errors.NO_OPENED_BRACKETS,
+                    "description of the arguments",
+                    "round",
+                    "("
             );
-            context.goNext();
 
+            context.goNext();
             return ParseResult.failed();
         }
 
@@ -44,15 +48,22 @@ public final class FuncDeclarationParser implements Parser<FuncDeclarationObject
                 Separator.COMMA,
                 FieldDeclarationParser.FUNC_ARG,
                 null,
-                "expected a comma separator here between the argument declarations",
-                "expected an argument declaration here, not the comma"
+                Errors.MISSING_SEPARATOR,
+                Errors.UNEXPECTED_SEPARATOR,
+                "comma",
+                "argument declarations",
+                "an argument",
+                "comma"
         );
 
         var isFailed = argsParseResult.isFailed();
 
         if (!context.goNextIfCurrentIs(Bracket.ROUND_CLOSE)) {
-            context.messages.addSyntaxErr(
-                    "expected the ending of the description of the arguments here using the round bracket `)`"
+            context.messages.report(
+                    Errors.UNCLOSED_BRACKETS,
+                    "description of the arguments",
+                    "round",
+                    ")"
             );
             context.goNext();
 
@@ -62,9 +73,9 @@ public final class FuncDeclarationParser implements Parser<FuncDeclarationObject
         final var returnTypeParseResult = context.goNextIfCurrentIs(Separator.ARROW)
                 ? TypeDescriptionParser.DEFAULT.parse(context) : null;
 
-        if (returnTypeParseResult != null && !returnTypeParseResult.isSuccessful()) {
-            if (returnTypeParseResult.isCanceled()) {
-                context.messages.addSyntaxErr("expected a function return type here");
+        if (returnTypeParseResult != null && !returnTypeParseResult.isOK()) {
+            if (returnTypeParseResult.isSkipped()) {
+                context.messages.report(Errors.EXPECTED_FUNC_RETURN_TYPE);
                 context.goNext();
             }
 
@@ -73,19 +84,19 @@ public final class FuncDeclarationParser implements Parser<FuncDeclarationObject
 
         final var bodyParseResult = BodyParser.createFunctionBodyParser(parentBody).parse(context);
 
-        if (!bodyParseResult.isSuccessful()) return ParseResult.failed();
+        if (!bodyParseResult.isOK()) return ParseResult.failed();
 
-        final var returnType = returnTypeParseResult == null || !returnTypeParseResult.isSuccessful()
+        final var returnType = returnTypeParseResult == null || !returnTypeParseResult.isOK()
                 ? null : returnTypeParseResult.valueOrThrow();
 
         final var body = bodyParseResult.valueOrThrow();
 
         if (returnType != null && !body.finishedWithReturnStatement) {
-            context.messages.addSyntaxErrBeforeToken("expected the return statement", context.prevOrThrow());
+            context.messages.report(context.prevOrThrow(), Errors.EXPECTED_FUNC_RETURN_STATEMENT);
             return ParseResult.failed();
         }
 
-        return isFailed ? ParseResult.failed() : ParseResult.successful(new FuncDeclarationObject(
+        return isFailed ? ParseResult.failed() : ParseResult.OK(new FuncDeclarationObject(
                 Objects.requireNonNull(nameToken).strictAs(),
                 argsParseResult.valueOrDefault(List.of()),
                 body,

@@ -1,6 +1,7 @@
 package cofty.core.parser;
 
-import cofty.Utils;
+import cofty.ParseResultAssert;
+import cofty.core.compiler.diagnostic.Errors;
 import cofty.type.Representable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -24,17 +25,10 @@ class FuncDeclarationParserTest {
                 MessageFormat.format("fun {0}({1}: {2} = false,) -> {2}", funcName, argName, funcTypes)
         );
 
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = MODULE_FUNC_DECLARATION_PARSER.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        final var astObject = parseResult.valueOrThrow();
+        final var astObject = ParseResultAssert.parse(expr, MODULE_FUNC_DECLARATION_PARSER)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value();
 
         Assertions.assertEquals(
                 funcName,
@@ -94,18 +88,10 @@ class FuncDeclarationParserTest {
     void validNoArgsNoReturnType() {
         final var funcName = "nothing";
         final var expr = String.format("fun %s() {}", funcName);
-
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = MODULE_FUNC_DECLARATION_PARSER.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        final var astObject = parseResult.valueOrThrow();
+        final var astObject = ParseResultAssert.parse(expr, MODULE_FUNC_DECLARATION_PARSER)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value();
 
         Assertions.assertEquals(
                 funcName,
@@ -158,17 +144,10 @@ class FuncDeclarationParserTest {
                 )
         );
 
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = MODULE_FUNC_DECLARATION_PARSER.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        final var astObject = parseResult.valueOrThrow();
+        final var astObject = ParseResultAssert.parse(expr, MODULE_FUNC_DECLARATION_PARSER)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value();
 
         Assertions.assertEquals(
                 funcName,
@@ -227,17 +206,10 @@ class FuncDeclarationParserTest {
     @Test
     void validReturnStatementAtNestedBody() {
         final var expr = "fun sixtyNine() -> int {{return 69}} ";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = MODULE_FUNC_DECLARATION_PARSER.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        final var astObject = parseResult.valueOrThrow();
+        final var astObject = ParseResultAssert.parse(expr, MODULE_FUNC_DECLARATION_PARSER)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value();
 
         Assertions.assertEquals(
                 1,
@@ -253,190 +225,64 @@ class FuncDeclarationParserTest {
 
     @Test
     void invalidNoValueReturnedButReturnValueDeclared() {
-        final var expr = "fun invalid() -> int {}";
-
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = MODULE_FUNC_DECLARATION_PARSER.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
-
-        Assertions.assertEquals(
-                1,
-                context.messages.handler.errCount(),
-                "there must be exactly one compilation error message"
-        );
+        ParseResultAssert.parse("fun invalid() -> int {}", MODULE_FUNC_DECLARATION_PARSER)
+                .failed()
+                .hasErrors(Errors.EXPECTED_FUNC_RETURN_STATEMENT);
     }
 
     @Test
     void invalidReturnType() {
-        final var expr = "fun invalid() -> 34 {}";
-
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = MODULE_FUNC_DECLARATION_PARSER.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
-
-        Assertions.assertEquals(
-                1,
-                context.messages.handler.errCount(),
-                "there must be exactly one compilation error message"
-        );
+        ParseResultAssert.parse("fun invalid() -> 34 {}", MODULE_FUNC_DECLARATION_PARSER)
+                .failed()
+                .hasErrors(Errors.EXPECTED_FUNC_RETURN_TYPE);
     }
 
     @Test
     void invalidNotSeparatedWithDotArguments() {
-        final var expr = "fun invalid(a = 0 b = 1) {}";
-
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = MODULE_FUNC_DECLARATION_PARSER.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
-
-        Assertions.assertEquals(
-                1,
-                context.messages.handler.errCount(),
-                "there must be exactly one compilation error message"
-        );
+        ParseResultAssert.parse("fun invalid(a = 0 b = 1) {}", MODULE_FUNC_DECLARATION_PARSER)
+                .failed()
+                .hasErrors(Errors.MISSING_SEPARATOR);
     }
 
     @Test
     void invalidArgumentDeclarationAsVariable() {
-        final var expr = "fun invalid(var a = 0) {}";
-
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = MODULE_FUNC_DECLARATION_PARSER.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
-
-        Assertions.assertEquals(
-                1,
-                context.messages.handler.errCount(),
-                "there must be exactly one compilation error message"
-        );
+        ParseResultAssert.parse("fun invalid(var a = 0) {}", MODULE_FUNC_DECLARATION_PARSER)
+                .failed()
+                .hasErrors(Errors.NOT_ALLOWED);
     }
 
     @Test
     void invalidArgumentWithNoExplicitlyDeclaredValueTypeAndAssignedWithNonSimpleValue() {
-        final var expr = "fun invalid(a = invalid()) {}";
-
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = MODULE_FUNC_DECLARATION_PARSER.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
-
-        Assertions.assertEquals(
-                1,
-                context.messages.handler.errCount(),
-                "there must be exactly one compilation error message"
-        );
+        ParseResultAssert.parse("fun invalid(a = invalid()) {}", MODULE_FUNC_DECLARATION_PARSER)
+                .failed()
+                .hasErrors(Errors.MISSING_EXPLICIT_TYPE);
     }
 
     @Test
     void invalidNoArgsSectionDescribed() {
-        final var expr = "fun invalid";
-
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = MODULE_FUNC_DECLARATION_PARSER.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
-
-        Assertions.assertEquals(
-                1,
-                context.messages.handler.errCount(),
-                "there must be exactly one compilation error message"
-        );
+        ParseResultAssert.parse("fun invalid", MODULE_FUNC_DECLARATION_PARSER)
+                .failed()
+                .hasErrors(Errors.NO_OPENED_BRACKETS);
     }
 
     @Test
     void invalidArgsDescriptionNotFinishedCorrectly() {
-        final var expr = "fun invalid(";
-
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = MODULE_FUNC_DECLARATION_PARSER.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
-
-        Assertions.assertEquals(
-                1,
-                context.messages.handler.errCount(),
-                "there must be exactly one compilation error message"
-        );
+        ParseResultAssert.parse("fun invalid(", MODULE_FUNC_DECLARATION_PARSER)
+                .failed()
+                .hasErrors(Errors.UNCLOSED_BRACKETS);
     }
 
     @Test
     void invalidNoBodyDescribed() {
-        final var expr = "fun invalid()";
-
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = MODULE_FUNC_DECLARATION_PARSER.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
-
-        Assertions.assertEquals(
-                1,
-                context.messages.handler.errCount(),
-                "there must be exactly one compilation error message"
-        );
+        ParseResultAssert.parse("fun invalid()", MODULE_FUNC_DECLARATION_PARSER)
+                .failed()
+                .hasErrors(Errors.NO_OPENED_BRACKETS);
     }
 
     @Test
     void invalidBodyNotFinishedCorrectly() {
-        final var expr = "fun invalid() {";
-
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = MODULE_FUNC_DECLARATION_PARSER.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
-
-        Assertions.assertEquals(
-                1,
-                context.messages.handler.errCount(),
-                "there must be exactly one compilation error message"
-        );
+        ParseResultAssert.parse("fun invalid() {", MODULE_FUNC_DECLARATION_PARSER)
+                .failed()
+                .hasErrors(Errors.UNCLOSED_BRACKETS);
     }
 }

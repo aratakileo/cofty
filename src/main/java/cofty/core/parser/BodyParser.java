@@ -1,7 +1,7 @@
 package cofty.core.parser;
 
+import cofty.core.compiler.diagnostic.Errors;
 import cofty.core.lexer.token.type.Simple;
-import cofty.core.lexer.token.type.TokenType;
 import cofty.core.lexer.token.type.operator.Bracket;
 import cofty.core.parser.ast.*;
 import cofty.core.parser.ast.body.BodyObject;
@@ -9,7 +9,7 @@ import cofty.core.parser.ast.body.BodyResidentObject;
 import cofty.core.parser.ast.body.NotSpecializedBodyObject;
 import cofty.type.Containable;
 import cofty.util.Cast;
-import cofty.core.compiler.message.CompilationMessageRepresentable;
+import cofty.core.compiler.diagnostic.DiagnosticRepresentable;
 import cofty.core.parser.ast.value.ReturnStatementObject;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,15 +53,12 @@ public final class BodyParser implements Parser<BodyObject> {
 
         if (!startsWithCurve) {
             if (bodyFormat.mustStartsWithCurveBracket()) {
-                context.messages.addSyntaxErr(String.format(
-                        "expected the beginning of the %s here using the curly bracket `{`",
-                        actualBodyType.represent()
-                ));
+                context.messages.report(Errors.NO_OPENED_BRACKETS, actualBodyType, "curve", "{");
                 return ParseResult.failed();
             }
 
             if (bodyFormat.mayStartsWithCurveBracket())
-                return ParseResult.canceled();
+                return ParseResult.skipped();
         }
 
         context.goNextIfCurrentIs(Simple.NEWLINE);
@@ -84,25 +81,24 @@ public final class BodyParser implements Parser<BodyObject> {
 
                     return actualBodyType.isDominant || dominantBodyType.applyFilter(astObject);
                 },
-                "expected a newline separator here between expressions",
-                null
+                Errors.MISSING_SEPARATOR,
+                null,
+                "newline",
+                "expressions"
         );
 
         var isFailed = residentsParseResult.isFailed();
 
         if (context.hasCurrent() && actualBodyType == BodyType.MODULE) {
-            context.messages.addInvalidSyntaxErr();
+            context.messages.report(Errors.PARSER_INVALID_SYNTAX);
             return ParseResult.failed();
         }
 
-        if (!isFailed && residentsParseResult.isCanceled() && bodyFormat == BodyFormat.NOT_WRAPPED_WITH_CURVES)
-            return ParseResult.canceled();
+        if (!isFailed && residentsParseResult.isSkipped() && bodyFormat == BodyFormat.NOT_WRAPPED_WITH_CURVES)
+            return ParseResult.skipped();
 
         if (startsWithCurve && !context.goNextIfCurrentIs(Bracket.CURVE_CLOSE)) {
-            context.messages.addSyntaxErr(String.format(
-                    "expected the ending of the %s here using the curly bracket `}`",
-                    actualBodyType.represent()
-            ));
+            context.messages.report(Errors.UNCLOSED_BRACKETS, actualBodyType, "curve", "}");
             return ParseResult.failed();
         }
 
@@ -110,46 +106,21 @@ public final class BodyParser implements Parser<BodyObject> {
 
         final var residents = residentsParseResult.valueOrDefault(List.of());
 
-        return ParseResult.successful(new NotSpecializedBodyObject(residents, bodyFinishedWithReturn.get()));
+        return ParseResult.OK(new NotSpecializedBodyObject(residents, bodyFinishedWithReturn.get()));
     }
 
     private @NotNull ParseResult<BodyResidentObject> parseLine(@NotNull ParseContext context) {
         final var complexParseResult = parseValueExpressionOrFieldValueAssignment(context);
 
-        if (!complexParseResult.isCanceled()) return Cast.quiet(complexParseResult);
+        if (!complexParseResult.isSkipped()) return Cast.quiet(complexParseResult);
 
         for (final var parser: resident_parsers) {
             final var parseResult = parser.parse(context);
 
-            if (!parseResult.isCanceled()) return Cast.quiet(parseResult);
+            if (!parseResult.isSkipped()) return Cast.quiet(parseResult);
         }
 
-        return ParseResult.canceled();
-    }
-
-    private @NotNull ParseResult<? extends BodyResidentObject> checkIfItIsAllowed(
-            @NotNull ParseContext context,
-            @NotNull TokenType startsWith,
-            @NotNull Parser<? extends BodyResidentObject> parser,
-            @NotNull BodyType... allowedBodyTypes
-    ) {
-        final var token = context.current(startsWith);
-        final var parseResult = parser.parse(context);
-
-        var isAllowed = false;
-
-        for (var allowedBodyType: allowedBodyTypes)
-            if (actualBodyType == allowedBodyType) {
-                isAllowed = true;
-                break;
-            }
-
-        if (!isAllowed && token != null && token.type.equals(startsWith)) {
-            context.messages.addSyntaxErr("not allowed here", token);
-            return ParseResult.failed();
-        }
-
-        return parseResult;
+        return ParseResult.skipped();
     }
 
     /*
@@ -166,13 +137,13 @@ public final class BodyParser implements Parser<BodyObject> {
 
         if (valueExpressionParseResult.isFailed()) return ParseResult.failed();
 
-        if (valueExpressionParseResult.isSuccessful()) {
+        if (valueExpressionParseResult.isOK()) {
             final var fieldValueAssignmentParseResult = FieldValueAssignmentParser.DEFAULT.parse(
                     context,
                     valueExpressionParseResult.valueOrThrow()
             );
 
-            if (!fieldValueAssignmentParseResult.isCanceled()) return fieldValueAssignmentParseResult;
+            if (!fieldValueAssignmentParseResult.isSkipped()) return fieldValueAssignmentParseResult;
 
             return valueExpressionParseResult;
         }
@@ -202,7 +173,7 @@ public final class BodyParser implements Parser<BodyObject> {
         return new BodyParser(actualBodyType, BodyType.FUNC, BodyFormat.STRICT_WRAPPED_WITH_CURVES);
     }
 
-    public enum BodyType implements CompilationMessageRepresentable, AstObjectFilter<BodyResidentObject> {
+    public enum BodyType implements DiagnosticRepresentable, AstObjectFilter<BodyResidentObject> {
         MODULE(true),
         FUNC(true),
         CLASS(true),
@@ -240,7 +211,7 @@ public final class BodyParser implements Parser<BodyObject> {
          */
         STRICT_WRAPPED_WITH_CURVES,
         /**
-         * if there are no curve brackets then the parse result will be specified as canceled
+         * if there are no curve brackets then the parse result will be specified as skipped
          */
         NON_STRICT_WRAPPED_WITH_CURVES,
         SINGLE_LINE_OR_WRAPPED_WITH_CURVES,

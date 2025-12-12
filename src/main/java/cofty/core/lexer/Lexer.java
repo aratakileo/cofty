@@ -1,13 +1,11 @@
 package cofty.core.lexer;
 
+import cofty.core.compiler.diagnostic.Errors;
 import cofty.core.lexer.token.*;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.type.TokenType;
-import cofty.core.compiler.message.MessageType;
-import cofty.core.compiler.message.CompilationMessage;
-import cofty.core.compiler.message.CompilationMessageHandler;
+import cofty.core.compiler.diagnostic.DiagnosticEngine;
 import cofty.type.TextContent;
-import cofty.core.compiler.message.CompilationMessageLabel;
 import cofty.util.Cast;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,13 +18,13 @@ public class Lexer {
     private static final Pattern PATTERN;
 
     public final TextContent text;
-    public final CompilationMessageHandler messages;
+    public final DiagnosticEngine.TextAssociated messages;
 
     private final Matcher matcher;
 
-    public Lexer(@NotNull TextContent text, @NotNull CompilationMessageHandler messages) {
+    public Lexer(@NotNull TextContent text, @NotNull DiagnosticEngine messages) {
         this.text = text;
-        this.messages = messages;
+        this.messages = messages.associateWith(text);
         this.matcher = PATTERN.matcher(text.text);
     }
 
@@ -44,7 +42,7 @@ public class Lexer {
                     continue;
                 }
 
-                showSyntaxError(prevToken);
+                messages.report(prevToken, Errors.LEXER_SYNTAX_ERROR);
             }
 
             if (!tokenType.isAny(Simple.SKIP, Simple.MISMATCH) && (tokenType != Simple.NEWLINE || !tokens.isEmpty()))
@@ -54,13 +52,9 @@ public class Lexer {
         }
 
         if (prevToken != null && prevToken.type.equals(Simple.MISMATCH))
-            showSyntaxError(prevToken);
+            messages.report(prevToken, Errors.LEXER_SYNTAX_ERROR);
 
         return tokens;
-    }
-
-    private void showSyntaxError(@NotNull TypedToken<?> token) {
-        messages.add(CompilationMessage.create(text, MessageType.ERROR, CompilationMessageLabel.INVALID_SYNTAX, token));
     }
 
     static {

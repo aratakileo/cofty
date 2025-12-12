@@ -1,19 +1,19 @@
 package cofty.core.compiler;
 
-import cofty.core.compiler.message.CompilationMessageHandler;
+import cofty.core.compiler.diagnostic.DiagnosticEngine;
 import org.jetbrains.annotations.NotNull;
 
-public class CompileResultLogger {
-    private final CompilationMessageHandler messages;
+public final class CompileResultLogger {
+    private final DiagnosticEngine messages;
 
-    private StageState lexerStageState = StageState.CANCELED,
-            parserStageState = StageState.CANCELED,
-            quickSemanticAnalyzerState = StageState.CANCELED,
-            deepSemanticAnalyzerState = StageState.CANCELED;
+    private StageState lexerStageState = StageState.SKIPPED,
+            parserStageState = StageState.SKIPPED,
+            quickSemanticAnalyzerState = StageState.SKIPPED,
+            deepSemanticAnalyzerState = StageState.SKIPPED;
 
     private String lexerStageMessage = null;
 
-    public CompileResultLogger(@NotNull CompilationMessageHandler messages) {
+    public CompileResultLogger(@NotNull DiagnosticEngine messages) {
         this.messages = messages;
     }
 
@@ -22,29 +22,29 @@ public class CompileResultLogger {
     }
 
     public void checkInLexer(boolean successfully) {
-        lexerStageState = successfully ? StageState.SUCCESSFULLY : StageState.FAILED;
+        lexerStageState = successfully ? StageState.OK : StageState.FAILED;
     }
 
     public void checkInParser(boolean successfully) {
-        parserStageState = successfully ? StageState.SUCCESSFULLY : StageState.FAILED;
+        parserStageState = successfully ? StageState.OK : StageState.FAILED;
     }
 
     public void checkInQuickSemanticAnalyzer(boolean successfully) {
-        quickSemanticAnalyzerState = successfully ? StageState.SUCCESSFULLY : StageState.FAILED;
+        quickSemanticAnalyzerState = successfully ? StageState.OK : StageState.FAILED;
     }
 
     public void checkInDeepSemanticAnalyzer(boolean successfully) {
-        deepSemanticAnalyzerState = successfully ? StageState.SUCCESSFULLY : StageState.FAILED;
+        deepSemanticAnalyzerState = successfully ? StageState.OK : StageState.FAILED;
     }
 
     public void print() {
         System.out.printf(
                 "Stages:%n" +
-                        " - Splitting into tokens (lexer): %s%s%n" +
-                        " - Parsing tokens into AST objects (parser): %s%n" +
-                        " - Analyzing AST objects (semantic analyzer):%n" +
-                        "   - Quick analyzing: %s%n" +
-                        "   - Deep analyzing: %s%n",
+                        " [1] Lexing: %s%s%n" +
+                        " [2] Parsing: %s%n" +
+                        " [3] Semantic analysis:%n" +
+                        "     - Primary symbol table generation: %s%n" +
+                        "     - Full pass: %s%n",
                 lexerStageState,
                 (lexerStageMessage == null ? "" : " [" + lexerStageMessage + ']'),
                 parserStageState,
@@ -54,20 +54,20 @@ public class CompileResultLogger {
 
         if (messages.isEmpty()) return;
 
-        if (messages.hasErrs()) {
-            System.out.printf("%n%s errors:%n", messages.errCount());
-            messages.printErrs();
+        if (messages.hasErrors()) {
+            System.out.printf("%n%s errors:%n", messages.errorsCount());
+            messages.printErrors();
         }
 
-        if (messages.hasWarns()) {
-            System.out.printf("%n%s warnings:%n", messages.warnCount());
-            messages.printWarns();
+        if (messages.hasWarnings()) {
+            System.out.printf("%n%s warnings:%n", messages.warningsCount());
+            messages.printWarnings();
         }
     }
 
     public enum StageState {
-        SUCCESSFULLY,
+        OK,
         FAILED,
-        CANCELED
+        SKIPPED
     }
 }

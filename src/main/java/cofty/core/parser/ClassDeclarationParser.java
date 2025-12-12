@@ -1,5 +1,6 @@
 package cofty.core.parser;
 
+import cofty.core.compiler.diagnostic.Errors;
 import cofty.core.lexer.token.type.Keyword;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.parser.ast.ClassDeclarationObject;
@@ -16,12 +17,12 @@ public final class ClassDeclarationParser implements Parser<ClassDeclarationObje
 
     @Override
     public @NotNull ParseResult<ClassDeclarationObject> parse(@NotNull ParseContext context) {
-        if (!context.goNextIfCurrentIs(Keyword.CLASS)) return ParseResult.canceled();
+        if (!context.goNextIfCurrentIs(Keyword.CLASS)) return ParseResult.skipped();
 
         final var nameToken = context.current(Simple.WORD);
 
         if (!context.goNextIfCurrentIs(Simple.WORD)) {
-            context.messages.addSyntaxErr("expected a class name here");
+            context.messages.report(Errors.EXPECTED_NAME, "class");
             context.goNext();
 
             return ParseResult.failed();
@@ -29,10 +30,10 @@ public final class ClassDeclarationParser implements Parser<ClassDeclarationObje
 
         final var bodyParseResult = BodyParser.createClassBodyParser(parentBody).parse(context);
 
-        if (!bodyParseResult.isSuccessful()) return ParseResult.failed();
+        if (!bodyParseResult.isOK()) return ParseResult.failed();
         final var body = bodyParseResult.valueOrThrow();
 
-        return ParseResult.successful(new ClassDeclarationObject(
+        return ParseResult.OK(new ClassDeclarationObject(
                 Objects.requireNonNull(nameToken).strictAs(),
                 body
         ));

@@ -1,6 +1,8 @@
 package cofty.core.parser;
 
-import cofty.Utils;
+import cofty.ParseResultAssert;
+import cofty.core.compiler.diagnostic.Errors;
+import cofty.core.compiler.diagnostic.Warnings;
 import cofty.core.lexer.token.type.Simple;
 import cofty.type.Representable;
 import cofty.core.parser.ast.value.complex.ComplexValueObject;
@@ -14,19 +16,10 @@ class ComplexValueParserTest {
     @Test
     void validSingleFieldAccess() {
         final var expr = "validField";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = ComplexValueParser.DEFAULT.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        Assertions.assertInstanceOf(FieldAccessObject.class, parseResult.valueOrThrow());
-
-        final var astObject = (FieldAccessObject)parseResult.valueOrThrow();
+        final var astObject = ParseResultAssert.parse(expr, ComplexValueParser.DEFAULT)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value(FieldAccessObject.class);
 
         Assertions.assertEquals(
                 "validField",
@@ -38,19 +31,10 @@ class ComplexValueParserTest {
     @Test
     void validSingleIntValue() {
         final var expr = "51";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = ComplexValueParser.DEFAULT.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        Assertions.assertInstanceOf(SimpleValueObject.class, parseResult.valueOrThrow());
-
-        final var astObject = (SimpleValueObject)parseResult.valueOrThrow();
+        final var astObject = ParseResultAssert.parse(expr, ComplexValueParser.DEFAULT)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value(SimpleValueObject.class);
 
         Assertions.assertEquals(Simple.INT, astObject.value.type);
 
@@ -65,19 +49,10 @@ class ComplexValueParserTest {
     void validSingleFuncCall() {
         final var name = "validFuncCall";
         final var expr = String.format("%s()", name);
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = ComplexValueParser.DEFAULT.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        Assertions.assertInstanceOf(FuncCallObject.class, parseResult.valueOrThrow());
-
-        final var astObject = (FuncCallObject)parseResult.valueOrThrow();
+        final var astObject = ParseResultAssert.parse(expr, ComplexValueParser.DEFAULT)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value(FuncCallObject.class);
 
         Assertions.assertEquals(
                 name,
@@ -101,19 +76,10 @@ class ComplexValueParserTest {
         final var name = "validFuncCall";
         final var argValue = "'что-то мега крутое на русском (by avi)'";
         final var expr = String.format("%s(%s,)", name, argValue);
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = ComplexValueParser.DEFAULT.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        Assertions.assertInstanceOf(FuncCallObject.class, parseResult.valueOrThrow());
-
-        final var astObject = (FuncCallObject)parseResult.valueOrThrow();
+        final var astObject = ParseResultAssert.parse(expr, ComplexValueParser.DEFAULT)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value(FuncCallObject.class);
 
         Assertions.assertEquals(
                 name,
@@ -151,19 +117,10 @@ class ComplexValueParserTest {
         final var firstArgValue = "'что-то мега крутое на русском (by avi)'";
         final var secondArgValue = "2.9764";
         final var expr = String.format("%s(%s, %s)", name, firstArgValue, secondArgValue);
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = ComplexValueParser.DEFAULT.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        Assertions.assertInstanceOf(FuncCallObject.class, parseResult.valueOrThrow());
-
-        final var astObject = (FuncCallObject)parseResult.valueOrThrow();
+        final var astObject = ParseResultAssert.parse(expr, ComplexValueParser.DEFAULT)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value(FuncCallObject.class);
 
         Assertions.assertEquals(
                 name,
@@ -208,20 +165,11 @@ class ComplexValueParserTest {
         final var name = "validFuncCall";
         final var firstArgValue = "'что-то мега крутое на русском (by avi)'";
         final var secondArgValue = "2.9764";
-        final var expr = String.format("%s\n(\n%s\n,\n%s\n)", name, firstArgValue, secondArgValue);
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = ComplexValueParser.DEFAULT.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        Assertions.assertInstanceOf(FuncCallObject.class, parseResult.valueOrThrow());
-
-        final var astObject = (FuncCallObject)parseResult.valueOrThrow();
+        final var expr = "%s\n(\n%s\n,\n%s\n)".formatted(name, firstArgValue, secondArgValue);
+        final var astObject = ParseResultAssert.parse(expr, ComplexValueParser.DEFAULT)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value(FuncCallObject.class);
 
         Assertions.assertEquals(
                 name,
@@ -232,7 +180,7 @@ class ComplexValueParserTest {
         Assertions.assertEquals(
                 2,
                 astObject.args.size(),
-                String.format("the function call must contain exactly one argument (`%s`)", expr)
+                "the function call must contain exactly two arguments (`%s`)".formatted(expr)
         );
 
         Assertions.assertInstanceOf(
@@ -272,19 +220,10 @@ class ComplexValueParserTest {
         final var value = "'89'";
         final var funcName = "int";
         final var expr = String.format("%s!%s", value, funcName);
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = ComplexValueParser.DEFAULT.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        Assertions.assertInstanceOf(ComplexValueObject.class, parseResult.valueOrThrow());
-
-        final var astObject = (ComplexValueObject)parseResult.valueOrThrow();
+        final var astObject = ParseResultAssert.parse(expr, ComplexValueParser.DEFAULT)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value(ComplexValueObject.class);
 
         Assertions.assertEquals(
                 2,
@@ -333,19 +272,11 @@ class ComplexValueParserTest {
         final var value = "'89'";
         final var funcName = "int";
         final var expr = String.format("%s!%s()", value, funcName);
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = ComplexValueParser.DEFAULT.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        Assertions.assertInstanceOf(ComplexValueObject.class, parseResult.valueOrThrow());
-
-        final var astObject = (ComplexValueObject)parseResult.valueOrThrow();
+        final var astObject = ParseResultAssert.parse(expr, ComplexValueParser.DEFAULT)
+                .ok()
+                .hasNoErrors()
+                .hasWarnings(Warnings.POSTFIX_FUNC_CALL_WITH_NO_ARGS)
+                .value(ComplexValueObject.class);
 
         Assertions.assertEquals(
                 2,
@@ -392,122 +323,78 @@ class ComplexValueParserTest {
     @Test
     void validThreeFieldAccessSegmentsWithNewLines() {
         final var expr = "one\n.\ntwo\n.\nthree";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = ComplexValueParser.DEFAULT.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        Assertions.assertInstanceOf(ComplexValueObject.class, parseResult.valueOrThrow());
-
-        final var astObject = (ComplexValueObject)parseResult.valueOrThrow();
+        final var astObject = ParseResultAssert.parse(expr, ComplexValueParser.DEFAULT)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value(ComplexValueObject.class);
 
         Assertions.assertEquals(
                 3,
                 astObject.segments.size(),
-                String.format("`%s` must consists of exactly two segment", Representable.repr(expr, true))
+                String.format("`%s` must consists of exactly three segment", Representable.repr(expr, true))
+        );
+    }
+
+    @Test
+    void validTooLongPostfixChain() {
+        final var expr = "value!one!two!three!four"; // more than three postfix calls
+        final var astObject = ParseResultAssert.parse(expr, ComplexValueParser.DEFAULT)
+                .ok()
+                .hasNoErrors()
+                .hasWarnings(Warnings.LONG_POSTFIX_CHAIN)
+                .value(ComplexValueObject.class);
+
+        Assertions.assertEquals(
+                5,
+                astObject.segments.size(),
+                String.format("`%s` must consists of exactly five segment", Representable.repr(expr, true))
         );
     }
 
     @Test
     void invalidNoSecondSegmentWithDotAfterFirstSegment() {
-        final var expr = "one.";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = ComplexValueParser.DEFAULT.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
+        ParseResultAssert.parse("one.", ComplexValueParser.DEFAULT)
+                .failed()
+                .hasErrors(Errors.EXPECTED_MEMBER_ACCESS);
     }
 
     @Test
     void invalidFuncCallWithMissedSecondArgument() {
-        final var expr = "invalidFuncCall('one',,)";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = ComplexValueParser.DEFAULT.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
+        ParseResultAssert.parse("invalidFuncCall('one',,)", ComplexValueParser.DEFAULT)
+                .failed()
+                .hasErrors(Errors.UNEXPECTED_SEPARATOR);
     }
 
     @Test
     void invalidFuncCallWithMissedFirstArgument() {
-        final var expr = "invalidFuncCall(, 'two',)";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = ComplexValueParser.DEFAULT.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
+        ParseResultAssert.parse("invalidFuncCall(, 'two',)", ComplexValueParser.DEFAULT)
+                .failed()
+                .hasErrors(Errors.UNEXPECTED_SEPARATOR);
     }
 
     @Test
     void invalidFuncCallWithArgsNotSeparatedByComma() {
-        final var expr = "invalidFuncCall('one' 'two')";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = ComplexValueParser.DEFAULT.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
+        ParseResultAssert.parse("invalidFuncCall('one' 'two')", ComplexValueParser.DEFAULT)
+                .failed()
+                .hasErrors(Errors.MISSING_SEPARATOR);
     }
 
     @Test
     void invalidFuncCallWithMissedClosingRoundBracket() {
-        final var expr = "invalidFuncCall(";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = ComplexValueParser.DEFAULT.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
+        ParseResultAssert.parse("invalidFuncCall(", ComplexValueParser.DEFAULT)
+                .failed()
+                .hasErrors(Errors.UNCLOSED_BRACKETS);
     }
 
     @Test
     void invalidSecondValue() {
-        final var expr = "'one'.'two'";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = ComplexValueParser.DEFAULT.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
+        ParseResultAssert.parse("'one'.'two'", ComplexValueParser.DEFAULT)
+                .failed()
+                .hasErrors(Errors.EXPECTED_MEMBER_ACCESS);
     }
 
     @Test
     void invalidNoWords() {
-        final var expr = "";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = ComplexValueParser.DEFAULT.parse(context);
-
-        Assertions.assertTrue(parseResult.isCanceled(), "the parse result must be specified as canceled");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
+        ParseResultAssert.parse("", ComplexValueParser.DEFAULT).skipped().hasNoDiagnosticMessages();
     }
 }

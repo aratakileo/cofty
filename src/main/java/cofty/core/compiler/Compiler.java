@@ -1,7 +1,7 @@
 package cofty.core.compiler;
 
 import cofty.core.lexer.Lexer;
-import cofty.core.compiler.message.CompilationMessageHandler;
+import cofty.core.compiler.diagnostic.DiagnosticEngine;
 import cofty.core.parser.ParseContext;
 import cofty.core.semantics.ModuleContext;
 import cofty.core.semantics.ModuleDeepAnalyzer;
@@ -16,7 +16,7 @@ import java.nio.file.Paths;
 
 public final class Compiler {
     public final TextContent text;
-    public final CompilationMessageHandler messages = new CompilationMessageHandler();
+    public final DiagnosticEngine messages = new DiagnosticEngine();
     public final CompileResultLogger resultLogger = new CompileResultLogger(messages);
 
     public Compiler(@NotNull TextContent text) {

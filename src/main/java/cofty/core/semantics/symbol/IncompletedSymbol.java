@@ -20,15 +20,15 @@ public interface IncompletedSymbol<T extends BodyResidentObject, R extends Symbo
         public final Status status;
         public final @NotNull List<TypedToken<?>> invalidTokens;
         public final AbsSymbolPath notSuitableTypePath;
-        public final Scope.ResolveTypeResult.ValueType expected, resolved;
+        public final Scope.ResolveTypeResult.NamedSymbol expected, resolved;
         public final R completedSymbol;
 
         private CompletionResult(
                 @NotNull Status status,
                 @Nullable List<TypedToken<?>> invalidTokens,
                 @Nullable AbsSymbolPath notSuitableTypePath,
-                @Nullable Scope.ResolveTypeResult.ValueType expected,
-                @Nullable Scope.ResolveTypeResult.ValueType resolved,
+                @Nullable Scope.ResolveTypeResult.NamedSymbol expected,
+                @Nullable Scope.ResolveTypeResult.NamedSymbol resolved,
                 @Nullable R completedSymbol
         ) {
             this.status = status;
@@ -43,8 +43,8 @@ public interface IncompletedSymbol<T extends BodyResidentObject, R extends Symbo
             return Objects.requireNonNull(completedSymbol);
         }
 
-        public static <R extends Symbol> @NotNull CompletionResult<R> successful(@NotNull R completedSymbol) {
-            return new CompletionResult<>(Status.SUCCESSFUL, null, null, null, null, completedSymbol);
+        public static <R extends Symbol> @NotNull CompletionResult<R> OK(@NotNull R completedSymbol) {
+            return new CompletionResult<>(Status.OK, null, null, null, null, completedSymbol);
         }
 
         public static <R extends Symbol> @NotNull CompletionResult<R> typeBasedFail(
@@ -67,15 +67,15 @@ public interface IncompletedSymbol<T extends BodyResidentObject, R extends Symbo
 
         public static <R extends Symbol> @NotNull CompletionResult<R> undefinedValue(
                 @NotNull List<TypedToken<?>> typeTokens,
-                @NotNull Scope.ResolveTypeResult.ValueType expected
+                @NotNull Scope.ResolveTypeResult.NamedSymbol expected
         ) {
             return new CompletionResult<>(Status.UNDEFINED_VALUE, typeTokens, null, null, null, null);
         }
 
         public static <R extends Symbol> @NotNull CompletionResult<R> nonValue(
                 @NotNull List<TypedToken<?>> typeTokens,
-                @NotNull Scope.ResolveTypeResult.ValueType expected,
-                @NotNull Scope.ResolveTypeResult.ValueType resolved
+                @NotNull Scope.ResolveTypeResult.NamedSymbol expected,
+                @NotNull Scope.ResolveTypeResult.NamedSymbol resolved
         ) {
             return new CompletionResult<>(Status.NON_VALUE, typeTokens, null, expected, resolved, null);
         }
@@ -97,7 +97,7 @@ public interface IncompletedSymbol<T extends BodyResidentObject, R extends Symbo
         }
 
         public enum Status {
-            SUCCESSFUL,
+            OK,
             UNDEFINED_TYPE,
             NON_TYPE,
             UNDEFINED_VALUE,

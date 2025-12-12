@@ -14,11 +14,11 @@ public final class ParseResult<R> {
         this.isCanceled = isCanceled;
     }
 
-    public boolean isCanceled() {
+    public boolean isSkipped() {
         return isCanceled;
     }
 
-    public boolean isSuccessful() {
+    public boolean isOK() {
         return value != null;
     }
 
@@ -35,10 +35,10 @@ public final class ParseResult<R> {
     }
 
     public @NotNull R valueOrDefault(@NotNull R defaultValue) {
-        return isSuccessful() ? valueOrThrow() : defaultValue;
+        return isOK() ? valueOrThrow() : defaultValue;
     }
 
-    public static <R> @NotNull ParseResult<R> successful(@NotNull R result) {
+    public static <R> @NotNull ParseResult<R> OK(@NotNull R result) {
         return new ParseResult<>(result, false);
     }
 
@@ -46,7 +46,7 @@ public final class ParseResult<R> {
         return new ParseResult<>(null, false);
     }
 
-    public static <R> @NotNull ParseResult<R> canceled() {
+    public static <R> @NotNull ParseResult<R> skipped() {
         return new ParseResult<>(null, true);
     }
 }

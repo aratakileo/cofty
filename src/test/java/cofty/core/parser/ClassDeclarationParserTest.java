@@ -1,6 +1,7 @@
 package cofty.core.parser;
 
-import cofty.Utils;
+import cofty.ParseResultAssert;
+import cofty.core.compiler.diagnostic.Errors;
 import cofty.type.Representable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -13,20 +14,11 @@ class ClassDeclarationParserTest {
     @Test
     void validEmptyClass() {
         final var className = "SixtyNine";
-
         final var expr = String.format("class %s {}", className);
-
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = MODULE_CLASS_DECLARATION_PARSER.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        final var astObject = parseResult.valueOrThrow();
+        final var astObject = ParseResultAssert.parse(expr, MODULE_CLASS_DECLARATION_PARSER)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value();
 
         Assertions.assertEquals(
                 className,
@@ -47,20 +39,11 @@ class ClassDeclarationParserTest {
     @Test
     void validEverythingStartsWithNewLine() {
         final var className = "SixtyNine";
-
         final var expr = String.format("class\n%s\n{\n}", className);
-
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = MODULE_CLASS_DECLARATION_PARSER.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        final var astObject = parseResult.valueOrThrow();
+        final var astObject = ParseResultAssert.parse(expr, MODULE_CLASS_DECLARATION_PARSER)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value();
 
         Assertions.assertEquals(
                 className,
@@ -90,17 +73,10 @@ class ClassDeclarationParserTest {
                 }
                 """;
 
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = MODULE_CLASS_DECLARATION_PARSER.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        final var astObject = parseResult.valueOrThrow();
+        final var astObject = ParseResultAssert.parse(expr, MODULE_CLASS_DECLARATION_PARSER)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value();
 
         Assertions.assertEquals(
                 3,
@@ -114,50 +90,23 @@ class ClassDeclarationParserTest {
 
     @Test
     void invalidFieldWithNoExplicitlyDeclaredValueTypeAndAssignedWithNonSimpleValue() {
-        final var expr = "class SixtyNine {var ermmm = invalid()}";
-
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = MODULE_CLASS_DECLARATION_PARSER.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
-
-        Assertions.assertEquals(
-                1,
-                context.messages.handler.errCount(),
-                "there must be exactly one compilation error message"
-        );
+        ParseResultAssert.parse("class SixtyNine {var ermmm = invalid()}", MODULE_CLASS_DECLARATION_PARSER)
+                .failed()
+                .hasErrors(Errors.MISSING_EXPLICIT_TYPE);
     }
 
     @Test
     void invalidNonDeclarationResidentsInClassBody() {
-        final var expr = """
-                class InvalidResidentsInClass {
-                    someFunctionCall()
-                    someValue = 'newValue'
-                    return 'whaaaat'
-                    {}
-                }
-                """;
-
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = MODULE_CLASS_DECLARATION_PARSER.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
-
-        Assertions.assertEquals(
-                4,
-                context.messages.handler.errCount(),
-                "there must be exactly four compilation error message"
-        );
+        ParseResultAssert.parse(
+                        """
+                        class InvalidResidentsInClass {
+                            someFunctionCall()
+                            someValue = 'newValue'
+                            return 'whaaaat'
+                            {}
+                        }
+                        """,
+                        MODULE_CLASS_DECLARATION_PARSER
+                ).failed().hasErrors(Errors.NOT_ALLOWED, Errors.NOT_ALLOWED, Errors.NOT_ALLOWED, Errors.NOT_ALLOWED);
     }
 }

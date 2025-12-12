@@ -3,7 +3,7 @@ package cofty.core.lexer;
 import cofty.core.lexer.token.*;
 import cofty.core.lexer.token.type.*;
 import cofty.core.lexer.token.type.operator.*;
-import cofty.core.compiler.message.CompilationMessageHandler;
+import cofty.core.compiler.diagnostic.DiagnosticEngine;
 import cofty.type.TextContent;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -133,11 +133,11 @@ class LexerTest {
         final var tokens = lexer.parse();
 
         Assertions.assertEquals(3, tokens.size());
-        Assertions.assertEquals(2, lexer.messages.errCount());
+        Assertions.assertEquals(2, lexer.messages.engine.errorsCount());
     }
 
     private Lexer lexerOfText(String text) {
-        return new Lexer(TextContent.ofInput(text), new CompilationMessageHandler());
+        return new Lexer(TextContent.ofInput(text), new DiagnosticEngine());
     }
 
     private TypedToken<?> firstToken(String token) {

@@ -41,7 +41,7 @@ public final class IncompletedFuncScope extends FuncScope<TypeDescriptionObject>
             if (arg instanceof IncompletedFieldSymbol incompletedFieldSymbol) {
                 final var completionResult = incompletedFieldSymbol.tryComplete();
 
-                if (completionResult.status != CompletionResult.Status.SUCCESSFUL)
+                if (completionResult.status != CompletionResult.Status.OK)
                     return Cast.quiet(completionResult);
 
                 completedArgs.add(completionResult.completedSymbol);
@@ -62,7 +62,7 @@ public final class IncompletedFuncScope extends FuncScope<TypeDescriptionObject>
 
         ((FuncSignaturesScope)parentOrThrow()).remove(this);
 
-        return CompletionResult.successful(new CompletedFuncScope(
+        return CompletionResult.OK(new CompletedFuncScope(
                 nameToken(),
                 typeResolveResult.unwrap(),
                 completedArgs

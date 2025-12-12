@@ -1,6 +1,7 @@
 package cofty.core.parser;
 
-import cofty.Utils;
+import cofty.ParseResultAssert;
+import cofty.core.compiler.diagnostic.Errors;
 import cofty.core.lexer.token.type.Keyword;
 import cofty.core.lexer.token.type.Simple;
 import cofty.type.Representable;
@@ -12,17 +13,10 @@ class FieldDeclarationParserTest {
     @Test
     void validWithSpecifiedTypeAndValue() {
         final var expr = "var mut isValid: bool = true";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldDeclarationParser.VARIABLE.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        final var astObject = parseResult.valueOrThrow();
+        final var astObject = ParseResultAssert.parse(expr, FieldDeclarationParser.VARIABLE)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value();
 
         Assertions.assertNotNull(
                 astObject.mutable,
@@ -71,17 +65,10 @@ class FieldDeclarationParserTest {
     @Test
     void validEverythingWithNewLineExceptValue() {
         final var expr = "var\nmut\nisValid\n:\nbool\n= true";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldDeclarationParser.VARIABLE.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        final var astObject = parseResult.valueOrThrow();
+        final var astObject = ParseResultAssert.parse(expr, FieldDeclarationParser.VARIABLE)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value();
 
         Assertions.assertNotNull(
                 astObject.mutable,
@@ -139,17 +126,10 @@ class FieldDeclarationParserTest {
     @Test
     void validWithOnlyTypeSpecified() {
         final var expr = "var isValid: bool";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldDeclarationParser.VARIABLE.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        final var astObject = parseResult.valueOrThrow();
+        final var astObject = ParseResultAssert.parse(expr, FieldDeclarationParser.VARIABLE)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value();
 
         Assertions.assertEquals(
                 Simple.WORD,
@@ -175,17 +155,10 @@ class FieldDeclarationParserTest {
     @Test
     void validWithOnlyValueSpecified() {
         final var expr = "var isValid = true";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldDeclarationParser.VARIABLE.parse(context);
-
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        final var astObject = parseResult.valueOrThrow();
+        final var astObject = ParseResultAssert.parse(expr, FieldDeclarationParser.VARIABLE)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value();
 
         Assertions.assertEquals(
                 Simple.WORD,
@@ -213,72 +186,37 @@ class FieldDeclarationParserTest {
     }
 
     @Test
+    void validParseCancellation() {
+        ParseResultAssert.parse("", FieldDeclarationParser.VARIABLE)
+                .skipped()
+                .hasNoDiagnosticMessages();
+    }
+
+    @Test
     void invalidWithNoTypeSpecifiedAfterColonOperator() {
-        final var expr = "var isInvalid:";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldDeclarationParser.VARIABLE.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
+        ParseResultAssert.parse("var isInvalid:", FieldDeclarationParser.VARIABLE)
+                .failed()
+                .hasErrors(Errors.EXPECTED_FIELD_TYPE);
     }
 
     @Test
     void invalidWithNoValueSpecifiedAfterAssignOperator() {
-        final var expr = "var isInvalid =";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldDeclarationParser.VARIABLE.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
+        ParseResultAssert.parse("var isInvalid =", FieldDeclarationParser.VARIABLE)
+                .failed()
+                .hasErrors(Errors.EXPECTED_ASSIGNABLE_VALUE);
     }
 
     @Test
     void invalidValueStartsWithNewLine() {
-        final var expr = "var isInvalid =\ntrue";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldDeclarationParser.VARIABLE.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
+        ParseResultAssert.parse("var isInvalid =\ntrue", FieldDeclarationParser.VARIABLE)
+                .failed()
+                .hasErrors(Errors.EXPECTED_ASSIGNABLE_VALUE);
     }
 
     @Test
     void invalidWithNoSpecifiedTypeOrValue() {
-        final var expr = "var isInvalid";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldDeclarationParser.VARIABLE.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
-    }
-
-    @Test
-    void validParseCancellation() {
-        final var expr = "";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = FieldDeclarationParser.VARIABLE.parse(context);
-
-        Assertions.assertTrue(parseResult.isCanceled(), "the parse result must be specified as cancelled");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
+        ParseResultAssert.parse("var isInvalid", FieldDeclarationParser.VARIABLE)
+                .failed()
+                .hasErrors(Errors.EXPECTED_ASSIGNMENT_TARGET);
     }
 }

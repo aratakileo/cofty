@@ -1,6 +1,7 @@
 package cofty.core.parser;
 
-import cofty.Utils;
+import cofty.ParseResultAssert;
+import cofty.core.compiler.diagnostic.Errors;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -9,7 +10,8 @@ class BodyParserTest {
 
     @Test
     void validModuleBodyAllAllowedElements() {
-        final var expr = """
+        final var astObject = ParseResultAssert.parse(
+                """
                 
                 
                 
@@ -26,18 +28,10 @@ class BodyParserTest {
                 }
                 
                 2 ** 2 * 2 ** 2 ** 2 / 4 + 1
-                """;
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = BodyParser.MODULE_BODY.parse(context);
+                """,
+                BodyParser.MODULE_BODY
+        ).ok().hasNoDiagnosticMessages().value();
 
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        final var astObject = parseResult.valueOrThrow();
         final var countOfResidents = 6;
 
         Assertions.assertEquals(
@@ -49,18 +43,11 @@ class BodyParserTest {
 
     @Test
     void validEmptyNestedBody() {
-        final var expr = "{}";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = MODULE_NESTED_BODY_PARSER.parse(context);
+        final var astObject = ParseResultAssert.parse("{}", MODULE_NESTED_BODY_PARSER)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value();
 
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        final var astObject = parseResult.valueOrThrow();
         final var countOfResidents = 0;
 
         Assertions.assertEquals(
@@ -72,22 +59,15 @@ class BodyParserTest {
 
     @Test
     void validNestedBodyWithNestedFuncCallThatSpecifiedRightAfterNewLine() {
-        final var expr = """
-                {
-                    println('Hello World!')
-                }
-                """;
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = MODULE_NESTED_BODY_PARSER.parse(context);
+        final var astObject = ParseResultAssert.parse(
+                        """
+                        {
+                            println('Hello World!')
+                        }
+                        """,
+                        MODULE_NESTED_BODY_PARSER
+                ).ok().hasNoDiagnosticMessages().value();
 
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        final var astObject = parseResult.valueOrThrow();
         final var countOfResidents = 1;
 
         Assertions.assertEquals(
@@ -99,18 +79,11 @@ class BodyParserTest {
 
     @Test
     void validEmptyNestedBodyInNestedBody() {
-        final var expr = "{{}}";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = MODULE_NESTED_BODY_PARSER.parse(context);
+        final var astObject = ParseResultAssert.parse("{{}}", MODULE_NESTED_BODY_PARSER)
+                .ok()
+                .hasNoDiagnosticMessages()
+                .value();
 
-        Assertions.assertTrue(parseResult.isSuccessful(), "the parse result must be successful");
-
-        Assertions.assertDoesNotThrow(
-                parseResult::valueOrThrow,
-                "the resulted ast object must be non null"
-        );
-
-        final var astObject = parseResult.valueOrThrow();
         final var countOfResidents = 1;
 
         Assertions.assertEquals(
@@ -122,103 +95,43 @@ class BodyParserTest {
 
     @Test
     void invalidUnclosedEmptyNestedBody() {
-        final var expr = "{";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = MODULE_NESTED_BODY_PARSER.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertEquals(
-                1,
-                context.messages.handler.errCount(),
-                "there must be exactly one compilation error message"
-        );
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
+        ParseResultAssert.parse("{", MODULE_NESTED_BODY_PARSER)
+                .failed()
+                .hasErrors(Errors.UNCLOSED_BRACKETS);
     }
 
     @Test
     void invalidUnclosedNestedBodyWithOtherParseFails() {
-        final var expr = "{var test =";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = MODULE_NESTED_BODY_PARSER.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertEquals(
-                2,
-                context.messages.handler.errCount(),
-                "there must be exactly two compilation error message"
-        );
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
+        ParseResultAssert.parse("{var test =", MODULE_NESTED_BODY_PARSER)
+                .failed()
+                .hasErrors(Errors.EXPECTED_ASSIGNABLE_VALUE, Errors.UNCLOSED_BRACKETS);
     }
 
     @Test
     void invalidModuleNestedBodyFunctionDeclaration() {
-        final var expr = "{fun invalid() {}}";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = MODULE_NESTED_BODY_PARSER.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertEquals(
-                1,
-                context.messages.handler.errCount(),
-                "there must be exactly one compilation error message"
-        );
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
+        ParseResultAssert.parse("{fun invalid() {}}", MODULE_NESTED_BODY_PARSER)
+                .failed()
+                .hasErrors(Errors.NOT_ALLOWED);
     }
 
     @Test
     void invalidEmptyModuleBody() {
-        final var expr = "";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = BodyParser.MODULE_BODY.parse(context);
-
-        Assertions.assertTrue(parseResult.isCanceled(), "the parse result must be specified as canceled");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
+        ParseResultAssert.parse("", BodyParser.MODULE_BODY)
+                .skipped()
+                .hasNoDiagnosticMessages();
     }
 
     @Test
     void invalidModuleBodyNoSeparatorBetweenExpressions() {
-        final var expr = "variable1 variable2";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = BodyParser.MODULE_BODY.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
+        ParseResultAssert.parse("variable1 variable2", BodyParser.MODULE_BODY)
+                .failed()
+                .hasErrors(Errors.MISSING_SEPARATOR);
     }
 
     @Test
     void invalidModuleBodyReturnStatement() {
-        final var expr = "return";
-        final var context = Utils.parseContextOf(expr);
-        final var parseResult = BodyParser.MODULE_BODY.parse(context);
-
-        Assertions.assertTrue(parseResult.isFailed(), "the parse result must be specified as failed");
-
-        Assertions.assertNull(
-                parseResult.value(),
-                "the resulted ast object must be null"
-        );
+        ParseResultAssert.parse("return", BodyParser.MODULE_BODY)
+                .failed()
+                .hasErrors(Errors.NOT_ALLOWED);
     }
 }

@@ -34,7 +34,7 @@ public enum Simple implements TokenType {
     }
 
     @Override
-    public @Nullable String content() {
+    public @NotNull String content() {
         return null;
     }
 }

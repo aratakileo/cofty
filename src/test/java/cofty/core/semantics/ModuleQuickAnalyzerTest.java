@@ -21,9 +21,7 @@ class ModuleQuickAnalyzerTest {
         final var analyzer = new ModuleQuickAnalyzer(moduleAnalyzeContext);
         final var analyzeResult = analyzer.analyze();
 
-        Assertions.assertEquals(0, moduleAnalyzeContext.messages.handler.errCount());
-        Assertions.assertEquals(0, moduleAnalyzeContext.messages.handler.warnCount());
-
+        Assertions.assertTrue(moduleAnalyzeContext.messages.engine.isEmpty());
         Assertions.assertTrue(analyzeResult, "the result of the semantics analyze must be successful");
 
         Assertions.assertTrue(
@@ -62,9 +60,7 @@ class ModuleQuickAnalyzerTest {
         final var analyzer = new ModuleQuickAnalyzer(moduleAnalyzeContext);
         final var analyzeResult = analyzer.analyze();
 
-        Assertions.assertEquals(0, moduleAnalyzeContext.messages.handler.errCount());
-        Assertions.assertEquals(0, moduleAnalyzeContext.messages.handler.warnCount());
-
+        Assertions.assertTrue(moduleAnalyzeContext.messages.engine.isEmpty());
         Assertions.assertTrue(analyzeResult, "the result of the semantics analyze must be successful");
 
         Assertions.assertTrue(
@@ -96,9 +92,7 @@ class ModuleQuickAnalyzerTest {
         final var analyzer = new ModuleQuickAnalyzer(moduleAnalyzeContext);
         final var analyzeResult = analyzer.analyze();
 
-        Assertions.assertEquals(0, moduleAnalyzeContext.messages.handler.errCount());
-        Assertions.assertEquals(0, moduleAnalyzeContext.messages.handler.warnCount());
-
+        Assertions.assertTrue(moduleAnalyzeContext.messages.engine.isEmpty());
         Assertions.assertTrue(analyzeResult, "the result of the semantics analyze must be successful");
 
         Assertions.assertTrue(

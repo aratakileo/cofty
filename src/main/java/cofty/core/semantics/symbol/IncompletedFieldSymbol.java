@@ -43,16 +43,16 @@ public final class IncompletedFieldSymbol
         if (fieldTypePath == null || basedOn.value != null) {
             var resolveResult = parentOrThrow().resolveTypePath(basedOn.valueOrThrow());
 
-            if (resolveResult.status != Scope.ResolveTypeResult.Status.SUCCESSFUL) {
+            if (resolveResult.status != Scope.ResolveTypeResult.Status.OK) {
                 if (resolveResult.status == Scope.ResolveTypeResult.Status.INCOMPLETE_SYMBOL) {
                     final var completionResult = Objects.requireNonNull(resolveResult.incompletedSymbol).tryComplete();
 
-                    if (completionResult.status != CompletionResult.Status.SUCCESSFUL)
+                    if (completionResult.status != CompletionResult.Status.OK)
                         return Cast.quiet(completionResult);
 
                     resolveResult = parentOrThrow().resolveTypePath(basedOn.valueOrThrow());
 
-                    if (resolveResult.status != Scope.ResolveTypeResult.Status.SUCCESSFUL)
+                    if (resolveResult.status != Scope.ResolveTypeResult.Status.OK)
                         throw new IllegalStateException();
 
                     if (fieldTypePath == null)
@@ -69,7 +69,7 @@ public final class IncompletedFieldSymbol
             } else fieldTypePath = resolveResult.successfullyResolvedPath;
         }
 
-        return CompletionResult.successful(new CompletedFieldSymbol(
+        return CompletionResult.OK(new CompletedFieldSymbol(
                 nameToken(),
                 Objects.requireNonNull(fieldTypePath),
                 isMutable(),

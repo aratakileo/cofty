@@ -3,7 +3,7 @@ package cofty.core.parser;
 import cofty.core.lexer.token.TypedToken;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.type.TokenType;
-import cofty.core.compiler.message.CompilationMessageHandler;
+import cofty.core.compiler.diagnostic.DiagnosticEngine;
 import cofty.type.TextContent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +16,7 @@ import java.util.Objects;
 public final class ParseContext {
     public final List<TypedToken<?>> tokens;
     public final TextContent text;
-    public final CompilationMessageHandler.ParseContextAssociated messages;
+    public final DiagnosticEngine.ParseContextAssociated messages;
 
     private int index = 0;
     private final ArrayList<Integer> indexSnapshotStack = new ArrayList<>();
@@ -28,7 +28,7 @@ public final class ParseContext {
     public ParseContext(
             @NotNull List<TypedToken<?>> tokens,
             @NotNull TextContent text,
-            @NotNull CompilationMessageHandler messages
+            @NotNull DiagnosticEngine messages
     ) {
         this.tokens = tokens;
         this.text = text;

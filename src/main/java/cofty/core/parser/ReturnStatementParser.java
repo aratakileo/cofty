@@ -13,19 +13,19 @@ public final class ReturnStatementParser implements Parser<ReturnStatementObject
     @Override
     public @NotNull ParseResult<ReturnStatementObject> parse(@NotNull ParseContext context) {
         if (!context.goNextIfCurrentIs(Keyword.RETURN))
-            return ParseResult.canceled();
+            return ParseResult.skipped();
 
         if (context.currentIs(Simple.NEWLINE))
-            return ParseResult.successful(new ReturnStatementObject(null));
+            return ParseResult.OK(new ReturnStatementObject(null));
 
         final var valueParseResult = ValueExpressionParser.create(true).parse(context);
 
-        if (valueParseResult.isCanceled())
-            return ParseResult.successful(new ReturnStatementObject(null));
+        if (valueParseResult.isSkipped())
+            return ParseResult.OK(new ReturnStatementObject(null));
 
         if (valueParseResult.isFailed())
             return ParseResult.failed();
 
-        return ParseResult.successful(new ReturnStatementObject(valueParseResult.valueOrThrow()));
+        return ParseResult.OK(new ReturnStatementObject(valueParseResult.valueOrThrow()));
     }
 }

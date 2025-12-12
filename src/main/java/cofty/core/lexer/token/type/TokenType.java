@@ -11,11 +11,10 @@ import java.util.regex.MatchResult;
 
 public interface TokenType extends Containable<TokenType>, Representable {
     @NotNull Simple type();
-    @Nullable String content();
+    @NotNull String content();
 
     default boolean equals(@NotNull TokenType type) {
         return type.type().equals(type())
-                && (type.content() == null) == (content() == null)
                 && Objects.equals(type.content(), content());
     }
 

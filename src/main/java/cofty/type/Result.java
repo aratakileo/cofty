@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
-public class Result<OK, ERR> {
+public final class Result<OK, ERR> {
     protected final OK ok;
     protected final ERR err;
 

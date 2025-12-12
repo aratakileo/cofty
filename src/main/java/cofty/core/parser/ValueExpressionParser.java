@@ -1,5 +1,6 @@
 package cofty.core.parser;
 
+import cofty.core.compiler.diagnostic.Errors;
 import cofty.core.lexer.token.TypedToken;
 import cofty.core.lexer.token.type.TokenType;
 import cofty.core.lexer.token.type.operator.*;
@@ -89,14 +90,11 @@ public final class ValueExpressionParser implements Parser<ExpressionValueObject
         context.rollbackSkippingNewLinesState();
 
         if (operandStack.isEmpty() && operatorStack.isEmpty())
-            return ParseResult.canceled();
+            return ParseResult.skipped();
 
         while (!operatorStack.isEmpty()) {
             if (operatorStack.getLast().equals(Bracket.ROUND_OPEN)) {
-                context.messages.addSyntaxErr(
-                        "the round brackets are opened here but never closed",
-                        operatorTokensStack.getLast().getFirst()
-                );
+                context.messages.report(operatorTokensStack.getLast().getFirst(), Errors.UNCLOSED_PARENTHESIS);
                 return ParseResult.failed();
             }
 
@@ -106,20 +104,17 @@ public final class ValueExpressionParser implements Parser<ExpressionValueObject
         if (operandStack.size() > 1)
             throw new IllegalStateException();
 
-        return ParseResult.successful(operandStack.getFirst());
+        return ParseResult.OK(operandStack.getFirst());
     }
 
     private @NotNull StaticParseResult parseOpenRoundBracket(@NotNull ParseContext context) {
         if (!context.currentIs(Bracket.ROUND_OPEN))
-            return StaticParseResult.CANCELED;
+            return StaticParseResult.SKIPPED;
 
         final var token = context.advanceOrThrow();
 
         if (!expectsOperand) {
-            context.messages.addSyntaxErr(
-                    "expected any binary operator here, not the opening round bracket `(`",
-                    token
-            );
+            context.messages.report(token, Errors.EXPECTED_BINARY_OPERATOR);
             return StaticParseResult.FAILED;
         }
 
@@ -127,7 +122,7 @@ public final class ValueExpressionParser implements Parser<ExpressionValueObject
         context.startSkippingNewLines();
         nestingLevel++;
 
-        return StaticParseResult.SUCCESSFUL;
+        return StaticParseResult.OK;
     }
 
     private @NotNull StaticParseResult parseCloseRoundBracket(@NotNull ParseContext context) {
@@ -141,12 +136,12 @@ public final class ValueExpressionParser implements Parser<ExpressionValueObject
          *
          */
         if (!context.currentIs(Bracket.ROUND_CLOSE) || nestingLevel == 0)
-            return StaticParseResult.CANCELED;
+            return StaticParseResult.SKIPPED;
 
         final var token = context.advanceOrThrow();
 
         if (expectsOperand) {
-            context.messages.addSyntaxErr("expected any operand here, not the closing round bracket `)`", token);
+            context.messages.report(token, Errors.EXPECTED_OPERAND_NOT_CLOSING_PARENT);
             return StaticParseResult.FAILED;
         }
 
@@ -163,14 +158,14 @@ public final class ValueExpressionParser implements Parser<ExpressionValueObject
         context.rollbackSkippingNewLinesState();
         nestingLevel--;
 
-        return StaticParseResult.SUCCESSFUL;
+        return StaticParseResult.OK;
     }
 
     private @NotNull StaticParseResult parseOperator(@NotNull ParseContext context) {
         final var token = context.current(true);
 
         if (token == null || !token.type.isValueOperator())
-            return StaticParseResult.CANCELED;
+            return StaticParseResult.SKIPPED;
 
         var operatorType = token.type;
         var operatorTokens = (List<TypedToken<?>>)null;
@@ -197,21 +192,27 @@ public final class ValueExpressionParser implements Parser<ExpressionValueObject
         final var isOperatorUnary = operatorType instanceof Unary;
 
         if (isOperatorUnary != expectsOperand) {
-            final var errorMessage = String.format(
-                    "expected any contextually appropriate %s operator here, not the %s operator `%s`",
-                    expectsOperand ? "unary" : "binary",
-                    isOperatorUnary ? "unary" : "binary",
+            final var expectedOperator = expectsOperand ? "unary" : "binary";
+            final var gotOperator = isOperatorUnary ? "unary" : "binary";
+
+            if (operatorTokens.size() == 2)
+                context.messages.reportRange(
+                        context.advanceOrThrow(),
+                        context.advanceOrThrow(),
+                        Errors.INVALID_OPERATOR_FOR_CONTEXT,
+                        expectedOperator,
+                        gotOperator,
+                        operatorType.content()
+                );
+
+            context.messages.report(
+                    context.advanceOrThrow(),
+                    Errors.INVALID_OPERATOR_FOR_CONTEXT,
+                    expectedOperator,
+                    gotOperator,
                     operatorType.content()
             );
 
-            if (operatorTokens.size() == 2)
-                context.messages.addInRangeSyntaxErr(
-                        errorMessage,
-                        context.advanceOrThrow(),
-                        context.advanceOrThrow()
-                );
-
-            context.messages.addSyntaxErr(errorMessage, context.advanceOrThrow());
             return StaticParseResult.FAILED;
         }
 
@@ -246,7 +247,7 @@ public final class ValueExpressionParser implements Parser<ExpressionValueObject
 
         expectsOperand = true;
 
-        return StaticParseResult.SUCCESSFUL;
+        return StaticParseResult.OK;
     }
 
     @NotNull StaticParseResult parseOperand(@NotNull ParseContext context) {
@@ -263,17 +264,17 @@ public final class ValueExpressionParser implements Parser<ExpressionValueObject
          *                  this wrong operand will be processed by ComplexValueParser because of that condition
          *
          */
-        if (!expectsOperand) return StaticParseResult.CANCELED;
+        if (!expectsOperand) return StaticParseResult.SKIPPED;
 
         final var parseResult = ComplexValueParser.DEFAULT.parse(context);
 
-        if (!parseResult.isSuccessful())
+        if (!parseResult.isOK())
             return StaticParseResult.of(parseResult);
 
         expectsOperand = false;
         operandStack.add(parseResult.valueOrThrow());
 
-        return StaticParseResult.SUCCESSFUL;
+        return StaticParseResult.OK;
     }
 
     private boolean applyOperator(@NotNull ParseContext context) {
@@ -281,10 +282,7 @@ public final class ValueExpressionParser implements Parser<ExpressionValueObject
 
         if (operator instanceof Binary) {
             if (operandStack.size() < 2) {
-                context.messages.addSyntaxErrAfterToken(
-                        "expected any second operand here",
-                        operatorTokensStack.getLast().getLast()
-                );
+                context.messages.reportAfter(operatorTokensStack.getLast().getLast(), Errors.EXPECTED_OPERAND);
                 return false;
             }
 
@@ -297,10 +295,7 @@ public final class ValueExpressionParser implements Parser<ExpressionValueObject
 
         if (operator instanceof Unary) {
             if (operandStack.isEmpty()) {
-                context.messages.addSyntaxErrAfterToken(
-                        "expected any operand here",
-                        operatorTokensStack.getLast().getLast()
-                );
+                context.messages.reportAfter(operatorTokensStack.getLast().getLast(), Errors.EXPECTED_OPERAND);
                 return false;
             }
 
@@ -333,24 +328,24 @@ public final class ValueExpressionParser implements Parser<ExpressionValueObject
     }
 
     private enum StaticParseResult {
-        SUCCESSFUL,
+        OK,
         FAILED,
-        CANCELED;
+        SKIPPED;
 
         public boolean isFailed() {
             return this == FAILED;
         }
 
         public boolean isCanceled() {
-            return this == CANCELED;
+            return this == SKIPPED;
         }
 
         public static @NotNull StaticParseResult of(@NotNull ParseResult<?> result) {
-            if (result.isCanceled())
-                return CANCELED;
+            if (result.isSkipped())
+                return SKIPPED;
 
-            if (result.isSuccessful())
-                return SUCCESSFUL;
+            if (result.isOK())
+                return OK;
 
             return FAILED;
         }
