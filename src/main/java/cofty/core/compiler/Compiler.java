@@ -4,8 +4,8 @@ import cofty.core.lexer.Lexer;
 import cofty.core.compiler.diagnostic.DiagnosticEngine;
 import cofty.core.parser.ParseContext;
 import cofty.core.semantics.ModuleContext;
-import cofty.core.semantics.ModuleDeepAnalyzer;
-import cofty.core.semantics.ModuleQuickAnalyzer;
+import cofty.core.semantics.ModuleDeepScanner;
+import cofty.core.semantics.ModuleQuickScanner;
 import cofty.core.semantics.symbol.scope.RootScope;
 import cofty.type.TextContent;
 import cofty.core.parser.BodyParser;
@@ -51,9 +51,9 @@ public final class Compiler {
         resultLogger.checkInParser(true);
 
         final var moduleContext = ModuleContext.create(text, messages, new RootScope(), parseResult.valueOrThrow());
-        final var quickAnalyzer = new ModuleQuickAnalyzer(moduleContext);
+        final var quickAnalyzer = new ModuleQuickScanner(moduleContext);
 
-        if (!quickAnalyzer.analyze()) {
+        if (!quickAnalyzer.scan()) {
             resultLogger.checkInQuickSemanticAnalyzer(false);
             return false;
         }
@@ -63,9 +63,9 @@ public final class Compiler {
         if (semanticTreeOutput)
             tryWriteScopeTreeSnapshot(moduleContext, true);
 
-        final var deepAnalyzer = new ModuleDeepAnalyzer(moduleContext);
+        final var deepAnalyzer = new ModuleDeepScanner(moduleContext);
 
-        if (!deepAnalyzer.analyze()) {
+        if (!deepAnalyzer.scan()) {
             resultLogger.checkInDeepSemanticAnalyzer(false);
             return false;
         }

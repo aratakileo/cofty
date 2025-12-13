@@ -7,19 +7,19 @@ import cofty.core.semantics.symbol.NamedSymbol;
 import cofty.core.semantics.symbol.scope.*;
 import org.jetbrains.annotations.NotNull;
 
-public final class ModuleQuickAnalyzer extends ModuleAnalyzer {
-    public ModuleQuickAnalyzer(@NotNull ModuleContext context) {
+public final class ModuleQuickScanner extends ModuleScanner {
+    public ModuleQuickScanner(@NotNull ModuleContext context) {
         super(context);
     }
 
     @Override
-    public boolean analyze() {
+    public boolean scan() {
         for (; index < currentBodyObject.residents().size(); index++) {
             final var residentObject = currentBodyObject.residents().get(index);
 
             var isFunc = residentObject.is(FuncDeclarationObject.class);
 
-            if (residentObject instanceof WithName named && currentScope.containsName(named.name()) && !isFunc) {
+            if (residentObject instanceof WithName named && currentScope.containsLocalName(named.name()) && !isFunc) {
                 addAlreadyDefinedNameError((NamedSymbol) currentScope.resolveOrThrow(named.name()), named.nameToken());
                 isFailed = true;
                 continue;
@@ -36,7 +36,7 @@ public final class ModuleQuickAnalyzer extends ModuleAnalyzer {
                 case FuncDeclarationObject funcDeclarationObject -> {
                     var _newScope = (FuncSignaturesScope)null;
 
-                    if (currentScope.containsName(funcDeclarationObject.name.content)) {
+                    if (currentScope.containsLocalName(funcDeclarationObject.name.content)) {
                         final var resolvedSymbol = currentScope.resolveOrThrow(funcDeclarationObject.name.content);
 
                         if (resolvedSymbol instanceof FuncSignaturesScope funcSignaturesScope) _newScope = funcSignaturesScope;
@@ -68,7 +68,7 @@ public final class ModuleQuickAnalyzer extends ModuleAnalyzer {
                 }
 
                 case FieldDeclarationObject fieldDeclarationObject -> currentScope.put(
-                        new IncompletedFieldSymbol(fieldDeclarationObject)
+                        IncompletedFieldSymbol.create(fieldDeclarationObject)
                 );
 
                 default -> {}

@@ -37,7 +37,7 @@ public final class FuncSignaturesScope extends NamedSymbol implements Scope {
     }
 
     @Override
-    public boolean containsName(@NotNull String name) {
+    public boolean containsLocalName(@NotNull String name) {
         try {
             return Integer.parseInt(name) < funcs.size();
         } catch (Exception e) {
@@ -59,7 +59,7 @@ public final class FuncSignaturesScope extends NamedSymbol implements Scope {
         }
     }
 
-    public @Nullable CompletedFuncScope resolve(@NotNull List<AbsSymbolPath> argSignatures) {
+    public @Nullable CompletedFuncScope resolveBySignature(@NotNull List<TypeDescriptor<AbsSymbolPath>> argSignatures) {
         for (final var funcScope: funcs)
             if (funcScope instanceof CompletedFuncScope completedFuncScope)
                 if (completedFuncScope.canReceive(argSignatures))
@@ -68,7 +68,7 @@ public final class FuncSignaturesScope extends NamedSymbol implements Scope {
         return null;
     }
 
-    public @Nullable IncompletedFuncScope resolveIncompleted(@NotNull List<RelativeSymbolPath> argSignatures) {
+    public @Nullable IncompletedFuncScope resolveIncompleted(@NotNull List<TypeDescriptor<RelativeSymbolPath>> argSignatures) {
         for (final var funcScope: funcs)
             if (funcScope instanceof IncompletedFuncScope incompletedFuncScope)
                 if (incompletedFuncScope.canReceive(argSignatures))
@@ -77,11 +77,11 @@ public final class FuncSignaturesScope extends NamedSymbol implements Scope {
         return null;
     }
 
-    public @NotNull IncompletedFuncScope resolveIncompletedOrThrow(@NotNull List<RelativeSymbolPath> argSignatures) {
+    public @NotNull IncompletedFuncScope resolveIncompletedOrThrow(@NotNull List<TypeDescriptor<RelativeSymbolPath>> argSignatures) {
         return Objects.requireNonNull(resolveIncompleted(argSignatures));
     }
 
-    public @Nullable CompletedFuncScope resolveCompleted(@NotNull List<RelativeSymbolPath> argSignatures) {
+    public @Nullable CompletedFuncScope resolveCompleted(@NotNull List<TypeDescriptor<RelativeSymbolPath>> argSignatures) {
         for (final var funcScope: funcs)
             if (funcScope instanceof CompletedFuncScope completedFuncScope)
                 if (completedFuncScope.canProbablyReceive(argSignatures))
@@ -95,6 +95,16 @@ public final class FuncSignaturesScope extends NamedSymbol implements Scope {
         return IntStream.range(0, funcs.size()).mapToObj(String::valueOf).collect(Collectors.toSet());
     }
 
+    @Override
+    public boolean isEmpty() {
+        return funcs.isEmpty();
+    }
+
+    @Override
+    public int childrenCount() {
+        return funcs.size();
+    }
+
     public void remove(@NotNull FuncScope<?> funcScope) {
         if (!funcScope.name().equals(name()))
             throw new IllegalArgumentException();
@@ -102,7 +112,7 @@ public final class FuncSignaturesScope extends NamedSymbol implements Scope {
         funcs.remove(funcScope);
     }
 
-    public boolean containsCompletedSignature(@NotNull List<AbsSymbolPath> argSignatures) {
+    public boolean containsCompletedSignature(@NotNull List<TypeDescriptor<AbsSymbolPath>> argSignatures) {
         for (final var funcScope: funcs)
             if (funcScope instanceof CompletedFuncScope completed && completed.canReceive(argSignatures))
                 return true;
@@ -110,7 +120,7 @@ public final class FuncSignaturesScope extends NamedSymbol implements Scope {
         return false;
     }
 
-    public boolean containsIncompletedSignature(@NotNull List<RelativeSymbolPath> argSignatures) {
+    public boolean containsIncompletedSignature(@NotNull List<TypeDescriptor<RelativeSymbolPath>> argSignatures) {
         for (final var funcScope: funcs)
             if (funcScope instanceof IncompletedFuncScope incompleted && incompleted.canReceive(argSignatures))
                 return true;
@@ -118,7 +128,7 @@ public final class FuncSignaturesScope extends NamedSymbol implements Scope {
         return false;
     }
 
-    public @NotNull IncompletedSymbol.CompletionResult<CompletedFuncScope> tryComplete(@NotNull List<RelativeSymbolPath> argSignatures) {
+    public @NotNull IncompletedSymbol.CompletionResult<CompletedFuncScope> tryComplete(@NotNull List<TypeDescriptor<RelativeSymbolPath>> argSignatures) {
         for (final var funcScope: funcs)
             if (funcScope instanceof IncompletedFuncScope incompleted && incompleted.canReceive(argSignatures))
                 return incompleted.tryComplete();

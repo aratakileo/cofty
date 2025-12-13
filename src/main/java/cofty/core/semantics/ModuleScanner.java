@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-public sealed abstract class ModuleAnalyzer permits ModuleQuickAnalyzer, ModuleDeepAnalyzer {
+public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDeepScanner {
     private final ArrayList<WithBody> bodyObjectsStack = new ArrayList<>();
     private final ArrayList<Integer> childIndexesStack = new ArrayList<>();
     private final ArrayList<Scope> scopesStack = new ArrayList<>();
@@ -21,13 +21,13 @@ public sealed abstract class ModuleAnalyzer permits ModuleQuickAnalyzer, ModuleD
 
     public final ModuleContext context;
 
-    protected ModuleAnalyzer(@NotNull ModuleContext context) {
+    protected ModuleScanner(@NotNull ModuleContext context) {
         this.context = context;
         this.currentScope = context.scope;
         this.currentBodyObject = context.bodyObject;
     }
 
-    public abstract boolean analyze();
+    public abstract boolean scan();
 
     protected void diveInto(@NotNull Scope scope, @NotNull WithBody bodyObject) {
         if (bodyObject.residents().isEmpty()) return;

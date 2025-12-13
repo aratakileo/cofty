@@ -7,10 +7,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public final class TypeDescriptionObject implements AstObject {
+public final class TypeDescriptorObject implements AstObject {
     public final List<TypedToken<Simple>> name;
 
-    public TypeDescriptionObject(@NotNull List<TypedToken<Simple>> name) {
+    public TypeDescriptorObject(@NotNull List<TypedToken<Simple>> name) {
         this.name = name;
     }
 
@@ -21,7 +21,7 @@ public final class TypeDescriptionObject implements AstObject {
 
     @Override
     public boolean equals(@NotNull Object _other) {
-        if (_other instanceof TypeDescriptionObject other) {
+        if (_other instanceof TypeDescriptorObject other) {
             if (name.size() != other.name.size())
                 return false;
 

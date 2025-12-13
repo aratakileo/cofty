@@ -17,10 +17,10 @@ public abstract class ChildScope extends ChildSymbol implements Scope {
 
     @Override
     public @Nullable Symbol resolve(@NotNull String name) {
-        if (containsName(name))
+        if (containsLocalName(name))
             return children.get(name);
 
-        if (parent() != null && parentOrThrow().containsName(name))
+        if (parent() != null && parentOrThrow().containsLocalName(name))
             return parentOrThrow().resolve(name);
 
         return null;
@@ -35,12 +35,22 @@ public abstract class ChildScope extends ChildSymbol implements Scope {
     }
 
     @Override
-    public boolean containsName(@NotNull String name) {
+    public boolean containsLocalName(@NotNull String name) {
         return children.containsKey(name);
     }
 
     @Override
     public @NotNull Set<String> childNames() {
         return children.keySet();
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return children.isEmpty();
+    }
+
+    @Override
+    public int childrenCount() {
+        return children.size();
     }
 }

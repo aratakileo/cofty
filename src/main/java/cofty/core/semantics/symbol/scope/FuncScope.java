@@ -2,13 +2,11 @@ package cofty.core.semantics.symbol.scope;
 
 import cofty.core.lexer.token.TypedToken;
 import cofty.core.lexer.token.type.Simple;
-import cofty.core.parser.ast.FuncDeclarationObject;
-import cofty.core.parser.ast.TypeDescriptionObject;
-import cofty.core.parser.ast.value.complex.SimpleValueObject;
 import cofty.core.semantics.symbol.FieldSymbol;
 import cofty.core.semantics.symbol.Symbol;
+import cofty.core.semantics.symbol.TypeDescriptor;
 import cofty.core.semantics.symbol.WithValueType;
-import cofty.core.semantics.symbol.path.AbsSymbolPath;
+import cofty.core.semantics.symbol.path.SymbolPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,14 +14,15 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public sealed abstract class FuncScope<T> extends NamedScope implements WithValueType<T> permits IncompletedFuncScope, CompletedFuncScope {
+public sealed abstract class FuncScope<T extends SymbolPath<?>> extends NamedScope implements WithValueType<T>
+        permits IncompletedFuncScope, CompletedFuncScope {
     protected final LinkedHashMap<String, FieldSymbol<T>> args = new LinkedHashMap<>();
 
-    private final T returnedValueTypePath;
+    private final TypeDescriptor<T> returnedValueTypePath;
 
     protected FuncScope(
             @NotNull TypedToken<Simple> name,
-            @NotNull T returnedValueTypePath,
+            @NotNull TypeDescriptor<T> returnedValueTypePath,
             @NotNull List<? extends FieldSymbol<T>> args
     ) {
         super(name);
@@ -32,6 +31,22 @@ public sealed abstract class FuncScope<T> extends NamedScope implements WithValu
         for (final var arg: args) {
             this.args.put(arg.name(), arg);
         }
+    }
+
+    public @NotNull List<TypeDescriptor<T>> getArgSignatures() {
+        return args.sequencedValues().stream().map(FieldSymbol::valueType).toList();
+    }
+
+    public boolean canReceive(@NotNull List<TypeDescriptor<T>> argSignatures) {
+        if (args.size() != argSignatures.size()) return false;
+
+        final var functionArgSymbols = args.values().stream().toList();
+
+        for (var i = 0; i < args.size(); i++)
+            if (!functionArgSymbols.get(i).valueTypeOrThrow().equals(argSignatures.get(i)))
+                return false;
+
+        return true;
     }
 
     @Override
@@ -43,8 +58,8 @@ public sealed abstract class FuncScope<T> extends NamedScope implements WithValu
     }
 
     @Override
-    public boolean containsName(@NotNull String name) {
-        return args.containsKey(name) || super.containsName(name);
+    public boolean containsLocalName(@NotNull String name) {
+        return args.containsKey(name) || super.containsLocalName(name);
     }
 
     @Override
@@ -61,7 +76,17 @@ public sealed abstract class FuncScope<T> extends NamedScope implements WithValu
     }
 
     @Override
-    public @NotNull T valueType() {
+    public boolean isEmpty() {
+        return super.isEmpty() && args.isEmpty();
+    }
+
+    @Override
+    public int childrenCount() {
+        return super.childrenCount() + args.size();
+    }
+
+    @Override
+    public @Nullable TypeDescriptor<T> valueType() {
         return returnedValueTypePath;
     }
 
@@ -88,7 +113,7 @@ public sealed abstract class FuncScope<T> extends NamedScope implements WithValu
                 return true;
 
             for (final var arg : args.values().stream().toList())
-                if (!other.args.containsKey(arg.name()) || !arg.valueType().equals(other.args.get(arg.name()).valueType()))
+                if (!other.args.containsKey(arg.name()) || !arg.valueTypeOrThrow().equals(other.args.get(arg.name()).valueTypeOrThrow()))
                     return false;
 
             return true;

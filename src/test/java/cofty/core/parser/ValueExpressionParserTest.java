@@ -1,6 +1,5 @@
 package cofty.core.parser;
 
-import cofty.ParseResultAssert;
 import cofty.core.compiler.diagnostic.Errors;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.parser.ast.value.BinaryExpressionObject;

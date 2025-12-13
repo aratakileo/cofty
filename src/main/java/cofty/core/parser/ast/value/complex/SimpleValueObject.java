@@ -30,6 +30,6 @@ public final class SimpleValueObject implements ValueSegmentObject {
     }
 
     public @NotNull String valueTypeName() {
-        return ((Enum<?>)value.type).name().toLowerCase();
+        return value.type.isAny(Keyword.TRUE, Keyword.FALSE) ? "bool" : value.typeAsEnum().name().toLowerCase();
     }
 }

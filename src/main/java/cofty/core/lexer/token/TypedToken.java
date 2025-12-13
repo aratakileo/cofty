@@ -23,6 +23,10 @@ public class TypedToken<T extends TokenType> {
         this.end = end;
     }
 
+    public @NotNull Enum<?> typeAsEnum() {
+        return Cast.quiet(type);
+    }
+
     public @NotNull TypedToken<T> merge(@NotNull TypedToken<T> token) {
         if (!type.equals(token.type))
             throw new IllegalStateException("Both tokens should have the same type");

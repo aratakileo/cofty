@@ -1,27 +1,25 @@
 package cofty.core.semantics.symbol.scope;
 
 import cofty.core.parser.ast.FuncDeclarationObject;
-import cofty.core.parser.ast.TypeDescriptionObject;
 import cofty.core.semantics.symbol.CompletedFieldSymbol;
 import cofty.core.semantics.symbol.IncompletedFieldSymbol;
 import cofty.core.semantics.symbol.IncompletedSymbol;
+import cofty.core.semantics.symbol.TypeDescriptor;
 import cofty.core.semantics.symbol.path.RelativeSymbolPath;
-import cofty.core.semantics.symbol.path.SymbolPath;
 import cofty.util.Cast;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.List;
 
-public final class IncompletedFuncScope extends FuncScope<TypeDescriptionObject>
+public final class IncompletedFuncScope extends FuncScope<RelativeSymbolPath>
         implements IncompletedSymbol<FuncDeclarationObject, CompletedFuncScope> {
     private final FuncDeclarationObject basedOn;
 
     public IncompletedFuncScope(@NotNull FuncDeclarationObject basedOn) {
         super(
                 basedOn.name,
-                basedOn.returnType,
-                basedOn.args.stream().map(IncompletedFieldSymbol::new).toList()
+                basedOn.returnType == null ? TypeDescriptor.RELATIVE_NULL : TypeDescriptor.rawReference(basedOn.returnType),
+                basedOn.args.stream().map(IncompletedFieldSymbol::create).toList()
         );
 
         this.basedOn = basedOn;
@@ -48,43 +46,20 @@ public final class IncompletedFuncScope extends FuncScope<TypeDescriptionObject>
             }
         }
 
-        final var typeResolveResult = parentOrThrow().resolveTypePath(
-                valueType() == null
-                        ? SymbolPath.relative("null")
-                        : SymbolPath.rawTokens(valueType().name)
-        );
+        final var typeResolveResult = parentOrThrow().resolveTypePath(valueTypeOrThrow().path);
 
         if (typeResolveResult.isErr())
             return CompletionResult.typeBasedFail(
                     CompletionResult.Status.of(typeResolveResult.unwrapErr()),
-                    valueType().name
+                    basedOn.returnType.name
             );
 
         ((FuncSignaturesScope)parentOrThrow()).remove(this);
 
         return CompletionResult.OK(new CompletedFuncScope(
                 nameToken(),
-                typeResolveResult.unwrap(),
+                TypeDescriptor.reference(typeResolveResult.unwrap()),
                 completedArgs
         ));
-    }
-
-    public boolean canReceive(@NotNull List<RelativeSymbolPath> argSignatures) {
-        if (args.size() != argSignatures.size()) return false;
-
-        final var functionArgSymbols = args.values().stream().toList();
-
-        for (var i = 0; i < args.size(); i++)
-            if (!SymbolPath.rawTokens(functionArgSymbols.get(i).valueType().name).equals(argSignatures.get(i)))
-                return false;
-
-        return true;
-    }
-
-    public @NotNull List<RelativeSymbolPath> getArgSignatures() {
-        return args.sequencedValues()
-                .stream()
-                .map(field -> RelativeSymbolPath.rawTokens(field.valueType().name))
-                .toList();
     }
 }

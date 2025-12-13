@@ -1,6 +1,5 @@
 package cofty.core.parser;
 
-import cofty.ParseResultAssert;
 import cofty.core.compiler.diagnostic.Errors;
 import cofty.type.Representable;
 import org.junit.jupiter.api.Assertions;

@@ -14,13 +14,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public final class ModuleDeepAnalyzer extends ModuleAnalyzer {
-    public ModuleDeepAnalyzer(@NotNull ModuleContext context) {
+public final class ModuleDeepScanner extends ModuleScanner {
+    public ModuleDeepScanner(@NotNull ModuleContext context) {
         super(context);
     }
 
     @Override
-    public boolean analyze() {
+    public boolean scan() {
         for (; index < currentBodyObject.residents().size(); index++) {
             final var residentObject = currentBodyObject.residents().get(index);
 
@@ -65,7 +65,7 @@ public final class ModuleDeepAnalyzer extends ModuleAnalyzer {
         var fieldSymbol = parentScope.resolve(fieldDeclarationObject.name());
 
         if (fieldSymbol == null) {
-            fieldSymbol = new IncompletedFieldSymbol(fieldDeclarationObject);
+            fieldSymbol = IncompletedFieldSymbol.create(fieldDeclarationObject);
             parentScope.put(fieldSymbol);
         }
 

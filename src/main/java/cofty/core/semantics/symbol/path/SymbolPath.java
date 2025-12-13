@@ -6,10 +6,11 @@ import cofty.core.semantics.symbol.scope.RootScope;
 import cofty.util.Cast;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
-public sealed abstract class SymbolPath<T extends SymbolPath<?>> permits AbsSymbolPath, RelativeSymbolPath {
+public sealed abstract class SymbolPath<T extends SymbolPath<T>> permits AbsSymbolPath, RelativeSymbolPath {
     public final List<String> parts;
 
     protected SymbolPath(@NotNull List<String> path) {
@@ -66,46 +67,6 @@ public sealed abstract class SymbolPath<T extends SymbolPath<?>> permits AbsSymb
         return Cast.quiet(raw(parts.subList(0, end)));
     }
 
-    public static @NotNull AbsSymbolPath absolute(@NotNull List<String> path) {
-        if (path.isEmpty())
-            throw new IllegalArgumentException("empty path");
-
-        if (!path.getFirst().equals(RootScope.NAME))
-            throw new IllegalArgumentException("not an absolute path");
-
-        if (path.size() == 1)
-            return AbsSymbolPath.ROOT;
-
-        return new AbsSymbolPath(path);
-    }
-
-    public static @NotNull RelativeSymbolPath relative(@NotNull String path) {
-        return relative(List.of(path));
-    }
-
-    public static @NotNull RelativeSymbolPath relative(@NotNull List<String> path) {
-        if (path.isEmpty())
-            throw new IllegalArgumentException("empty path");
-
-        if (path.getFirst().equals(RootScope.NAME))
-            throw new IllegalArgumentException("not a relative path");
-
-        return new RelativeSymbolPath(path);
-    }
-
-    public static @NotNull SymbolPath<?> raw(@NotNull List<String> path) {
-        return path.getFirst().equals(RootScope.NAME) ? absolute(path) : relative(path);
-    }
-
-    public static @NotNull RelativeSymbolPath rawTokens(@NotNull List<TypedToken<Simple>> path) {
-        return new RelativeSymbolPath(path.stream().map(token -> {
-            if (!token.type.equals(Simple.WORD))
-                throw new IllegalStateException();
-
-            return token.content;
-        }).toList());
-    }
-
     @Override
     public boolean equals(@NotNull Object _other) {
         if (_other instanceof SymbolPath<?> other) {
@@ -120,5 +81,45 @@ public sealed abstract class SymbolPath<T extends SymbolPath<?>> permits AbsSymb
     @Override
     public String toString() {
         return String.join(".", parts);
+    }
+
+    public static @NotNull SymbolPath<?> raw(@NotNull List<String> path) {
+        return path.getFirst().equals(RootScope.NAME) ? absolute(path) : relative(path);
+    }
+
+    public static @NotNull RelativeSymbolPath rawRelative(@NotNull String path) {
+        return relative(Arrays.stream(path.split("\\.")).toList());
+    }
+
+    public static @NotNull RelativeSymbolPath rawRelative(@NotNull List<TypedToken<Simple>> path) {
+        return new RelativeSymbolPath(path.stream().map(token -> {
+            if (!token.type.equals(Simple.WORD))
+                throw new IllegalStateException();
+
+            return token.content;
+        }).toList());
+    }
+
+    public static @NotNull RelativeSymbolPath relative(@NotNull List<String> path) {
+        if (path.isEmpty())
+            throw new IllegalArgumentException("empty path");
+
+        if (path.getFirst().equals(RootScope.NAME))
+            throw new IllegalArgumentException("not a relative path");
+
+        return new RelativeSymbolPath(path);
+    }
+
+    public static @NotNull AbsSymbolPath absolute(@NotNull List<String> path) {
+        if (path.isEmpty())
+            throw new IllegalArgumentException("empty path");
+
+        if (!path.getFirst().equals(RootScope.NAME))
+            throw new IllegalArgumentException("not an absolute path");
+
+        if (path.size() == 1)
+            return AbsSymbolPath.ROOT;
+
+        return new AbsSymbolPath(path);
     }
 }

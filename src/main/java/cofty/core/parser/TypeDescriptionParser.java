@@ -5,16 +5,16 @@ import cofty.core.lexer.token.TypedToken;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.type.operator.Separator;
 import cofty.util.Lists;
-import cofty.core.parser.ast.TypeDescriptionObject;
+import cofty.core.parser.ast.TypeDescriptorObject;
 import org.jetbrains.annotations.NotNull;
 
-public final class TypeDescriptionParser implements Parser<TypeDescriptionObject> {
+public final class TypeDescriptionParser implements Parser<TypeDescriptorObject> {
     public static final TypeDescriptionParser DEFAULT = new TypeDescriptionParser();
 
     private TypeDescriptionParser() {}
 
     @Override
-    public @NotNull ParseResult<TypeDescriptionObject> parse(@NotNull ParseContext context) {
+    public @NotNull ParseResult<TypeDescriptorObject> parse(@NotNull ParseContext context) {
         if (!context.currentIs(Simple.WORD)) return ParseResult.skipped();
 
         final var words = Lists.<TypedToken<Simple>>arrayListOf(context.advanceOrThrow().strictAs());
@@ -30,6 +30,6 @@ public final class TypeDescriptionParser implements Parser<TypeDescriptionObject
             words.add(context.advanceOrThrow().strictAs());
         }
 
-        return ParseResult.OK(new TypeDescriptionObject(words));
+        return ParseResult.OK(new TypeDescriptorObject(words));
     }
 }

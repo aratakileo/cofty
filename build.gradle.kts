@@ -12,6 +12,8 @@ repositories {
 dependencies {
     testImplementation(platform("org.junit:junit-bom:6.0.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
+    testCompileOnly("org.jetbrains:annotations:26.0.2-1")
+
     compileOnly("org.jetbrains:annotations:26.0.2-1")
 }
 

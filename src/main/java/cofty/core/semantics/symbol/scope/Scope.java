@@ -3,7 +3,6 @@ package cofty.core.semantics.symbol.scope;
 import cofty.core.lexer.token.TypedToken;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.type.TokenType;
-import cofty.core.parser.ast.TypeDescriptionObject;
 import cofty.core.parser.ast.value.ExpressionValueObject;
 import cofty.core.parser.ast.value.complex.FieldAccessObject;
 import cofty.core.parser.ast.value.complex.FuncCallObject;
@@ -11,6 +10,7 @@ import cofty.core.parser.ast.value.complex.SimpleValueObject;
 import cofty.core.semantics.symbol.*;
 import cofty.core.semantics.symbol.path.AbsSymbolPath;
 import cofty.core.semantics.symbol.path.RelativeSymbolPath;
+import cofty.core.semantics.symbol.path.SymbolPath;
 import cofty.type.Result;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,12 +22,16 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public interface Scope extends Symbol {
-    boolean containsName(@NotNull String name);
+    boolean containsLocalName(@NotNull String name);
 
     @Nullable Symbol resolve(@NotNull String name);
 
     default @NotNull Symbol resolveOrThrow(@NotNull String name) {
         return Objects.requireNonNull(resolve(name));
+    }
+
+    default @Nullable Symbol resolve(@NotNull SymbolPath<?> path) {
+        return path.isAbs() ? resolve((AbsSymbolPath) path) : resolve((RelativeSymbolPath) path);
     }
 
     default @Nullable Symbol resolve(@NotNull RelativeSymbolPath path) {
@@ -41,7 +45,7 @@ public interface Scope extends Symbol {
             for (var i = 0; i < path.parts.size(); i++) {
                 final var nextScopeName = path.parts.get(i);
 
-                if (!returnableScope.containsName(nextScopeName)) continue MAIN;
+                if (!returnableScope.containsLocalName(nextScopeName)) continue MAIN;
 
                 final var currentSymbol = returnableScope.resolve(nextScopeName);
 
@@ -69,7 +73,7 @@ public interface Scope extends Symbol {
         for (var i = 1; i < path.parts.size(); i++) {
             final var nextScopeName = path.parts.get(i);
 
-            if (!currentScope.containsName(nextScopeName)) break;
+            if (!currentScope.containsLocalName(nextScopeName)) break;
 
             final var currentSymbol = currentScope.resolve(nextScopeName);
 
@@ -82,12 +86,6 @@ public interface Scope extends Symbol {
         }
 
         return currentScope;
-    }
-
-    default @NotNull Result<AbsSymbolPath, ValueTypeUndefined> resolveTypePath(
-            @NotNull TypeDescriptionObject typeDescriptionObject
-    ) {
-        return resolveTypePath(RelativeSymbolPath.rawTokens(typeDescriptionObject.name));
     }
 
     default @NotNull Result<AbsSymbolPath, ValueTypeUndefined> resolveTypePath(
@@ -107,7 +105,7 @@ public interface Scope extends Symbol {
     default @NotNull ResolveTypeResult<?> resolveTypePath(@NotNull ExpressionValueObject valueObject) {
         return switch (valueObject) {
             case SimpleValueObject simpleValueObject -> {
-                final var typeName = simpleValueObject.value.type.toString().toLowerCase();
+                final var typeName = simpleValueObject.valueTypeName();
                 final var resolvedSymbol = resolve(typeName);
 
                 if (resolvedSymbol == null)
@@ -128,7 +126,7 @@ public interface Scope extends Symbol {
                             ResolveTypeResult.NamedSymbol.FUNCTION
                     );
                     case FuncSignaturesScope funcSignaturesScope -> {
-                        final var argsSignature = new ArrayList<AbsSymbolPath>();
+                        final var argsSignature = new ArrayList<TypeDescriptor<AbsSymbolPath>>();
 
                         for (final var argValue: funcCallObject.args) {
                             final var resolveTypeResult = resolveTypePath(argValue);
@@ -136,10 +134,10 @@ public interface Scope extends Symbol {
                             if (resolveTypeResult.status != ResolveTypeResult.Status.OK)
                                 yield resolveTypeResult;
 
-                            argsSignature.add(resolveTypeResult.successfullyResolvedPath);
+                            argsSignature.add(TypeDescriptor.reference(resolveTypeResult.successfullyResolvedPath));
                         }
 
-                        final var resolvedFunctionScope = funcSignaturesScope.resolve(argsSignature);
+                        final var resolvedFunctionScope = funcSignaturesScope.resolveBySignature(argsSignature);
 
                         if (resolvedFunctionScope == null)
                             yield ResolveTypeResult.undefinedValue(
@@ -147,7 +145,7 @@ public interface Scope extends Symbol {
                                     ResolveTypeResult.NamedSymbol.FUNCTION
                             );
 
-                        yield ResolveTypeResult.successful(resolvedFunctionScope.valueType());
+                        yield ResolveTypeResult.successful(resolvedFunctionScope.valueTypeOrThrow().path);
                     }
                     case IncompletedSymbol<?, ?> incompletedSymbol -> ResolveTypeResult.incompleteSymbol(incompletedSymbol);
                     default -> ResolveTypeResult.nonValue(
@@ -166,7 +164,7 @@ public interface Scope extends Symbol {
                             List.of(fieldAccessObject.name),
                             ResolveTypeResult.NamedSymbol.FIELD
                     );
-                    case CompletedFieldSymbol fieldSymbol -> ResolveTypeResult.successful(fieldSymbol.valueType());
+                    case CompletedFieldSymbol fieldSymbol -> ResolveTypeResult.successful(fieldSymbol.valueTypeOrThrow().path);
                     case IncompletedSymbol<?, ?> incompletedSymbol -> ResolveTypeResult.incompleteSymbol(incompletedSymbol);
                     default -> ResolveTypeResult.nonValue(
                             List.of(fieldAccessObject.name),
@@ -190,6 +188,10 @@ public interface Scope extends Symbol {
 
     @NotNull Set<String> childNames();
 
+    boolean isEmpty();
+
+    int childrenCount();
+
     @Override
     default @NotNull String represented() {
         return represented(0, 3);
@@ -200,9 +202,9 @@ public interface Scope extends Symbol {
                 "%s%s {%s%s%s};",
                 " ".repeat(offset),
                 representedHeader(),
-                childNames().isEmpty() ? "" : "\n",
+                isEmpty() ? "" : "\n",
                 representedChildren(offset, childrenOffset),
-                childNames().isEmpty() ? "" : "\n" + " ".repeat(offset)
+                isEmpty() ? "" : "\n" + " ".repeat(offset)
         );
     }
 
