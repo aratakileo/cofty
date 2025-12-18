@@ -5,16 +5,24 @@ import cofty.core.lexer.token.type.Simple;
 import cofty.core.semantics.symbol.scope.RootScope;
 import cofty.util.Cast;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
 public sealed abstract class SymbolPath<T extends SymbolPath<T>> permits AbsSymbolPath, RelativeSymbolPath {
+    public final String fullName;
     public final List<String> parts;
+
+    protected SymbolPath(@NotNull String path) {
+        this.parts = Arrays.stream(path.split("\\.")).toList();
+        this.fullName = path;
+    }
 
     protected SymbolPath(@NotNull List<String> path) {
         this.parts = path;
+        this.fullName = String.join(".", parts);
     }
 
     public final boolean isAbs() {
@@ -51,20 +59,22 @@ public sealed abstract class SymbolPath<T extends SymbolPath<T>> permits AbsSymb
         if (otherPath.parts.size() > parts.size())
             return false;
 
-        for (var i = parts.size() - 1; i > 0; i--)
-            if (!parts.get(i).equals(otherPath.parts.get(i)))
+        final var offset = parts.size() - otherPath.parts.size();
+
+        for (var i = parts.size() - 1; i >= offset; i--)
+            if (!parts.get(i).equals(otherPath.parts.get(i - offset)))
                 return false;
 
         return true;
     }
 
-    public @NotNull T sliceUntil(int end) {
-        if (end == 0 || end >= parts.size() || end <= -parts.size())
+    public @NotNull T sliceUntilPart(int endPart) {
+        if (endPart == 0 || endPart >= parts.size() || endPart <= -parts.size())
             throw new IllegalArgumentException();
 
-        if (end < 0) end += parts.size();
+        if (endPart < 0) endPart += parts.size();
 
-        return Cast.quiet(raw(parts.subList(0, end)));
+        return Cast.quiet(raw(parts.subList(0, endPart)));
     }
 
     @Override
@@ -80,15 +90,11 @@ public sealed abstract class SymbolPath<T extends SymbolPath<T>> permits AbsSymb
 
     @Override
     public String toString() {
-        return String.join(".", parts);
+        return fullName;
     }
 
     public static @NotNull SymbolPath<?> raw(@NotNull List<String> path) {
         return path.getFirst().equals(RootScope.NAME) ? absolute(path) : relative(path);
-    }
-
-    public static @NotNull RelativeSymbolPath rawRelative(@NotNull String path) {
-        return relative(Arrays.stream(path.split("\\.")).toList());
     }
 
     public static @NotNull RelativeSymbolPath rawRelative(@NotNull List<TypedToken<Simple>> path) {
@@ -100,26 +106,52 @@ public sealed abstract class SymbolPath<T extends SymbolPath<T>> permits AbsSymb
         }).toList());
     }
 
-    public static @NotNull RelativeSymbolPath relative(@NotNull List<String> path) {
-        if (path.isEmpty())
-            throw new IllegalArgumentException("empty path");
-
-        if (path.getFirst().equals(RootScope.NAME))
-            throw new IllegalArgumentException("not a relative path");
-
-        return new RelativeSymbolPath(path);
+    public static @NotNull AbsSymbolPath absolute(@NotNull String path) {
+        return absolute(null, path);
     }
 
     public static @NotNull AbsSymbolPath absolute(@NotNull List<String> path) {
-        if (path.isEmpty())
-            throw new IllegalArgumentException("empty path");
+        return absolute(path, null);
+    }
 
-        if (!path.getFirst().equals(RootScope.NAME))
+    public static @NotNull RelativeSymbolPath relative(@NotNull String path) {
+        return relative(null, path);
+    }
+
+    public static @NotNull RelativeSymbolPath relative(@NotNull List<String> path) {
+        return relative(path, null);
+    }
+
+    private static @NotNull RelativeSymbolPath relative(@Nullable List<String> slicedPath, @Nullable String path) {
+        checkValidity(slicedPath, path);
+
+        if (path != null) path = path.strip();
+
+        if (startsWithRootName(slicedPath, path))
+            throw new IllegalArgumentException("not a relative path");
+
+        return slicedPath == null ? new RelativeSymbolPath(path) : new RelativeSymbolPath(slicedPath);
+    }
+
+    private static @NotNull AbsSymbolPath absolute(@Nullable List<String> slicedPath, @Nullable String path) {
+        checkValidity(slicedPath, path);
+
+        if (!startsWithRootName(slicedPath, path))
             throw new IllegalArgumentException("not an absolute path");
 
-        if (path.size() == 1)
-            return AbsSymbolPath.ROOT;
+        return slicedPath == null ? new AbsSymbolPath(path) : new AbsSymbolPath(slicedPath);
+    }
 
-        return new AbsSymbolPath(path);
+    private static void checkValidity(@Nullable List<String> slicedPath, @Nullable String path) {
+        if (slicedPath == null && path == null)
+            throw new IllegalArgumentException();
+
+        if (slicedPath != null && slicedPath.isEmpty() || path != null && path.isBlank())
+            throw new IllegalArgumentException("empty path");
+    }
+
+    private static boolean startsWithRootName(@Nullable List<String> slicedPath, @Nullable String path) {
+        return slicedPath != null && slicedPath.getFirst().equals(RootScope.NAME)
+                || path != null && path.startsWith(RootScope.NAME);
     }
 }

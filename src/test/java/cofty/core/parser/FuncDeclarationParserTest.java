@@ -244,6 +244,13 @@ class FuncDeclarationParserTest {
     }
 
     @Test
+    void invalidRequiredArgAfterDefaultArg() {
+        ParseResultAssert.parse("fun invalid(a = 0, b: int) {}", MODULE_FUNC_DECLARATION_PARSER)
+                .failed()
+                .hasErrors(Errors.REQUIRED_ARGUMENT_FOLLOWS_OPTIONAL);
+    }
+
+    @Test
     void invalidArgumentDeclarationAsVariable() {
         ParseResultAssert.parse("fun invalid(var a = 0) {}", MODULE_FUNC_DECLARATION_PARSER)
                 .failed()

@@ -11,4 +11,8 @@ public final class AbsSymbolPath extends SymbolPath<AbsSymbolPath> {
     AbsSymbolPath(@NotNull List<String> path) {
         super(path);
     }
+
+    AbsSymbolPath(@NotNull String path) {
+        super(path);
+    }
 }

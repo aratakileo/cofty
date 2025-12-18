@@ -2,37 +2,20 @@ package cofty.core.semantics.symbol.scope;
 
 import cofty.core.lexer.token.TypedToken;
 import cofty.core.lexer.token.type.Simple;
+import cofty.core.parser.ast.FuncDeclarationObject;
 import cofty.core.semantics.symbol.*;
 import cofty.core.semantics.symbol.path.AbsSymbolPath;
-import cofty.core.semantics.symbol.path.RelativeSymbolPath;
-import cofty.core.semantics.symbol.path.SymbolPath;
+import cofty.core.semantics.symbol.TypeDescriptor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public final class CompletedFuncScope extends FuncScope<AbsSymbolPath> {
     public CompletedFuncScope(
             @NotNull TypedToken<Simple> name,
-            @NotNull TypeDescriptor<AbsSymbolPath> returnedValueTypePath,
-            @NotNull List<CompletedFieldSymbol> args
+            @NotNull ArgsSignature<AbsSymbolPath> argsSignature,
+            @NotNull TypeDescriptor<AbsSymbolPath> returnedValueTypePath
     ) {
-        super(name, returnedValueTypePath, args);
-    }
-
-    public boolean canProbablyReceive(@NotNull List<TypeDescriptor<RelativeSymbolPath>> argSignatures) {
-        if (args.size() != argSignatures.size()) return false;
-
-        final var functionArgSymbols = args.values().stream().toList();
-
-        for (var i = 0; i < args.size(); i++)
-            if (!functionArgSymbols.get(i).valueTypeOrThrow().path.endsWith(argSignatures.get(i).path))
-                return false;
-
-        return true;
+        super(name, argsSignature, returnedValueTypePath);
     }
 }

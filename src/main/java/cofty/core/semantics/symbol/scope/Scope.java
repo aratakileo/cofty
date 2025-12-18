@@ -1,5 +1,6 @@
 package cofty.core.semantics.symbol.scope;
 
+import cofty.core.compiler.diagnostic.Errors;
 import cofty.core.lexer.token.TypedToken;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.type.TokenType;
@@ -11,6 +12,7 @@ import cofty.core.semantics.symbol.*;
 import cofty.core.semantics.symbol.path.AbsSymbolPath;
 import cofty.core.semantics.symbol.path.RelativeSymbolPath;
 import cofty.core.semantics.symbol.path.SymbolPath;
+import cofty.core.semantics.symbol.TypeDescriptor;
 import cofty.type.Result;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,8 +28,16 @@ public interface Scope extends Symbol {
 
     @Nullable Symbol resolve(@NotNull String name);
 
+    default @Nullable Symbol resolveLocal(@NotNull String name) {
+        return containsLocalName(name) ? resolve(name) : null;
+    }
+
+    default @NotNull Symbol resolveLocalOrThrow(@NotNull String name) {
+        return Objects.requireNonNull(resolveLocal(name));
+    }
+
     default @NotNull Symbol resolveOrThrow(@NotNull String name) {
-        return Objects.requireNonNull(resolve(name));
+        return Objects.requireNonNull(resolve(name), name);
     }
 
     default @Nullable Symbol resolve(@NotNull SymbolPath<?> path) {
@@ -88,94 +98,18 @@ public interface Scope extends Symbol {
         return currentScope;
     }
 
-    default @NotNull Result<AbsSymbolPath, ValueTypeUndefined> resolveTypePath(
+    default @NotNull Result<AbsSymbolPath, Errors> resolveTypePath(
             @NotNull RelativeSymbolPath typePath
     ) {
         final var resolvedSymbol = resolve(typePath);
 
         if (resolvedSymbol == null)
-            return Result.err(ValueTypeUndefined.DOES_NOT_EXIST);
+            return Result.err(Errors.UNRESOLVED_REFERENCE);
 
         if (resolvedSymbol instanceof ClassScope)
             return Result.ok(resolvedSymbol.absPath());
 
-        return Result.err(ValueTypeUndefined.NON_CLASS_SYMBOL);
-    }
-
-    default @NotNull ResolveTypeResult<?> resolveTypePath(@NotNull ExpressionValueObject valueObject) {
-        return switch (valueObject) {
-            case SimpleValueObject simpleValueObject -> {
-                final var typeName = simpleValueObject.valueTypeName();
-                final var resolvedSymbol = resolve(typeName);
-
-                if (resolvedSymbol == null)
-                    throw new IllegalStateException();
-
-                if (resolvedSymbol instanceof ClassScope)
-                    yield ResolveTypeResult.successful(resolvedSymbol.absPath());
-
-                throw new IllegalStateException();
-            }
-
-            case FuncCallObject funcCallObject -> {
-                final var resolvedFunctionSymbol = resolve(funcCallObject.name.content);
-
-                yield switch (resolvedFunctionSymbol) {
-                    case null -> ResolveTypeResult.undefinedValue(
-                            List.of(funcCallObject.name),
-                            ResolveTypeResult.NamedSymbol.FUNCTION
-                    );
-                    case FuncSignaturesScope funcSignaturesScope -> {
-                        final var argsSignature = new ArrayList<TypeDescriptor<AbsSymbolPath>>();
-
-                        for (final var argValue: funcCallObject.args) {
-                            final var resolveTypeResult = resolveTypePath(argValue);
-
-                            if (resolveTypeResult.status != ResolveTypeResult.Status.OK)
-                                yield resolveTypeResult;
-
-                            argsSignature.add(TypeDescriptor.reference(resolveTypeResult.successfullyResolvedPath));
-                        }
-
-                        final var resolvedFunctionScope = funcSignaturesScope.resolveBySignature(argsSignature);
-
-                        if (resolvedFunctionScope == null)
-                            yield ResolveTypeResult.undefinedValue(
-                                    List.of(funcCallObject.nameToken()),
-                                    ResolveTypeResult.NamedSymbol.FUNCTION
-                            );
-
-                        yield ResolveTypeResult.successful(resolvedFunctionScope.valueTypeOrThrow().path);
-                    }
-                    case IncompletedSymbol<?, ?> incompletedSymbol -> ResolveTypeResult.incompleteSymbol(incompletedSymbol);
-                    default -> ResolveTypeResult.nonValue(
-                            List.of(funcCallObject.name),
-                            ResolveTypeResult.NamedSymbol.FUNCTION,
-                            ResolveTypeResult.NamedSymbol.of(resolvedFunctionSymbol)
-                    );
-                };
-            }
-
-            case FieldAccessObject fieldAccessObject -> {
-                final var resolvedFieldSymbol = resolve(fieldAccessObject.name.content);
-
-                yield switch (resolvedFieldSymbol) {
-                    case null -> ResolveTypeResult.undefinedValue(
-                            List.of(fieldAccessObject.name),
-                            ResolveTypeResult.NamedSymbol.FIELD
-                    );
-                    case CompletedFieldSymbol fieldSymbol -> ResolveTypeResult.successful(fieldSymbol.valueTypeOrThrow().path);
-                    case IncompletedSymbol<?, ?> incompletedSymbol -> ResolveTypeResult.incompleteSymbol(incompletedSymbol);
-                    default -> ResolveTypeResult.nonValue(
-                            List.of(fieldAccessObject.name),
-                            ResolveTypeResult.NamedSymbol.FIELD,
-                            ResolveTypeResult.NamedSymbol.of(resolvedFieldSymbol)
-                    );
-                };
-            }
-
-            default -> throw new IllegalStateException();
-        };
+        return Result.err(Errors.NOT_A_TYPE);
     }
 
     void put(@NotNull String name, @NotNull Symbol symbol);

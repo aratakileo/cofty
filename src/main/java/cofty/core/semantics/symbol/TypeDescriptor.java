@@ -6,13 +6,20 @@ import cofty.core.semantics.symbol.path.RelativeSymbolPath;
 import cofty.core.semantics.symbol.path.SymbolPath;
 import org.jetbrains.annotations.NotNull;
 
-public class TypeDescriptor<T extends SymbolPath<?>> {
+public final class TypeDescriptor<T extends SymbolPath<?>> {
     public static @NotNull TypeDescriptor<RelativeSymbolPath> RELATIVE_NULL = rawReference("null");
 
     public final T path;
 
     private TypeDescriptor(@NotNull T path) {
         this.path = path;
+    }
+
+    public boolean isLike(@NotNull TypeDescriptor<? extends SymbolPath<?>> otherType) {
+        if (path.isAbs() == otherType.path.isAbs())
+            return path.equals(otherType.path);
+
+        return path.endsWith(otherType.path);
     }
 
     @Override
@@ -25,7 +32,11 @@ public class TypeDescriptor<T extends SymbolPath<?>> {
 
     @Override
     public String toString() {
-        return path.toString();
+        return path.fullName;
+    }
+
+    public @NotNull String fullName() {
+        return path.fullName;
     }
 
     public static @NotNull TypeDescriptor<AbsSymbolPath> reference(@NotNull AbsSymbolPath path) {
@@ -37,7 +48,7 @@ public class TypeDescriptor<T extends SymbolPath<?>> {
     }
 
     public static @NotNull TypeDescriptor<RelativeSymbolPath> rawReference(@NotNull String name) {
-        return new TypeDescriptor<>(SymbolPath.rawRelative(name));
+        return new TypeDescriptor<>(SymbolPath.relative(name));
     }
 
     public static @NotNull TypeDescriptor<RelativeSymbolPath> rawReference(@NotNull TypeDescriptorObject typeDescriptorObject) {

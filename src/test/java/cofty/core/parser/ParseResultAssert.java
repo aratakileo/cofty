@@ -47,6 +47,15 @@ public final class ParseResultAssert<T> {
         return this;
     }
 
+    public @NotNull ParseResultAssert<T> hasRepeatedError(@NotNull DiagnosticCode diagnosticCode, int count) {
+        Assertions.assertEquals(count, context.messages.engine.errorsCount());
+
+        for (var i = 0; i < context.messages.engine.errorsCount(); i++)
+            Assertions.assertEquals(diagnosticCode, context.messages.engine.getError(i).code);
+
+        return this;
+    }
+
     public @NotNull ParseResultAssert<T> hasErrors(
             @NotNull DiagnosticCode diagnosticCode,
             @NotNull DiagnosticCode @NotNull... diagnosticCodes

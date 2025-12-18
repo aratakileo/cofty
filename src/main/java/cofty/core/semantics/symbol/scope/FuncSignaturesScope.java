@@ -3,20 +3,19 @@ package cofty.core.semantics.symbol.scope;
 import cofty.core.lexer.token.TypedToken;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.semantics.symbol.*;
-import cofty.core.semantics.symbol.path.AbsSymbolPath;
 import cofty.core.semantics.symbol.path.RelativeSymbolPath;
+import cofty.type.Result;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public final class FuncSignaturesScope extends NamedSymbol implements Scope {
-    private final ArrayList<FuncScope<?>> funcs = new ArrayList<>();
+    private final HashMap<String, FuncScope<?>> funcs = new HashMap<>();
+
+    private int maxArgumentsCount = 0, minArgumentsCount = Integer.MAX_VALUE;
 
     public FuncSignaturesScope(@NotNull TypedToken<Simple> name) {
         super(name);
@@ -29,7 +28,12 @@ public final class FuncSignaturesScope extends NamedSymbol implements Scope {
 
         if (symbol instanceof FuncScope<?> newFuncScope) {
             newFuncScope.setParent(this);
-            funcs.add(newFuncScope);
+
+            funcs.put(newFuncScope.argsSignature.minimumSignature, newFuncScope);
+
+            maxArgumentsCount = Math.max(maxArgumentsCount, newFuncScope.argsSignature.size());
+            minArgumentsCount = Math.min(minArgumentsCount, newFuncScope.argsSignature.requiredArgsCount);
+
             return;
         }
 
@@ -37,62 +41,21 @@ public final class FuncSignaturesScope extends NamedSymbol implements Scope {
     }
 
     @Override
-    public boolean containsLocalName(@NotNull String name) {
-        try {
-            return Integer.parseInt(name) < funcs.size();
-        } catch (Exception e) {
-            return false;
-        }
+    public boolean containsLocalName(@NotNull String minimumArgsSignature) {
+        return funcs.containsKey(minimumArgsSignature);
     }
 
     @Override
-    public @Nullable Symbol resolve(@NotNull String name) {
-        try {
-            final var funcIndex = Integer.parseInt(name);
+    public @Nullable Symbol resolve(@NotNull String nameOrMinimumArgsSignature) {
+        if (funcs.containsKey(nameOrMinimumArgsSignature))
+            return funcs.get(nameOrMinimumArgsSignature);
 
-            if (funcIndex < funcs.size())
-                return funcs.get(funcIndex);
-
-            return parentOrThrow().resolve(name);
-        } catch (Exception e) {
-            return parentOrThrow().resolve(name);
-        }
-    }
-
-    public @Nullable CompletedFuncScope resolveBySignature(@NotNull List<TypeDescriptor<AbsSymbolPath>> argSignatures) {
-        for (final var funcScope: funcs)
-            if (funcScope instanceof CompletedFuncScope completedFuncScope)
-                if (completedFuncScope.canReceive(argSignatures))
-                    return completedFuncScope;
-
-        return null;
-    }
-
-    public @Nullable IncompletedFuncScope resolveIncompleted(@NotNull List<TypeDescriptor<RelativeSymbolPath>> argSignatures) {
-        for (final var funcScope: funcs)
-            if (funcScope instanceof IncompletedFuncScope incompletedFuncScope)
-                if (incompletedFuncScope.canReceive(argSignatures))
-                    return incompletedFuncScope;
-
-        return null;
-    }
-
-    public @NotNull IncompletedFuncScope resolveIncompletedOrThrow(@NotNull List<TypeDescriptor<RelativeSymbolPath>> argSignatures) {
-        return Objects.requireNonNull(resolveIncompleted(argSignatures));
-    }
-
-    public @Nullable CompletedFuncScope resolveCompleted(@NotNull List<TypeDescriptor<RelativeSymbolPath>> argSignatures) {
-        for (final var funcScope: funcs)
-            if (funcScope instanceof CompletedFuncScope completedFuncScope)
-                if (completedFuncScope.canProbablyReceive(argSignatures))
-                    return completedFuncScope;
-
-        return null;
+        return parentOrThrow().resolve(nameOrMinimumArgsSignature);
     }
 
     @Override
     public @NotNull Set<String> childNames() {
-        return IntStream.range(0, funcs.size()).mapToObj(String::valueOf).collect(Collectors.toSet());
+        return funcs.keySet();
     }
 
     @Override
@@ -105,34 +68,63 @@ public final class FuncSignaturesScope extends NamedSymbol implements Scope {
         return funcs.size();
     }
 
-    public void remove(@NotNull FuncScope<?> funcScope) {
-        if (!funcScope.name().equals(name()))
-            throw new IllegalArgumentException();
-
-        funcs.remove(funcScope);
+    public int maxArgumentsCount() {
+        return maxArgumentsCount;
     }
 
-    public boolean containsCompletedSignature(@NotNull List<TypeDescriptor<AbsSymbolPath>> argSignatures) {
-        for (final var funcScope: funcs)
-            if (funcScope instanceof CompletedFuncScope completed && completed.canReceive(argSignatures))
-                return true;
-
-        return false;
+    public int minArgumentsCount() {
+        return minArgumentsCount;
     }
 
-    public boolean containsIncompletedSignature(@NotNull List<TypeDescriptor<RelativeSymbolPath>> argSignatures) {
-        for (final var funcScope: funcs)
-            if (funcScope instanceof IncompletedFuncScope incompleted && incompleted.canReceive(argSignatures))
-                return true;
-
-        return false;
+    public @Nullable FuncScope<?> resolveByEmptyArgsSignature() {
+        return funcs.getOrDefault(ArgsSignature.SIGNATURES_PREFIX, null);
     }
 
-    public @NotNull IncompletedSymbol.CompletionResult<CompletedFuncScope> tryComplete(@NotNull List<TypeDescriptor<RelativeSymbolPath>> argSignatures) {
-        for (final var funcScope: funcs)
-            if (funcScope instanceof IncompletedFuncScope incompleted && incompleted.canReceive(argSignatures))
-                return incompleted.tryComplete();
+    public void removeSignature(@NotNull ArgsSignature<RelativeSymbolPath> argsSignature) {
+        funcs.remove(argsSignature.minimumSignature);
+    }
 
-        throw new IllegalArgumentException();
+    public @NotNull Result<FuncScope<?>, IncompatibleArgumentInfo> resolveByArgsSignature(
+            @NotNull List<? extends TypeDescriptor<?>> argSignatures
+    ) {
+        if (argSignatures.isEmpty())
+            throw new IllegalArgumentException("list of args signature should not be empty");
+
+        var bestMatchIndex = -1;
+        var bestFunc = (FuncScope<?>)null;
+
+        ROOT: for (final var func: funcs.values()) {
+            // this is necessary in case the search for matches does not find any,
+            // even for the first argument of the function
+            if (bestFunc == null && !func.argsSignature.isEmpty()) bestFunc = func;
+            if (func.argsSignature.size() < argSignatures.size()) continue;
+
+            for (var i = 0; i < argSignatures.size(); i++) {
+                if (!func.argsSignature.getType(i).isLike(argSignatures.get(i))) continue ROOT;
+                if (i <= bestMatchIndex) continue;
+
+                bestMatchIndex = i;
+                bestFunc = func;
+            }
+
+            if (argSignatures.size() < bestFunc.argsSignature.requiredArgsCount) break;
+
+            return Result.ok(func);
+        }
+
+        return Result.err(new IncompatibleArgumentInfo(
+                Objects.requireNonNull(bestFunc),
+                bestMatchIndex + 1
+        ));
+    }
+
+    public static class IncompatibleArgumentInfo {
+        public final int invalidArgIndex;
+        public final FuncScope<?> func;
+
+        public IncompatibleArgumentInfo(@NotNull FuncScope<?> func, int invalidArgIndex) {
+            this.invalidArgIndex = invalidArgIndex;
+            this.func = func;
+        }
     }
 }

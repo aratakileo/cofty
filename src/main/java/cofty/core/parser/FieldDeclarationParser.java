@@ -9,6 +9,7 @@ import cofty.core.lexer.token.type.operator.Assign;
 import cofty.core.lexer.token.type.operator.Separator;
 import cofty.core.parser.ast.FieldDeclarationObject;
 import cofty.core.parser.ast.value.complex.SimpleValueObject;
+import cofty.util.Types;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -27,6 +28,8 @@ public final class FieldDeclarationParser implements Parser<FieldDeclarationObje
     @Override
     public @NotNull ParseResult<FieldDeclarationObject> parse(@NotNull ParseContext context) {
         boolean isFailed = false;
+
+        final var varToken = context.current(Keyword.VAR);
 
         if (fieldType == FieldType.FUNC_ARG && context.currentIs(Keyword.VAR)) {
             context.messages.report(Errors.NOT_ALLOWED);
@@ -84,25 +87,22 @@ public final class FieldDeclarationParser implements Parser<FieldDeclarationObje
             return ParseResult.failed();
         }
 
-        if (valueTypeParseResult != null && valueParseResult != null)
-            return isFailed ? ParseResult.failed() : ParseResult.OK(FieldDeclarationObject.create(
-                    TypedToken.strictAsOrNull(mutableToken),
-                    TypedToken.strictAs(nameToken),
-                    valueTypeParseResult.valueOrThrow(),
-                    valueParseResult.valueOrThrow()
+        if (isFailed) return ParseResult.failed();
+
+        if (fieldType == FieldType.FUNC_ARG)
+            return ParseResult.OK(FieldDeclarationObject.createArgument(
+                    Types.valueAndMapOrNull(mutableToken, TypedToken::strictAs),
+                    Types.valueAndMapOrThrow(nameToken, TypedToken::strictAs),
+                    Types.valueAndMapOrNull(valueTypeParseResult, ParseResult::value),
+                    Types.valueAndMapOrNull(valueParseResult, ParseResult::value)
             ));
 
-        if (valueTypeParseResult != null)
-            return isFailed ? ParseResult.failed() : ParseResult.OK(FieldDeclarationObject.create(
-                    TypedToken.strictAsOrNull(mutableToken),
-                    TypedToken.strictAs(nameToken),
-                    valueTypeParseResult.valueOrThrow()
-            ));
-
-        return isFailed ? ParseResult.failed() : ParseResult.OK(FieldDeclarationObject.create(
-                TypedToken.strictAsOrNull(mutableToken),
-                TypedToken.strictAs(nameToken),
-                valueParseResult.valueOrThrow()
+        return ParseResult.OK(FieldDeclarationObject.createField(
+                Objects.requireNonNull(varToken),
+                Types.valueAndMapOrNull(mutableToken, TypedToken::strictAs),
+                Types.valueAndMapOrThrow(nameToken, TypedToken::strictAs),
+                Types.valueAndMapOrNull(valueTypeParseResult, ParseResult::value),
+                Types.valueAndMapOrNull(valueParseResult, ParseResult::value)
         ));
     }
 

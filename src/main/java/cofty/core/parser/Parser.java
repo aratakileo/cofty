@@ -5,6 +5,7 @@ import cofty.core.compiler.diagnostic.Errors;
 import cofty.core.lexer.token.TypedToken;
 import cofty.core.lexer.token.type.TokenType;
 import cofty.core.parser.ast.AstObject;
+import cofty.core.parser.ast.WithDiagnosticFailAnchor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,7 +74,10 @@ public interface Parser<R> {
                 continue;
             }
 
-            context.messages.report(separatedObjectStartsWithToken, Errors.NOT_ALLOWED);
+            if (separatedObject instanceof WithDiagnosticFailAnchor withDiagnosticFailAnchor)
+                context.messages.reportRange(withDiagnosticFailAnchor.failTokensRange(), Errors.NOT_ALLOWED);
+            else context.messages.report(separatedObjectStartsWithToken, Errors.NOT_ALLOWED);
+
             isFailed = true;
         }
 

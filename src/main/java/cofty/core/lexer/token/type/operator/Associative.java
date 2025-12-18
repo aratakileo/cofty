@@ -3,7 +3,7 @@ package cofty.core.lexer.token.type.operator;
 import cofty.core.lexer.token.type.TokenType;
 import org.jetbrains.annotations.NotNull;
 
-public interface Associative extends TokenType {
+public sealed interface Associative extends TokenType permits Binary, Unary {
     @NotNull Associativity associativity();
     int priorityLevel();
 

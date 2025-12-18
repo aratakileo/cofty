@@ -244,10 +244,10 @@ public final class DiagnosticMsg {
 
         @Override
         public String toString() {
-            return "MessageBuilder{" +
+            return "Builder{" +
                     "messageType=" + code +
                     ", textContent=" + textContent +
-                    ", descriptor=" + Representable.repr(descriptor.toString()) +
+                    ", descriptor=" + Representable.repr(descriptor.with(code)) +
                     ", start=" + start +
                     ", end=" + end +
                     ", cursorStart=" + cursorStart +

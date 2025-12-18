@@ -2,15 +2,17 @@ package cofty.core.parser.ast;
 
 import cofty.core.lexer.token.TypedToken;
 import cofty.core.lexer.token.type.Simple;
+import cofty.core.lexer.token.type.operator.Bracket;
 import cofty.core.parser.ast.body.BodyObject;
 import cofty.core.parser.ast.body.BodyResidentObject;
-import cofty.core.parser.ast.value.complex.SimpleValueObject;
+import cofty.core.parser.ast.value.ExpressionValueObject;
+import cofty.core.semantics.symbol.ArgsSignature;
 import cofty.core.semantics.symbol.TypeDescriptor;
 import cofty.core.semantics.symbol.path.RelativeSymbolPath;
-import cofty.core.semantics.symbol.path.SymbolPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public final class FuncDeclarationObject implements DeclarationObject, WithBody, WithName {
@@ -19,16 +21,47 @@ public final class FuncDeclarationObject implements DeclarationObject, WithBody,
     public final BodyObject body;
     public final TypeDescriptorObject returnType;
 
+    private final TypedToken<Bracket> leftBracket, rightBracket;
+    private final ArgsSignature<RelativeSymbolPath> argsSignature;
+
     public FuncDeclarationObject(
             @NotNull TypedToken<Simple> name,
             @NotNull List<FieldDeclarationObject> args,
             @NotNull BodyObject body,
-            @Nullable TypeDescriptorObject returnType
+            @Nullable TypeDescriptorObject returnType,
+            @NotNull TypedToken<Bracket> leftBracket,
+            @NotNull TypedToken<Bracket> rightBracket
     ) {
         this.name = name;
         this.args = args;
         this.body = body;
         this.returnType = returnType;
+        this.leftBracket = leftBracket;
+        this.rightBracket = rightBracket;
+
+        if (args.isEmpty()) {
+            this.argsSignature = ArgsSignature.EMPTY_RELATIVE;
+            return;
+        }
+
+        final var types = new ArrayList<TypeDescriptor<RelativeSymbolPath>>();
+        final var names = new ArrayList<String>();
+        final var defaults = new ArrayList<ExpressionValueObject>();
+
+        var lastRequiredArg = 0;
+
+        for (var i = 0; i < args.size(); i++) {
+            final var arg = args.get(i);
+
+            types.add(arg.constantValueTypeOrThrow());
+            names.add(arg.name());
+            defaults.add(arg.value);
+
+            if (arg.value == null)
+                lastRequiredArg = i;
+        }
+
+        this.argsSignature = ArgsSignature.create(types, names, defaults, lastRequiredArg + 1);
     }
 
     @Override
@@ -41,12 +74,11 @@ public final class FuncDeclarationObject implements DeclarationObject, WithBody,
         return name;
     }
 
-    public @NotNull List<TypeDescriptor<RelativeSymbolPath>> getArgSignatures() {
-        return args.stream()
-                .map(
-                        arg -> arg.valueType != null
-                                ? SymbolPath.rawRelative(arg.valueType.name)
-                                : SymbolPath.rawRelative(((SimpleValueObject)arg.valueOrThrow()).valueTypeName())
-                ).map(TypeDescriptor::reference).toList();
+    public @NotNull List<TypedToken<?>> argsSignatureRange() {
+        return List.of(leftBracket, rightBracket);
+    }
+
+    public @NotNull ArgsSignature<RelativeSymbolPath> argsSignature() {
+        return argsSignature;
     }
 }

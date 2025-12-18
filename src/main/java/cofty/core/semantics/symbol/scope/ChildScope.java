@@ -20,8 +20,7 @@ public abstract class ChildScope extends ChildSymbol implements Scope {
         if (containsLocalName(name))
             return children.get(name);
 
-        if (parent() != null && parentOrThrow().containsLocalName(name))
-            return parentOrThrow().resolve(name);
+        if (parent() != null) return parentOrThrow().resolve(name);
 
         return null;
     }

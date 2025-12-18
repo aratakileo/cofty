@@ -2,87 +2,70 @@ package cofty.core.semantics.symbol.scope;
 
 import cofty.core.lexer.token.TypedToken;
 import cofty.core.lexer.token.type.Simple;
-import cofty.core.semantics.symbol.FieldSymbol;
-import cofty.core.semantics.symbol.Symbol;
-import cofty.core.semantics.symbol.TypeDescriptor;
-import cofty.core.semantics.symbol.WithValueType;
+import cofty.core.semantics.symbol.*;
 import cofty.core.semantics.symbol.path.SymbolPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public sealed abstract class FuncScope<T extends SymbolPath<?>> extends NamedScope implements WithValueType<T>
+public sealed abstract class FuncScope<T extends SymbolPath<T>> extends NamedScope implements WithValueType<T>
         permits IncompletedFuncScope, CompletedFuncScope {
-    protected final LinkedHashMap<String, FieldSymbol<T>> args = new LinkedHashMap<>();
 
-    private final TypeDescriptor<T> returnedValueTypePath;
+    public final ArgsSignature<T> argsSignature;
+    public final TypeDescriptor<T> returnedValueTypePath;
 
     protected FuncScope(
             @NotNull TypedToken<Simple> name,
-            @NotNull TypeDescriptor<T> returnedValueTypePath,
-            @NotNull List<? extends FieldSymbol<T>> args
+            @NotNull ArgsSignature<T> argsSignature,
+            @NotNull TypeDescriptor<T> returnedValueTypePath
     ) {
         super(name);
+
         this.returnedValueTypePath = returnedValueTypePath;
-
-        for (final var arg: args) {
-            this.args.put(arg.name(), arg);
-        }
-    }
-
-    public @NotNull List<TypeDescriptor<T>> getArgSignatures() {
-        return args.sequencedValues().stream().map(FieldSymbol::valueType).toList();
-    }
-
-    public boolean canReceive(@NotNull List<TypeDescriptor<T>> argSignatures) {
-        if (args.size() != argSignatures.size()) return false;
-
-        final var functionArgSymbols = args.values().stream().toList();
-
-        for (var i = 0; i < args.size(); i++)
-            if (!functionArgSymbols.get(i).valueTypeOrThrow().equals(argSignatures.get(i)))
-                return false;
-
-        return true;
+        this.argsSignature = argsSignature;
     }
 
     @Override
     public void setParent(@NotNull Scope parent) {
         super.setParent(parent);
 
-        for (final var arg: args.sequencedValues())
-            arg.setParent(this);
+        if (this instanceof CompletedFuncScope)
+            argsSignature.setParent(parent);
     }
 
     @Override
     public boolean containsLocalName(@NotNull String name) {
-        return args.containsKey(name) || super.containsLocalName(name);
+        return argsSignature.containsName(name) || super.containsLocalName(name);
     }
 
     @Override
     public @Nullable Symbol resolve(@NotNull String name) {
-        if (args.containsKey(name))
-            return args.get(name);
+        if (argsSignature.containsName(name))
+            return argsSignature.getField(name);
 
         return super.resolve(name);
     }
 
     @Override
     public @NotNull Set<String> childNames() {
-        return Stream.concat(super.childNames().stream(), args.keySet().stream()).collect(Collectors.toSet());
+        if (this instanceof CompletedFuncScope)
+            return Stream.concat(super.childNames().stream(), argsSignature.names().stream()).collect(Collectors.toSet());
+
+        return super.childNames();
     }
 
     @Override
     public boolean isEmpty() {
-        return super.isEmpty() && args.isEmpty();
+        return super.isEmpty() && argsSignature.isEmpty();
     }
 
     @Override
     public int childrenCount() {
-        return super.childrenCount() + args.size();
+        return super.childrenCount() + argsSignature.size();
     }
 
     @Override
@@ -95,30 +78,29 @@ public sealed abstract class FuncScope<T extends SymbolPath<?>> extends NamedSco
         return String.format(
                 "%s (%s) -> %s",
                 super.representedHeader(),
-                args.entrySet()
-                        .stream()
-                        .map(entry -> entry.getKey() + ": " + entry.getValue().valueType())
+                IntStream.range(0, argsSignature.size())
+                        .mapToObj(i -> argsSignature.getName(i) + ": " + argsSignature.getType(i))
                         .collect(Collectors.joining(", ")),
                 returnedValueTypePath
         );
     }
 
-    @Override
-    public boolean equals(@NotNull Object _other) {
-        if (_other instanceof FuncScope<?> other) {
-            if (!name().equals(other.name()) || args.size() != other.args.size() || !getClass().isInstance(other))
-                return false;
-
-            if (args.isEmpty())
-                return true;
-
-            for (final var arg : args.values().stream().toList())
-                if (!other.args.containsKey(arg.name()) || !arg.valueTypeOrThrow().equals(other.args.get(arg.name()).valueTypeOrThrow()))
-                    return false;
-
-            return true;
-        }
-
-        return false;
-    }
+//    @Override
+//    public boolean equals(@NotNull Object _other) {
+//        if (_other instanceof FuncScope<?> other) {
+//            if (!name().equals(other.name()) || args.size() != other.args.size() || !getClass().isInstance(other))
+//                return false;
+//
+//            if (args.isEmpty())
+//                return true;
+//
+//            for (final var arg : args.values().stream().toList())
+//                if (!other.args.containsKey(arg.name()) || !arg.valueTypeOrThrow().equals(other.args.get(arg.name()).valueTypeOrThrow()))
+//                    return false;
+//
+//            return true;
+//        }
+//
+//        return false;
+//    }
 }

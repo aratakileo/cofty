@@ -13,7 +13,8 @@ public enum Simple implements TokenType {
     SKIP,
     NEWLINE,
     BRACKETS,
-    MISMATCH;
+    MISMATCH,
+    COMMENT;
 
     @Override
     public boolean equals(@NotNull TokenType type) {

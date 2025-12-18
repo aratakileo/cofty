@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.regex.MatchResult;
 
-public class TypedToken<T extends TokenType> {
+public final class TypedToken<T extends TokenType> {
     public final T type;
     public final String content;
     public final int start, end;
@@ -51,18 +51,6 @@ public class TypedToken<T extends TokenType> {
                 ", position=[" + start +
                 "-" + end +
                 "]}";
-    }
-
-    public static <T extends TokenType, _T extends TokenType> @NotNull TypedToken<_T> strictAs(
-            @Nullable TypedToken<T> token
-    ) {
-        return Objects.requireNonNull(token).strictAs();
-    }
-
-    public static <T extends TokenType, _T extends TokenType> @Nullable TypedToken<_T> strictAsOrNull(
-            @Nullable TypedToken<T> token
-    ) {
-        return token == null ? null : token.strictAs();
     }
 
     public static <_T extends TokenType> @NotNull TypedToken<_T> build(

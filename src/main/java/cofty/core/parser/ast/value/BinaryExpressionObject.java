@@ -18,4 +18,9 @@ public final class BinaryExpressionObject implements ExpressionValueObject {
         this.leftValue = leftValue;
         this.rightValue = rightValue;
     }
+
+    @Override
+    public @NotNull List<TypedToken<?>> failTokensRange() {
+        return List.of(leftValue.firstFailToken(), rightValue.lastFailToken());
+    }
 }

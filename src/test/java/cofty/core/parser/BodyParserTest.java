@@ -25,13 +25,11 @@ class BodyParserTest {
                 fun sum(a: int, b = 5) -> int {
                     return 7
                 }
-                
-                2 ** 2 * 2 ** 2 ** 2 / 4 + 1
                 """,
                 BodyParser.MODULE_BODY
         ).ok().hasNoDiagnosticMessages().value();
 
-        final var countOfResidents = 6;
+        final var countOfResidents = 5;
 
         Assertions.assertEquals(
                 countOfResidents,
@@ -122,9 +120,21 @@ class BodyParserTest {
 
     @Test
     void invalidModuleBodyNoSeparatorBetweenExpressions() {
-        ParseResultAssert.parse("variable1 variable2", BodyParser.MODULE_BODY)
+        ParseResultAssert.parse("funcCall() funcCall()", BodyParser.MODULE_BODY)
                 .failed()
                 .hasErrors(Errors.MISSING_SEPARATOR);
+    }
+
+    @Test
+    void invalidNoEffectExpression() {
+        ParseResultAssert.parse("""
+                        1 + 2
+                        not true
+                        erm.field
+                        funcCall() + 1
+                        """, BodyParser.MODULE_BODY)
+                .failed()
+                .hasRepeatedError(Errors.EXPRESSION_WITHOUT_EFFECT, 4);
     }
 
     @Test

@@ -94,7 +94,7 @@ public final class FieldValueAssignmentParser implements Parser<FieldValueAssign
         context.removeIndexSnapshot();
 
         if (!(lastSegment instanceof FieldAccessObject)) {
-            context.messages.report(lastSegment.failAnchor(), Errors.EXPECTED_ASSIGNABLE_FIELD, lastSegment);
+            context.messages.reportRange(lastSegment.failTokensRange(), Errors.EXPECTED_ASSIGNABLE_FIELD, lastSegment);
             return ParseResult.failed();
         }
 

@@ -6,6 +6,8 @@ import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.type.TokenType;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public final class SimpleValueObject implements ValueSegmentObject {
     public final TypedToken<?> value;
 
@@ -25,8 +27,8 @@ public final class SimpleValueObject implements ValueSegmentObject {
     }
 
     @Override
-    public @NotNull TypedToken<?> failAnchor() {
-        return value;
+    public @NotNull List<TypedToken<?>> failTokensRange() {
+        return List.of(value);
     }
 
     public @NotNull String valueTypeName() {

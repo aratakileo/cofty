@@ -102,7 +102,7 @@ public final class ComplexValueParser implements Parser<ExpressionValueObject> {
         final var name = context.advanceOrThrow().<Simple>strictAs();
 
         if (!context.currentIs(Bracket.ROUND_OPEN))
-            return isPostfixFuncCall ? new FuncCallObject(name, List.of(), true) : new FieldAccessObject(name);
+            return isPostfixFuncCall ? FuncCallObject.createPostfixFuncCall(name) : new FieldAccessObject(name);
 
         final var roundOpeningBracket = context.advanceOrThrow();
 
@@ -142,7 +142,9 @@ public final class ComplexValueParser implements Parser<ExpressionValueObject> {
                     Warnings.POSTFIX_FUNC_CALL_WITH_NO_ARGS
             );
 
-        return new FuncCallObject(name, argsParseResult.valueOrDefault(List.of()), isPostfixFuncCall);
+        final var args = argsParseResult.valueOrDefault(List.of());
+
+        return new FuncCallObject(name, args, roundClosingBracket, isPostfixFuncCall);
     }
 
     private int checkPostfixFunctionCalls(
@@ -153,8 +155,8 @@ public final class ComplexValueParser implements Parser<ExpressionValueObject> {
     ) {
         if (!isPostfixFuncCall) {
             if (postfixFunctionCallsCounter > 3) context.messages.reportRange(
-                    segments.get(segments.size() - postfixFunctionCallsCounter).failAnchor(),
-                    segments.getLast().failAnchor(),
+                    segments.get(segments.size() - postfixFunctionCallsCounter).firstFailToken(),
+                    segments.getLast().lastFailToken(),
                     Warnings.LONG_POSTFIX_CHAIN
             );
 

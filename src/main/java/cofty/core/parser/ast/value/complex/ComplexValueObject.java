@@ -1,5 +1,6 @@
 package cofty.core.parser.ast.value.complex;
 
+import cofty.core.lexer.token.TypedToken;
 import cofty.core.parser.ast.value.ExpressionValueObject;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,5 +11,10 @@ public final class ComplexValueObject implements ExpressionValueObject {
 
     public ComplexValueObject(@NotNull List<ValueSegmentObject> segments) {
         this.segments = segments;
+    }
+
+    @Override
+    public @NotNull List<TypedToken<?>> failTokensRange() {
+        return List.of(segments.getFirst().firstFailToken(), segments.getLast().lastFailToken());
     }
 }

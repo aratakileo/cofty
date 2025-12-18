@@ -18,11 +18,11 @@ class FieldValueAssignmentParserTest {
                 .hasNoDiagnosticMessages()
                 .value();
 
-        Assertions.assertInstanceOf(FieldAccessObject.class, astObject.field);
+        Assertions.assertInstanceOf(FieldAccessObject.class, astObject.fieldView);
 
         Assertions.assertEquals(
                 "validField",
-                ((FieldAccessObject)astObject.field).name.content,
+                ((FieldAccessObject)astObject.fieldView).name.content,
                 String.format("invalid assignable field name (`%s`)", expr)
         );
 
@@ -44,9 +44,9 @@ class FieldValueAssignmentParserTest {
                 .hasNoDiagnosticMessages()
                 .value();
 
-        Assertions.assertInstanceOf(ComplexValueObject.class, astObject.field);
+        Assertions.assertInstanceOf(ComplexValueObject.class, astObject.fieldView);
 
-        final var fieldObject = (ComplexValueObject)astObject.field;
+        final var fieldObject = (ComplexValueObject)astObject.fieldView;
 
         Assertions.assertEquals(
                 4,
@@ -80,9 +80,9 @@ class FieldValueAssignmentParserTest {
                 .hasNoDiagnosticMessages()
                 .value();
 
-        Assertions.assertInstanceOf(ComplexValueObject.class, astObject.field);
+        Assertions.assertInstanceOf(ComplexValueObject.class, astObject.fieldView);
 
-        final var fieldObject = (ComplexValueObject)astObject.field;
+        final var fieldObject = (ComplexValueObject)astObject.fieldView;
 
         Assertions.assertEquals(
                 4,

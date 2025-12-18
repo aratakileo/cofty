@@ -114,13 +114,13 @@ public final class ParseContext {
         return Objects.requireNonNull(current());
     }
 
-    public @Nullable TypedToken<?> current(@NotNull TokenType except) {
+    public <T extends TokenType> @Nullable TypedToken<T> current(@NotNull T except) {
         if (!hasCurrent()) return null;
 
         if (canSkipNewLine(except))
             skipNewLine();
 
-        return current();
+        return current() == null ? null : currentOrThrow().strictAs();
     }
 
     public @Nullable TypedToken<?> current(boolean canTrySkipNewLines) {

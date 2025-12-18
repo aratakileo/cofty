@@ -31,6 +31,8 @@ public final class FuncDeclarationParser implements Parser<FuncDeclarationObject
             return ParseResult.failed();
         }
 
+        final var openParentToken = context.current(Bracket.ROUND_OPEN);
+
         if (!context.goNextIfCurrentIs(Bracket.ROUND_OPEN)) {
             context.messages.report(
                     Errors.NO_OPENED_BRACKETS,
@@ -57,6 +59,28 @@ public final class FuncDeclarationParser implements Parser<FuncDeclarationObject
         );
 
         var isFailed = argsParseResult.isFailed();
+
+        if (argsParseResult.isOK()) {
+            var defaultValueArgDeclared = false;
+
+            for (final var arg: argsParseResult.valueOrThrow()) {
+                if (arg.value != null) {
+                    defaultValueArgDeclared = true;
+                    continue;
+                }
+
+                if (!defaultValueArgDeclared) continue;
+
+                context.messages.reportRange(
+                        arg.failTokensRange(),
+                        Errors.REQUIRED_ARGUMENT_FOLLOWS_OPTIONAL,
+                        arg.name()
+                );
+                isFailed = true;
+            }
+        }
+
+        final var closeParentToken = context.current(Bracket.ROUND_CLOSE);
 
         if (!context.goNextIfCurrentIs(Bracket.ROUND_CLOSE)) {
             context.messages.report(
@@ -100,7 +124,9 @@ public final class FuncDeclarationParser implements Parser<FuncDeclarationObject
                 Objects.requireNonNull(nameToken).strictAs(),
                 argsParseResult.valueOrDefault(List.of()),
                 body,
-                returnType
+                returnType,
+                Objects.requireNonNull(openParentToken),
+                Objects.requireNonNull(closeParentToken)
         ));
     }
 

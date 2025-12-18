@@ -2,12 +2,14 @@ package cofty.core.parser.ast;
 
 import cofty.core.lexer.token.TypedToken;
 import cofty.core.lexer.token.type.Simple;
+import cofty.core.semantics.symbol.TypeDescriptor;
+import cofty.core.semantics.symbol.path.RelativeSymbolPath;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-public final class TypeDescriptorObject implements AstObject {
+public final class TypeDescriptorObject implements AstObject, WithDiagnosticFailAnchor {
     public final List<TypedToken<Simple>> name;
 
     public TypeDescriptorObject(@NotNull List<TypedToken<Simple>> name) {
@@ -33,5 +35,10 @@ public final class TypeDescriptorObject implements AstObject {
         }
 
         return false;
+    }
+
+    @Override
+    public @NotNull List<TypedToken<?>> failTokensRange() {
+        return List.of(name.getFirst(), name.getLast());
     }
 }

@@ -14,7 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Lexer {
+public final class Lexer {
     private static final Pattern PATTERN;
 
     public final TextContent text;
@@ -45,8 +45,19 @@ public class Lexer {
                 messages.report(prevToken, Errors.LEXER_SYNTAX_ERROR);
             }
 
-            if (!tokenType.isAny(Simple.SKIP, Simple.MISMATCH) && (tokenType != Simple.NEWLINE || !tokens.isEmpty()))
-                tokens.add(token);
+            if (tokenType.isAny(Simple.SKIP, Simple.MISMATCH, Simple.COMMENT)
+                    || (tokenType == Simple.NEWLINE && tokens.isEmpty())) {
+                prevToken = token;
+                continue;
+            }
+
+            prevToken = tokens.isEmpty() ? prevToken : tokens.getLast();
+
+            final var replacePrevToken = prevToken != null
+                    && prevToken.type == Simple.NEWLINE
+                    && token.type == Simple.NEWLINE;
+
+            tokens.add(replacePrevToken ? tokens.removeLast().strictAs().merge(token) : token);
 
             prevToken = token;
         }
@@ -62,12 +73,13 @@ public class Lexer {
 
         final var patterns = new LinkedHashMap<Simple, String>();
         patterns.put(Simple.STR, "'(?:\\\\.|[^'\n])*'|\"(?:\\\\.|[^\"\n])*\"");
+        patterns.put(Simple.COMMENT, "#[^\n]*");
 
         // [ \t]* - to avoid NEWLINE token splitting
         patterns.put(Simple.NEWLINE, "([ \t]*\n[ \t]*)+");
 
         // [ \t] instead of \\s to avoid absorption NEWLINE token by SKIP token
-        patterns.put(Simple.SKIP, "[ \t]+|#[^\n]*");
+        patterns.put(Simple.SKIP, "[ \t]+");
 
         patterns.put(Simple.DOUBLE, "_*\\d+[\\d_]*(?:\\.[\\d_]*|[dD])");
         patterns.put(Simple.INT, "_*(?:0_*[xX][\\da-fA-F_]+|\\d+[\\d_]*)");

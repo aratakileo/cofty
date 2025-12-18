@@ -8,4 +8,8 @@ public final class RelativeSymbolPath extends SymbolPath<RelativeSymbolPath> {
     RelativeSymbolPath(@NotNull List<String> path) {
         super(path);
     }
+
+    RelativeSymbolPath(@NotNull String path) {
+        super(path);
+    }
 }

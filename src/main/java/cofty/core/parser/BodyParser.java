@@ -7,6 +7,8 @@ import cofty.core.parser.ast.*;
 import cofty.core.parser.ast.body.BodyObject;
 import cofty.core.parser.ast.body.BodyResidentObject;
 import cofty.core.parser.ast.body.NotSpecializedBodyObject;
+import cofty.core.parser.ast.value.complex.ComplexValueObject;
+import cofty.core.parser.ast.value.complex.FuncCallObject;
 import cofty.type.Containable;
 import cofty.util.Cast;
 import cofty.core.compiler.diagnostic.DiagnosticRepresentable;
@@ -25,6 +27,7 @@ public final class BodyParser implements Parser<BodyObject> {
     );
 
     private final Set<? extends Parser<? extends BodyResidentObject>> resident_parsers;
+
     public final BodyType dominantBodyType, actualBodyType;
     public final BodyFormat bodyFormat;
 
@@ -135,20 +138,28 @@ public final class BodyParser implements Parser<BodyObject> {
     ) {
         final var valueExpressionParseResult = ValueExpressionParser.create(true).parse(context);
 
-        if (valueExpressionParseResult.isFailed()) return ParseResult.failed();
+        if (!valueExpressionParseResult.isOK()) return valueExpressionParseResult;
 
-        if (valueExpressionParseResult.isOK()) {
-            final var fieldValueAssignmentParseResult = FieldValueAssignmentParser.DEFAULT.parse(
-                    context,
-                    valueExpressionParseResult.valueOrThrow()
-            );
+        final var fieldValueAssignmentParseResult = FieldValueAssignmentParser.DEFAULT.parse(
+                context,
+                valueExpressionParseResult.valueOrThrow()
+        );
 
-            if (!fieldValueAssignmentParseResult.isSkipped()) return fieldValueAssignmentParseResult;
+        if (!fieldValueAssignmentParseResult.isSkipped()) return fieldValueAssignmentParseResult;
 
-            return valueExpressionParseResult;
-        }
+        var parsedExpression = valueExpressionParseResult.valueOrThrow();
 
-        return valueExpressionParseResult;
+        if (parsedExpression instanceof ComplexValueObject complexValueObject)
+            parsedExpression = complexValueObject.segments.getLast();
+
+        if (parsedExpression instanceof FuncCallObject) return valueExpressionParseResult;
+
+        context.messages.reportRange(
+                valueExpressionParseResult.valueOrThrow().failTokensRange(),
+                Errors.EXPRESSION_WITHOUT_EFFECT
+        );
+
+        return ParseResult.failed();
     }
 
     public @NotNull BodyParser getNestedBodyParser() {

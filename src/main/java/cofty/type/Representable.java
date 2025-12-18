@@ -5,8 +5,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public interface Representable {
     @NotNull String toReprString();
@@ -48,7 +50,7 @@ public interface Representable {
         );
     }
 
-    static <T> @NotNull String repr(@Nullable ArrayList<T> arrayList) {
+    static @NotNull String repr(@Nullable ArrayList<?> arrayList) {
         if (arrayList == null)
             return "null";
 
@@ -59,7 +61,7 @@ public interface Representable {
         );
     }
 
-    static <T> @NotNull String repr(@Nullable List<T> arrayList) {
+    static @NotNull String repr(@Nullable List<?> arrayList) {
         if (arrayList == null)
             return "null";
 
@@ -69,7 +71,7 @@ public interface Representable {
         );
     }
 
-    static <T> @NotNull String repr(@Nullable HashSet<T> set) {
+    static @NotNull String repr(@Nullable HashSet<?> set) {
         if (set == null)
             return "null";
 
@@ -78,6 +80,13 @@ public interface Representable {
                 Lists.class.getSimpleName(),
                 String.join(", ", set.stream().map(Representable::repr).toList())
         );
+    }
+
+    static @NotNull String reprAsTuple(@Nullable Collection<?> collection) {
+        if (collection == null)
+            return "null";
+
+        return "(%s)".formatted(collection.stream().map(Representable::repr).collect(Collectors.joining(", ")));
     }
 
     static <T> @NotNull String repr(@Nullable T value) {

@@ -9,6 +9,18 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 
 public final class SemanticAssert {
+    private final static String BUILTINS_CODE = """
+                       
+                       class int {}
+                       class null {}
+                       class double {}
+                       class float {}
+                       class bool {}
+                       class str {}
+                       """;
+
+    public final static int BUILTINS_CLASSES = 6;
+
     public final ModuleContext context;
 
     private final boolean scanResult;
@@ -77,9 +89,10 @@ public final class SemanticAssert {
     }
 
     private static @NotNull SemanticAssert scan(@NotNull String expr, boolean quickOnly) {
-        final var parseResult = ParseResultAssert.parse(expr, BodyParser.MODULE_BODY)
-                .ok()
-                .hasNoDiagnosticMessages();
+        final var parseResult = ParseResultAssert.parse(
+                expr + (quickOnly ? "" : BUILTINS_CODE),
+                BodyParser.MODULE_BODY
+        ).ok().hasNoDiagnosticMessages();
 
         final var moduleContext = ModuleContext.create(
                 parseResult.context.text,

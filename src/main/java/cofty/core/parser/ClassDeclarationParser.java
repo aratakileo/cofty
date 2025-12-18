@@ -11,7 +11,7 @@ import java.util.Objects;
 public final class ClassDeclarationParser implements Parser<ClassDeclarationObject> {
     public final BodyParser.BodyType parentBody;
 
-    private ClassDeclarationParser(BodyParser.BodyType parentBody) {
+    private ClassDeclarationParser(@NotNull BodyParser.BodyType parentBody) {
         this.parentBody = parentBody;
     }
 

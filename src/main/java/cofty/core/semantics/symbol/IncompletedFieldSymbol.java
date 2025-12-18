@@ -29,59 +29,6 @@ public final class IncompletedFieldSymbol
         return basedOn;
     }
 
-    @Override
-    public @NotNull CompletionResult<CompletedFieldSymbol> tryComplete() {
-        var fieldTypePath = (AbsSymbolPath)null;
-
-        if (valueType() != null) {
-            final var resolveResult = parentOrThrow().resolveTypePath(valueTypeOrThrow().path);
-
-            if (resolveResult.isErr())
-                return CompletionResult.typeBasedFail(
-                        resolveResult.mapErr(CompletionResult.Status::of).unwrapErr(),
-                        basedOn.valueType.name
-                );
-
-            fieldTypePath = resolveResult.unwrap();
-        }
-
-        if (basedOn.value != null && fieldTypePath == null) {
-            var resolveResult = parentOrThrow().resolveTypePath(basedOn.valueOrThrow());
-
-            if (resolveResult.status != Scope.ResolveTypeResult.Status.OK) {
-                if (resolveResult.status == Scope.ResolveTypeResult.Status.INCOMPLETE_SYMBOL) {
-                    final var completionResult = Objects.requireNonNull(resolveResult.incompletedSymbol).tryComplete();
-
-                    if (completionResult.status != CompletionResult.Status.OK)
-                        return Cast.quiet(completionResult);
-
-                    resolveResult = parentOrThrow().resolveTypePath(basedOn.valueOrThrow());
-
-                    if (resolveResult.status != Scope.ResolveTypeResult.Status.OK)
-                        throw new IllegalStateException();
-
-                    if (fieldTypePath == null)
-                        fieldTypePath = resolveResult.successfullyResolvedPath;
-                } else return CompletionResult.failOf(resolveResult);
-
-                if (!Objects.requireNonNull(fieldTypePath).equals(Objects.requireNonNull(
-                        resolveResult.successfullyResolvedPath
-                )))
-                    return CompletionResult.notSuitableValueType(
-                            Cast.quiet(Objects.requireNonNull(basedOn.valueType).name),
-                            resolveResult.successfullyResolvedPath
-                    );
-            } else fieldTypePath = resolveResult.successfullyResolvedPath;
-        }
-
-        return CompletionResult.OK(new CompletedFieldSymbol(
-                nameToken(),
-                TypeDescriptor.reference(fieldTypePath),
-                isMutable(),
-                isValuePassed()
-        ));
-    }
-
     public static @NotNull IncompletedFieldSymbol create(@NotNull FieldDeclarationObject basedOn) {
         final var valueType = basedOn.valueType != null ? TypeDescriptor.rawReference(basedOn.valueType) : (
                 basedOn.value instanceof SimpleValueObject simpleValueObject

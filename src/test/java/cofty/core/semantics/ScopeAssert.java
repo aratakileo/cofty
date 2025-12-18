@@ -1,14 +1,18 @@
 package cofty.core.semantics;
 
-import cofty.core.semantics.symbol.Symbol;
-import cofty.core.semantics.symbol.TypeDescriptor;
-import cofty.core.semantics.symbol.WithValueType;
+import cofty.core.semantics.symbol.*;
+import cofty.core.semantics.symbol.path.AbsSymbolPath;
 import cofty.core.semantics.symbol.path.RelativeSymbolPath;
 import cofty.core.semantics.symbol.path.SymbolPath;
+import cofty.core.semantics.symbol.scope.ClassScope;
+import cofty.core.semantics.symbol.scope.CompletedFuncScope;
+import cofty.core.semantics.symbol.scope.FuncSignaturesScope;
 import cofty.core.semantics.symbol.scope.Scope;
 import cofty.util.Cast;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
+
+import java.util.Arrays;
 
 public sealed class ScopeAssert<T extends Scope> permits TypedScopeAssert {
     public final T scope;
@@ -40,6 +44,23 @@ public sealed class ScopeAssert<T extends Scope> permits TypedScopeAssert {
         return new ScopeAssert<>(resolve(symbolType, symbolName));
     }
 
+    public @NotNull ScopeAssert<CompletedFuncScope> completedPossibleFuncScope(
+            @NotNull String funcName,
+            @NotNull String @NotNull... requiredArgTypes
+    ) {
+        final var funcSignature = ArgsSignature.viewOf(
+                Arrays.stream(requiredArgTypes)
+                        .map(type -> TypeDescriptor.reference(resolve(ClassScope.class, type).absPath()))
+                        .toList()
+        );
+
+        return scope(FuncSignaturesScope.class, funcName).scope(CompletedFuncScope.class, funcSignature);
+    }
+
+    public @NotNull CompletedFieldSymbolAssert completedField(@NotNull String symbolName) {
+        return new CompletedFieldSymbolAssert(resolve(CompletedFieldSymbol.class, symbolName));
+    }
+
     public <_T extends Scope & WithValueType<P>, P extends SymbolPath<P>> @NotNull TypedScopeAssert<_T, P> typedScope(
             @NotNull Class<_T> symbolType,
             @NotNull String symbolName
@@ -62,6 +83,14 @@ public sealed class ScopeAssert<T extends Scope> permits TypedScopeAssert {
             @NotNull String checkableType
     ) {
         return resolve(symbolType, symbolName, TypeDescriptor.rawReference(checkableType));
+    }
+
+    public <_T extends Symbol & WithValueType<AbsSymbolPath>> @NotNull _T resolve(
+            @NotNull Class<_T> symbolType,
+            @NotNull String symbolName,
+            @NotNull AbsSymbolPath checkableType
+    ) {
+        return resolve(symbolType, symbolName, TypeDescriptor.reference(checkableType));
     }
 
     public <_T extends Symbol & WithValueType<P>, P extends SymbolPath<?>> @NotNull _T resolve(
