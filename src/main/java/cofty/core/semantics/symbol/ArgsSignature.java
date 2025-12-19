@@ -14,7 +14,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public final class ArgsSignature<T extends SymbolPath<T>> {
-    public final static String SIGNATURES_PREFIX = "@signature:";
+    public final static String SIGNATURES_PREFIX = "signature:";
     public final static ArgsSignature<RelativeSymbolPath> EMPTY_RELATIVE = createEmpty();
     public final static ArgsSignature<AbsSymbolPath> EMPTY_ABSOLUTE = createEmpty();
 
@@ -42,6 +42,10 @@ public final class ArgsSignature<T extends SymbolPath<T>> {
         this.requiredArgsCount = requiredArgsCount;
     }
 
+    public boolean containsDefaultArgs() {
+        return types == null || requiredArgsCount != types.size();
+    }
+
     public boolean containsName(@NotNull String name) {
         return names != null && names.contains(name);
     }
@@ -58,6 +62,10 @@ public final class ArgsSignature<T extends SymbolPath<T>> {
         return types == null ? List.of() : types;
     }
 
+    public @Nullable ExpressionValueObject getDefaultValue(int i) {
+        return defaults == null ? null : defaults.get(i);
+    }
+
     public @NotNull TypeDescriptor<T> getType(int i) {
         return Objects.requireNonNull(types).get(i);
     }
@@ -68,6 +76,13 @@ public final class ArgsSignature<T extends SymbolPath<T>> {
 
     public @NotNull String getName(int i) {
         return Objects.requireNonNull(names).get(i);
+    }
+
+    public @NotNull CompletedFieldSymbol getField(int i) {
+        if (fields == null)
+            throw new IllegalStateException();
+
+        return fields.get(i);
     }
 
     public @NotNull CompletedFieldSymbol getField(@NotNull String name) {
@@ -82,8 +97,10 @@ public final class ArgsSignature<T extends SymbolPath<T>> {
     }
 
     public void setParent(@NotNull Scope scope) {
-        if (fields == null)
+        if (types != null && fields == null)
             throw new IllegalStateException();
+
+        if (fields == null) return;
 
         for (final var field: fields)
             field.setParent(scope);

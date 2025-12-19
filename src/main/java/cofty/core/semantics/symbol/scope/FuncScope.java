@@ -1,7 +1,5 @@
 package cofty.core.semantics.symbol.scope;
 
-import cofty.core.lexer.token.TypedToken;
-import cofty.core.lexer.token.type.Simple;
 import cofty.core.semantics.symbol.*;
 import cofty.core.semantics.symbol.path.SymbolPath;
 import org.jetbrains.annotations.NotNull;
@@ -12,14 +10,14 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public sealed abstract class FuncScope<T extends SymbolPath<T>> extends NamedScope implements WithValueType<T>
+public sealed abstract class FuncScope<T extends SymbolPath<T>> extends ChildScope implements WithValueType<T>
         permits IncompletedFuncScope, CompletedFuncScope {
 
     public final ArgsSignature<T> argsSignature;
     public final TypeDescriptor<T> returnedValueTypePath;
 
     protected FuncScope(
-            @NotNull TypedToken<Simple> name,
+            @NotNull String name,
             @NotNull ArgsSignature<T> argsSignature,
             @NotNull TypeDescriptor<T> returnedValueTypePath
     ) {
@@ -31,10 +29,14 @@ public sealed abstract class FuncScope<T extends SymbolPath<T>> extends NamedSco
 
     @Override
     public void setParent(@NotNull Scope parent) {
-        super.setParent(parent);
+        if (this.parent != null)
+            throw new IllegalCallerException();
+
+        this.parent = parent;
+        this.absPath = parent.absPath().merge(argsSignature.minimumSignature);
 
         if (this instanceof CompletedFuncScope)
-            argsSignature.setParent(parent);
+            argsSignature.setParent(this);
     }
 
     @Override
@@ -84,23 +86,4 @@ public sealed abstract class FuncScope<T extends SymbolPath<T>> extends NamedSco
                 returnedValueTypePath
         );
     }
-
-//    @Override
-//    public boolean equals(@NotNull Object _other) {
-//        if (_other instanceof FuncScope<?> other) {
-//            if (!name().equals(other.name()) || args.size() != other.args.size() || !getClass().isInstance(other))
-//                return false;
-//
-//            if (args.isEmpty())
-//                return true;
-//
-//            for (final var arg : args.values().stream().toList())
-//                if (!other.args.containsKey(arg.name()) || !arg.valueTypeOrThrow().equals(other.args.get(arg.name()).valueTypeOrThrow()))
-//                    return false;
-//
-//            return true;
-//        }
-//
-//        return false;
-//    }
 }

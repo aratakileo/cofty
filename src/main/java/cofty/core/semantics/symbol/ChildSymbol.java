@@ -8,8 +8,8 @@ import org.jetbrains.annotations.Nullable;
 public abstract class ChildSymbol implements Symbol {
     private final String name;
 
-    private Scope parent = null;
-    private AbsSymbolPath absPath;
+    protected Scope parent = null;
+    protected AbsSymbolPath absPath;
 
     protected ChildSymbol(@NotNull String name) {
         this.name = name;

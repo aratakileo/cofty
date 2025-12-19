@@ -1,26 +1,19 @@
 package cofty.core.semantics.symbol.scope;
 
-import cofty.core.parser.ast.FieldDeclarationObject;
+import cofty.core.lexer.token.TypedToken;
+import cofty.core.lexer.token.type.Simple;
 import cofty.core.parser.ast.FuncDeclarationObject;
-import cofty.core.semantics.symbol.CompletedFieldSymbol;
-import cofty.core.semantics.symbol.IncompletedFieldSymbol;
-import cofty.core.semantics.symbol.IncompletedSymbol;
-import cofty.core.semantics.symbol.TypeDescriptor;
+import cofty.core.semantics.symbol.*;
 import cofty.core.semantics.symbol.path.RelativeSymbolPath;
-import cofty.util.Cast;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public final class IncompletedFuncScope extends FuncScope<RelativeSymbolPath>
-        implements IncompletedSymbol<FuncDeclarationObject, CompletedFuncScope> {
+        implements IncompletedSymbol<FuncDeclarationObject, CompletedFuncScope>, WithNameToken {
     private final FuncDeclarationObject basedOn;
 
     private IncompletedFuncScope(@NotNull FuncDeclarationObject basedOn) {
         super(
-                basedOn.name,
+                basedOn.name.content,
                 basedOn.argsSignature(),
                 basedOn.returnType == null ? TypeDescriptor.RELATIVE_NULL : TypeDescriptor.rawReference(basedOn.returnType)
         );
@@ -35,5 +28,10 @@ public final class IncompletedFuncScope extends FuncScope<RelativeSymbolPath>
 
     public static @NotNull IncompletedFuncScope create(@NotNull FuncDeclarationObject basedOn) {
         return new IncompletedFuncScope(basedOn);
+    }
+
+    @Override
+    public @NotNull TypedToken<Simple> nameToken() {
+        return basedOn.nameToken();
     }
 }

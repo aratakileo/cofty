@@ -1,5 +1,7 @@
 package cofty.core.semantics.symbol;
 
+import cofty.core.lexer.token.TypedToken;
+import cofty.core.lexer.token.type.Simple;
 import cofty.core.parser.ast.FieldDeclarationObject;
 import cofty.core.parser.ast.value.complex.SimpleValueObject;
 import cofty.core.semantics.symbol.path.AbsSymbolPath;
@@ -13,14 +15,14 @@ import java.util.Objects;
 
 public final class IncompletedFieldSymbol
         extends FieldSymbol<RelativeSymbolPath>
-        implements IncompletedSymbol<FieldDeclarationObject, CompletedFieldSymbol> {
+        implements IncompletedSymbol<FieldDeclarationObject, CompletedFieldSymbol>, WithNameToken {
     private final FieldDeclarationObject basedOn;
 
     private IncompletedFieldSymbol(
             @NotNull FieldDeclarationObject basedOn,
             @Nullable TypeDescriptor<RelativeSymbolPath> valueTypePath
     ) {
-        super(basedOn.nameToken(), valueTypePath, basedOn.mutable != null, basedOn.value != null);
+        super(basedOn.name(), valueTypePath, basedOn.mutable != null, basedOn.value != null);
         this.basedOn = basedOn;
     }
 
@@ -36,5 +38,10 @@ public final class IncompletedFieldSymbol
         );
 
         return new IncompletedFieldSymbol(basedOn, valueType);
+    }
+
+    @Override
+    public @NotNull TypedToken<Simple> nameToken() {
+        return basedOn.nameToken();
     }
 }

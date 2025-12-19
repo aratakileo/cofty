@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.IntStream;
 
 public final class Lists {
     private Lists() {}
@@ -15,6 +16,10 @@ public final class Lists {
         Collections.addAll(arrayList, args);
 
         return arrayList;
+    }
+
+    public static <T> @NotNull List<T> createList(@Nullable T value, int size) {
+        return IntStream.range(0, size).mapToObj(_ -> value).toList();
     }
 
     @SafeVarargs

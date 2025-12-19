@@ -2,6 +2,7 @@ package cofty.core.semantics;
 
 import cofty.core.compiler.diagnostic.Errors;
 import cofty.core.lexer.token.TypedToken;
+import cofty.core.lexer.token.type.Simple;
 import cofty.core.parser.ast.*;
 import cofty.core.parser.ast.value.ExpressionValueObject;
 import cofty.core.parser.ast.value.complex.ComplexValueObject;
@@ -54,13 +55,13 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
         if (resolvedSymbol != null)
             return (ClassScope)resolvedSymbol;
 
-        final var classScope = new ClassScope(classDeclarationObject.name);
+        final var classScope = new CoftyClassScope(classDeclarationObject.name);
         currentScope.put(classScope);
         return classScope;
     }
 
     protected @Nullable FuncScope<?> scanFunc(@NotNull FuncDeclarationObject funcDeclarationObject, boolean quickScan) {
-        final var resolvedSymbol = currentScope.resolveLocal(funcDeclarationObject.name());
+        final var resolvedSymbol = currentScope.resolve(funcDeclarationObject.name());
 
         if (resolvedSymbol != null && !(resolvedSymbol instanceof FuncSignaturesScope)) {
             reportDuplicateName((NamedSymbol)resolvedSymbol, funcDeclarationObject.nameToken());
@@ -70,13 +71,24 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
 
         final var signaturesScopeIsNew = resolvedSymbol == null;
 
+        if (signaturesScopeIsNew && !quickScan)
+            throw new IllegalStateException();
+
         final var funcSignaturesScope = signaturesScopeIsNew
-                ? new FuncSignaturesScope(funcDeclarationObject.nameToken())
+                ? new FuncSignaturesScope(funcDeclarationObject.name())
                 : (FuncSignaturesScope)resolvedSymbol;
 
-        final var resolvedFuncScope = !signaturesScopeIsNew
-                ? (FuncScope<?>)funcSignaturesScope.resolve(funcDeclarationObject.argsSignature().minimumSignature)
-                : null;
+        var resolvedFuncScope = (FuncScope<?>)null;
+
+        if (!signaturesScopeIsNew) {
+            if (quickScan) resolvedFuncScope = (FuncScope<?>)funcSignaturesScope.resolve(
+                    funcDeclarationObject.argsSignature().minimumSignature
+            );
+
+            else resolvedFuncScope = funcDeclarationObject.args.isEmpty()
+                    ? (FuncScope<?>) funcSignaturesScope.resolve(ArgsSignature.SIGNATURES_PREFIX)
+                    : funcSignaturesScope.resolveByArgsSignature(funcDeclarationObject.argsSignature().types()).unwrap();
+        }
 
         if (signaturesScopeIsNew)
             currentScope.put(funcSignaturesScope);
@@ -136,7 +148,7 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
         if (returnTypeResolveResult.isErr()) {
             context.messages.reportRange(
                     Objects.requireNonNull(funcDeclarationObject.returnType).name,
-                    returnTypeResolveResult.unwrapErr()
+                    returnTypeResolveResult.unwrapErrOrThrow()
             );
 
             isFailed = true;
@@ -161,13 +173,13 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
 
         currentScope = initialScope;
 
-        final var completedFuncScope = new CompletedFuncScope(
+        final var completedFuncScope = new CoftyFuncScope(
                 funcDeclarationObject.nameToken(),
                 ArgsSignature.create(
                         args,
                         funcDeclarationObject.args.stream().map(arg -> arg.value).toList()
                 ),
-                TypeDescriptor.reference(returnTypeResolveResult.unwrap())
+                TypeDescriptor.reference(returnTypeResolveResult.unwrapOrThrow())
         );
 
         funcSignaturesScope.removeSignature(Cast.<ArgsSignature<?>, ArgsSignature<RelativeSymbolPath>>quiet(
@@ -207,18 +219,18 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
     ) {
         final var resolvedSymbol = currentScope.resolveLocal(fieldDeclarationObject.name());
 
-        final var isCompletedSymbolDuplicate = resolvedSymbol instanceof CompletedFieldSymbol completedFieldSymbol
+        final var isCompletedSymbolDuplicate = resolvedSymbol instanceof CoftyFieldSymbol completedFieldSymbol
                 && completedFieldSymbol.isCompletedInsideOfMainCycle();
 
         final var isIncompletedSymbolDuplicate = resolvedSymbol != null && quickScan;
 
         if (isIncompletedSymbolDuplicate || isCompletedSymbolDuplicate) {
-            reportDuplicateName((NamedSymbol)resolvedSymbol, fieldDeclarationObject.nameToken());
+            reportDuplicateName((WithNameToken)resolvedSymbol, fieldDeclarationObject.nameToken());
             isFailed = true;
             return null;
         }
 
-        if (resolvedSymbol instanceof CompletedFieldSymbol completedFieldSymbol) {
+        if (resolvedSymbol instanceof CoftyFieldSymbol completedFieldSymbol) {
             completedFieldSymbol.markAsCompletedInsideOfMainCycle();
             return completedFieldSymbol;
         }
@@ -241,7 +253,7 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
             return null;
         }
 
-        final var completedFieldSymbol = CompletedFieldSymbol.create(
+        final var completedFieldSymbol = CoftyFieldSymbol.create(
                 fieldDeclarationObject,
                 resolvedType,
                 isCompletedInsideOfMainCycle
@@ -268,11 +280,11 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
             final var valueTypeResolveResult = currentScope.resolveTypePath(typePath);
 
             if (valueTypeResolveResult.isErr()) {
-                context.messages.reportRange(type.name, valueTypeResolveResult.unwrapErr());
+                context.messages.reportRange(type.name, valueTypeResolveResult.unwrapErrOrThrow());
                 return null;
             }
 
-            resolvedExplicitType = TypeDescriptor.reference(valueTypeResolveResult.unwrap());
+            resolvedExplicitType = TypeDescriptor.reference(valueTypeResolveResult.unwrapOrThrow());
         }
 
         if (value != null) {
@@ -312,7 +324,10 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
         if (resolvedValue == null)
             return null;
 
-        if (resolvedValue instanceof CompletedFieldSymbol completedFieldSymbol && !completedFieldSymbol.isValuePassed()) {
+        final var isFuncArg = resolvedValue.parentOrThrow() instanceof CompletedFuncScope completedFuncScope
+                        && completedFuncScope.argsSignature.containsName(resolvedValue.name());
+
+        if (!isFuncArg && resolvedValue instanceof CompletedFieldSymbol completedFieldSymbol && !completedFieldSymbol.isValuePassed()) {
             context.messages.report(
                     value instanceof FieldAccessObject fieldAccessObject
                             ? fieldAccessObject.nameToken()
@@ -341,7 +356,7 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
             switch (currentValueSegment) {
                 case SimpleValueObject _ -> throw new IllegalArgumentException();
                 case FieldAccessObject fieldAccessObject -> {
-                    resolvedSymbol = resolveSymbol(fieldAccessObject);
+                    resolvedSymbol = resolveSymbol(fieldAccessObject, resolvedSymbol != null);
 
                     if (resolvedSymbol == null) {
                         currentScope = initialScope;
@@ -359,7 +374,7 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
                 }
 
                 case FuncCallObject funcCallObject -> {
-                    resolvedSymbol = resolveScope(funcCallObject);
+                    resolvedSymbol = resolveScope(initialScope, funcCallObject, resolvedSymbol != null);
 
                     if (resolvedSymbol == null) {
                         currentScope = initialScope;
@@ -375,9 +390,9 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
             }
         }
 
-        if (resolvedSymbol instanceof ClassScope classScope) {
-            context.messages.report(
-                    classScope.nameToken(),
+        if (resolvedSymbol instanceof ClassScope) {
+            context.messages.reportRange(
+                    valueSegments.getLast().failTokensRange(),
                     Errors.NOT_A_VALUE,
                     SymbolType.FIELD,
                     SymbolType.CLASS
@@ -392,11 +407,20 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
         return resolvedSymbol;
     }
 
-    private @Nullable Scope resolveScope(@NotNull FuncCallObject funcCallObject) {
-        final var resolvedFuncSignaturesScope = currentScope.resolveLocal(funcCallObject.name());
+    private @Nullable Scope resolveScope(
+            @NotNull Scope argsScope,
+            @NotNull FuncCallObject funcCallObject,
+            boolean localOnly
+    ) {
+        final var resolvedFuncSignaturesScope = localOnly
+                ? currentScope.resolveLocal(funcCallObject.name())
+                : currentScope.resolve(funcCallObject.name());
 
         if (isNotDefined(funcCallObject, resolvedFuncSignaturesScope)) return null;
-        if (isNotInstanceof((NamedSymbol)resolvedFuncSignaturesScope, SymbolType.FUNCTION)) return null;
+        if (isNotInstanceof(resolvedFuncSignaturesScope, funcCallObject, SymbolType.FUNCTION)) return null;
+
+        final var initialScope = currentScope;
+        currentScope = argsScope;
 
         var resolvedFuncScope = (FuncScope<?>)null;
 
@@ -406,11 +430,15 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
             for (final var argValue: funcCallObject.args) {
                 final var passingType = resolveType(argValue);
 
-                if (passingType == null)
+                if (passingType == null) {
+                    currentScope = initialScope;
                     return null;
+                }
 
                 passingArgsSignature.add(passingType);
             }
+
+            currentScope = initialScope;
 
             final var funcSignatureScope = ((FuncSignaturesScope)resolvedFuncSignaturesScope);
 
@@ -446,10 +474,15 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
             resolvedFuncScope = (FuncScope<?>)funcSignatureScope.resolve(ArgsSignature.viewOf(passingArgsSignature));
 
             if (resolvedFuncScope == null) {
-                final var resolveResult = funcSignatureScope.resolveByArgsSignature(passingArgsSignature);
+                var resolveResult = funcSignatureScope.resolveByArgsSignature(passingArgsSignature);
+
+                while (resolveResult.isErr() && resolveResult.unwrapErrOrThrow().func instanceof IncompletedFuncScope incompletedFuncScope) {
+                    scanFunc(incompletedFuncScope.basedOn(), false);
+                    resolveResult = funcSignatureScope.resolveByArgsSignature(passingArgsSignature);
+                }
 
                 if (resolveResult.isErr()) {
-                    final var incompatibleArgInfo = resolveResult.unwrapErr();
+                    final var incompatibleArgInfo = resolveResult.unwrapErrOrThrow();
 
                     if (passingArgsSignature.size() < incompatibleArgInfo.func.argsSignature.requiredArgsCount) {
                         context.messages.reportRange(
@@ -474,7 +507,7 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
                     return null;
                 }
 
-                resolvedFuncScope = resolveResult.unwrap();
+                resolvedFuncScope = resolveResult.unwrapOrThrow();
             }
         } else resolvedFuncScope = ((FuncSignaturesScope)resolvedFuncSignaturesScope).resolveByEmptyArgsSignature();
 
@@ -486,12 +519,15 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
                     ((FuncSignaturesScope)resolvedFuncSignaturesScope).minArgumentsCount(),
                     0
             );
-
             return null;
         }
 
         if (resolvedFuncScope instanceof IncompletedFuncScope incompletedFuncScope) {
+            currentScope = incompletedFuncScope.parentOrThrow();
+
             final var completedFuncScope = scanFunc(incompletedFuncScope.basedOn(), false);
+
+            currentScope = initialScope;
 
             if (completedFuncScope == null) return null;
 
@@ -501,12 +537,14 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
         return Objects.requireNonNull(resolvedFuncScope);
     }
 
-    private @Nullable Symbol resolveSymbol(@NotNull FieldAccessObject fieldAccessObject) {
-        var resolvedSymbol = currentScope.resolveLocal(fieldAccessObject.name());
+    private @Nullable Symbol resolveSymbol(@NotNull FieldAccessObject fieldAccessObject, boolean localOnly) {
+        var resolvedSymbol = localOnly
+                ? currentScope.resolveLocal(fieldAccessObject.name())
+                : currentScope.resolve(fieldAccessObject.name());
 
         if (isNotDefined(fieldAccessObject, resolvedSymbol)) return null;
         if (resolvedSymbol instanceof ClassScope) return resolvedSymbol;
-        if (isNotInstanceof((NamedSymbol)resolvedSymbol, SymbolType.FIELD)) return null;
+        if (isNotInstanceof(resolvedSymbol, fieldAccessObject, SymbolType.FIELD)) return null;
 
         if (resolvedSymbol instanceof IncompletedFieldSymbol incompletedFieldSymbol) {
             final var completedFieldSymbol = deepScanFieldOrVariable(
@@ -548,14 +586,14 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
     }
 
     protected void reportDuplicateName(
-            @NotNull NamedSymbol firstDeclaration,
+            @NotNull WithNameToken firstDeclaration,
             @NotNull TypedToken<?> newName
     ) {
         reportDuplicateName(firstDeclaration, null, newName);
     }
 
     protected void reportDuplicateName(
-            @NotNull NamedSymbol firstDeclaration,
+            @NotNull WithNameToken firstDeclaration,
             @Nullable SymbolType firstDeclarationType,
             @NotNull TypedToken<?> newName
     ) {
@@ -563,7 +601,7 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
                 newName,
                 Errors.DUPLICATE_NAME,
                 firstDeclaration.name(),
-                firstDeclarationType == null ? SymbolType.of(firstDeclaration) : firstDeclarationType,
+                firstDeclarationType == null ? SymbolType.of(Cast.quiet(firstDeclaration)) : firstDeclarationType,
                 firstDeclaration.nameToken().getLineNumber(context.text)
         );
     }
@@ -577,7 +615,7 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
                 Errors.DUPLICATE_FUNC_SIGNATURE,
                 firstDeclaration.name(),
                 Representable.reprAsTuple(firstDeclaration.argsSignature.types()),
-                firstDeclaration.nameToken().getLineNumber(context.text)
+                ((WithNameToken)firstDeclaration).nameToken().getLineNumber(context.text)
         );
     }
 
@@ -588,10 +626,18 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
         return true;
     }
 
-    private boolean isNotInstanceof(@NotNull NamedSymbol symbol, @NotNull SymbolType expectedInstance) {
+    private boolean isNotInstanceof(
+            @NotNull Symbol symbol,
+            @NotNull WithDiagnosticFailAnchor failAnchor,
+            @NotNull SymbolType expectedInstance
+    ) {
         if (expectedInstance.isinstance(symbol)) return false;
 
-        context.messages.report(symbol.nameToken(), Errors.NOT_A_VALUE, expectedInstance, SymbolType.of(symbol));
+        context.messages.reportRange(
+                failAnchor.failTokensRange(),
+                Errors.NOT_A_VALUE, expectedInstance,
+                SymbolType.of(Cast.quiet(symbol))
+        );
         return true;
     }
 }

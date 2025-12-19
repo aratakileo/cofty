@@ -22,14 +22,18 @@ public final class Result<OK, ERR> {
         return err != null;
     }
 
-    public @NotNull OK unwrap() {
+    public @Nullable OK unwrap() {
+        return ok;
+    }
+
+    public @NotNull OK unwrapOrThrow() {
         if (ok != null)
             return ok;
 
         throw new IllegalStateException("Called unwrap() on the error value");
     }
 
-    public @NotNull ERR unwrapErr() {
+    public @NotNull ERR unwrapErrOrThrow() {
         if (err != null)
             return err;
 

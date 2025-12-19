@@ -7,6 +7,8 @@ import cofty.core.parser.ast.FieldValueAssignmentObject;
 import cofty.core.parser.ast.FuncDeclarationObject;
 import cofty.core.parser.ast.value.ExpressionValueObject;
 import cofty.core.parser.ast.value.ReturnStatementObject;
+import cofty.core.parser.ast.value.complex.FuncCallObject;
+import cofty.core.semantics.symbol.CoftyFieldSymbol;
 import cofty.core.semantics.symbol.CompletedFieldSymbol;
 import cofty.core.semantics.symbol.SymbolType;
 import cofty.core.semantics.symbol.TypeDescriptor;
@@ -51,7 +53,7 @@ public final class ModuleDeepScanner extends ModuleScanner {
                 );
 
                 case ReturnStatementObject returnStatementObject -> scanReturnStatement(returnStatementObject);
-                case ExpressionValueObject expressionValueObject -> scanExpressionStatement(expressionValueObject);
+                case ExpressionValueObject expressionValueObject -> scanFuncCall(expressionValueObject);
                 case FieldDeclarationObject fieldDeclarationObject -> deepScanFieldOrVariable(
                         fieldDeclarationObject,
                         true
@@ -69,7 +71,7 @@ public final class ModuleDeepScanner extends ModuleScanner {
     private void scanReturnStatement(@NotNull ReturnStatementObject returnStatementObject) {
         final var functionReturnsNothing = Objects.equals(
                 funcContext.valueTypeOrThrow(),
-                TypeDescriptor.reference(currentScope.resolveTypePath(TypeDescriptor.RELATIVE_NULL.path).unwrap())
+                TypeDescriptor.reference(currentScope.resolveTypePath(TypeDescriptor.RELATIVE_NULL.path).unwrapOrThrow())
         );
 
         if (functionReturnsNothing && returnStatementObject.value == null) return;
@@ -106,7 +108,7 @@ public final class ModuleDeepScanner extends ModuleScanner {
         );
     }
 
-    private void scanExpressionStatement(@NotNull ExpressionValueObject expressionValueObject) {
+    private void scanFuncCall(@NotNull ExpressionValueObject expressionValueObject) {
         final var resolvedFuncCall = resolveValue(expressionValueObject);
 
         if (resolvedFuncCall == null) isFailed = true;
@@ -128,7 +130,7 @@ public final class ModuleDeepScanner extends ModuleScanner {
                     Errors.IMMUTABLE_REASSIGNMENT,
                     SymbolType.of(assignableFieldSymbol),
                     assignableFieldSymbol.name(),
-                    assignableFieldSymbol.nameToken().getLineNumber(context.text)
+                    ((CoftyFieldSymbol)assignableFieldSymbol).nameToken().getLineNumber(context.text)
             );
 
             isFailed = true;

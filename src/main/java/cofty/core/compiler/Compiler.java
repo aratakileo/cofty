@@ -7,6 +7,7 @@ import cofty.core.semantics.ModuleContext;
 import cofty.core.semantics.ModuleDeepScanner;
 import cofty.core.semantics.ModuleQuickScanner;
 import cofty.core.semantics.symbol.scope.RootScope;
+import cofty.core.transpiler.ModuleTranspiler;
 import cofty.type.TextContent;
 import cofty.core.parser.BodyParser;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +51,7 @@ public final class Compiler {
 
         resultLogger.checkInParser(true);
 
-        final var moduleContext = ModuleContext.create(text, messages, new RootScope(), parseResult.valueOrThrow());
+        final var moduleContext = ModuleContext.create(text, messages, RootScope.create(), parseResult.valueOrThrow());
         final var quickAnalyzer = new ModuleQuickScanner(moduleContext);
 
         if (!quickAnalyzer.scan()) {
@@ -75,6 +76,15 @@ public final class Compiler {
         if (semanticTreeOutput)
             tryWriteScopeTreeSnapshot(moduleContext, false);
 
+        final var transpilator = new ModuleTranspiler(moduleContext, 4);
+
+        if (!tryWriteTranspiledJavaFile(transpilator)) {
+            resultLogger.checkInTranspilation(false);
+            return false;
+        }
+
+        resultLogger.checkInTranspilation(true);
+
         return true;
     }
 
@@ -88,5 +98,20 @@ public final class Compiler {
             e.printStackTrace(System.out);
             System.out.println();
         }
+    }
+
+    private static boolean tryWriteTranspiledJavaFile(@NotNull ModuleTranspiler transpiler) {
+        final var writePath = transpiler.context.text.dirPath() + '/' + transpiler.context.scope.name() + ".java";
+
+        try {
+            Files.writeString(Paths.get(writePath), transpiler.compile());
+            return true;
+        } catch (Exception e) {
+            System.out.printf("Failed to write java file \"%s\":%n", writePath);
+            e.printStackTrace(System.out);
+            System.out.println();
+        }
+
+        return false;
     }
 }

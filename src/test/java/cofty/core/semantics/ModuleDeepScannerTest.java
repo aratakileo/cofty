@@ -1,10 +1,7 @@
 package cofty.core.semantics;
 
 import cofty.core.compiler.diagnostic.Errors;
-import cofty.core.semantics.symbol.ArgsSignature;
 import cofty.core.semantics.symbol.scope.ClassScope;
-import cofty.core.semantics.symbol.scope.CompletedFuncScope;
-import cofty.core.semantics.symbol.scope.FuncSignaturesScope;
 import org.junit.jupiter.api.Test;
 
 class ModuleDeepScannerTest {

@@ -1,20 +1,18 @@
 package cofty.core.semantics.symbol;
 
-import cofty.core.lexer.token.TypedToken;
-import cofty.core.lexer.token.type.Simple;
 import cofty.core.semantics.symbol.path.SymbolPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public sealed abstract class FieldSymbol<T extends SymbolPath<?>> extends NamedSymbol implements WithValueType<T>
+public sealed abstract class FieldSymbol<T extends SymbolPath<?>> extends ChildSymbol implements WithValueType<T>
         permits IncompletedFieldSymbol, CompletedFieldSymbol {
     private final TypeDescriptor<T> valueTypePath;
 
     private final boolean isMutable;
-    private boolean isValuePassed;
+    protected boolean isValuePassed;
 
     protected FieldSymbol(
-            @NotNull TypedToken<Simple> name,
+            @NotNull String name,
             @Nullable TypeDescriptor<T> valueTypePath,
             boolean isMutable,
             boolean isValuePassed
@@ -48,12 +46,4 @@ public sealed abstract class FieldSymbol<T extends SymbolPath<?>> extends NamedS
     public boolean isValuePassed() {
         return isValuePassed;
     }
-
-    public boolean passValue() {
-        if (this instanceof IncompletedFieldSymbol)
-            throw new IllegalCallerException("passing value is not allowed for incomplete field symbol");
-
-        return !isValuePassed && (isValuePassed = true);
-    }
-
 }

@@ -1,7 +1,5 @@
 package cofty.core.semantics.symbol.scope;
 
-import cofty.core.lexer.token.TypedToken;
-import cofty.core.lexer.token.type.Simple;
 import cofty.core.semantics.symbol.*;
 import cofty.core.semantics.symbol.path.RelativeSymbolPath;
 import cofty.type.Result;
@@ -9,15 +7,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
-public final class FuncSignaturesScope extends NamedSymbol implements Scope {
+public final class FuncSignaturesScope extends ChildScope {
     private final HashMap<String, FuncScope<?>> funcs = new HashMap<>();
 
     private int maxArgumentsCount = 0, minArgumentsCount = Integer.MAX_VALUE;
+    private FuncScope<?> firstDeclaredSignature = null;
 
-    public FuncSignaturesScope(@NotNull TypedToken<Simple> name) {
+    public FuncSignaturesScope(@NotNull String name) {
         super(name);
     }
 
@@ -30,6 +27,9 @@ public final class FuncSignaturesScope extends NamedSymbol implements Scope {
             newFuncScope.setParent(this);
 
             funcs.put(newFuncScope.argsSignature.minimumSignature, newFuncScope);
+
+            if (firstDeclaredSignature == null)
+                firstDeclaredSignature = newFuncScope;
 
             maxArgumentsCount = Math.max(maxArgumentsCount, newFuncScope.argsSignature.size());
             minArgumentsCount = Math.min(minArgumentsCount, newFuncScope.argsSignature.requiredArgsCount);
@@ -68,6 +68,14 @@ public final class FuncSignaturesScope extends NamedSymbol implements Scope {
         return funcs.size();
     }
 
+    public @Nullable FuncScope<?> firstDeclaredSignature() {
+        return firstDeclaredSignature;
+    }
+
+    public @NotNull FuncScope<?> firstDeclaredSignatureOrThrow() {
+        return Objects.requireNonNull(firstDeclaredSignature);
+    }
+
     public int maxArgumentsCount() {
         return maxArgumentsCount;
     }
@@ -81,6 +89,9 @@ public final class FuncSignaturesScope extends NamedSymbol implements Scope {
     }
 
     public void removeSignature(@NotNull ArgsSignature<RelativeSymbolPath> argsSignature) {
+        if (firstDeclaredSignature == funcs.get(argsSignature.minimumSignature))
+            firstDeclaredSignature = null;
+
         funcs.remove(argsSignature.minimumSignature);
     }
 

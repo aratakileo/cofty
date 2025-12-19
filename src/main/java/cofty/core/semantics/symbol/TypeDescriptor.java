@@ -19,7 +19,7 @@ public final class TypeDescriptor<T extends SymbolPath<?>> {
         if (path.isAbs() == otherType.path.isAbs())
             return path.equals(otherType.path);
 
-        return path.endsWith(otherType.path);
+        return path.endsWith(otherType.path) || otherType.path.endsWith(path);
     }
 
     @Override
@@ -36,7 +36,7 @@ public final class TypeDescriptor<T extends SymbolPath<?>> {
     }
 
     public @NotNull String fullName() {
-        return path.fullName;
+        return String.join("/", path.parts);
     }
 
     public static @NotNull TypeDescriptor<AbsSymbolPath> reference(@NotNull AbsSymbolPath path) {

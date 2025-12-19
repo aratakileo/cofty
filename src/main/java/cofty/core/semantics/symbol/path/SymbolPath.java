@@ -68,6 +68,10 @@ public sealed abstract class SymbolPath<T extends SymbolPath<T>> permits AbsSymb
         return true;
     }
 
+    public @NotNull T sliceParts(int startPart) {
+        return Cast.quiet(raw(parts.subList(startPart, parts.size())));
+    }
+
     public @NotNull T sliceUntilPart(int endPart) {
         if (endPart == 0 || endPart >= parts.size() || endPart <= -parts.size())
             throw new IllegalArgumentException();
@@ -93,6 +97,10 @@ public sealed abstract class SymbolPath<T extends SymbolPath<T>> permits AbsSymb
         return fullName;
     }
 
+    public static @NotNull SymbolPath<?> raw(@NotNull String path) {
+        return path.startsWith(RootScope.NAME) ? absolute(path) : relative(path);
+    }
+
     public static @NotNull SymbolPath<?> raw(@NotNull List<String> path) {
         return path.getFirst().equals(RootScope.NAME) ? absolute(path) : relative(path);
     }
@@ -104,6 +112,15 @@ public sealed abstract class SymbolPath<T extends SymbolPath<T>> permits AbsSymb
 
             return token.content;
         }).toList());
+    }
+
+    public static @NotNull AbsSymbolPath asAbsolute(@NotNull String path) {
+        final var symbolPath = raw(path);
+
+        if (symbolPath.isAbs())
+            throw new IllegalArgumentException();
+
+        return absolute(AbsSymbolPath.ROOT.fullName + '.' + path);
     }
 
     public static @NotNull AbsSymbolPath absolute(@NotNull String path) {

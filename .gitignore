@@ -46,3 +46,4 @@ bin/
 *.cft
 *.scope
 *.qscope
+src/test/java/test.java

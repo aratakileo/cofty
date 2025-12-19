@@ -9,7 +9,8 @@ public final class CompileResultLogger {
     private StageState lexerStageState = StageState.SKIPPED,
             parserStageState = StageState.SKIPPED,
             quickSemanticAnalyzerState = StageState.SKIPPED,
-            deepSemanticAnalyzerState = StageState.SKIPPED;
+            deepSemanticAnalyzerState = StageState.SKIPPED,
+            transpilationState = StageState.SKIPPED;
 
     private String lexerStageMessage = null;
 
@@ -37,6 +38,10 @@ public final class CompileResultLogger {
         deepSemanticAnalyzerState = successfully ? StageState.OK : StageState.FAILED;
     }
 
+    public void checkInTranspilation(boolean successfully) {
+        transpilationState = successfully ? StageState.OK : StageState.FAILED;
+    }
+
     public void print() {
         System.out.printf(
                 "Stages:%n" +
@@ -44,12 +49,14 @@ public final class CompileResultLogger {
                         " [2] Parsing: %s%n" +
                         " [3] Semantic analysis:%n" +
                         "     - Primary symbol table generation: %s%n" +
-                        "     - Full pass: %s%n",
+                        "     - Full pass: %s%n" +
+                        " [4] Transpilation: %s%n",
                 lexerStageState,
                 (lexerStageMessage == null ? "" : " [" + lexerStageMessage + ']'),
                 parserStageState,
                 quickSemanticAnalyzerState,
-                deepSemanticAnalyzerState
+                deepSemanticAnalyzerState,
+                transpilationState
         );
 
         if (messages.isEmpty()) return;

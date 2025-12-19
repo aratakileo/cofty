@@ -97,7 +97,7 @@ public final class SemanticAssert {
         final var moduleContext = ModuleContext.create(
                 parseResult.context.text,
                 parseResult.context.messages.engine,
-                new RootScope(),
+                RootScope.create(),
                 parseResult.value()
         );
 
