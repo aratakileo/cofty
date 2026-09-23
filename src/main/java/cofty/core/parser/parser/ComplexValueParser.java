@@ -1,4 +1,4 @@
-package cofty.core.parser;
+package cofty.core.parser.parser;
 
 import cofty.core.compiler.diagnostic.Errors;
 import cofty.core.compiler.diagnostic.Warnings;
@@ -7,6 +7,8 @@ import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.type.TokenType;
 import cofty.core.lexer.token.type.operator.Bracket;
 import cofty.core.lexer.token.type.operator.Separator;
+import cofty.core.parser.ParseContext;
+import cofty.core.parser.ParseResult;
 import cofty.core.parser.ast.value.complex.*;
 import cofty.util.Lists;
 import cofty.core.parser.ast.value.ExpressionValueObject;

@@ -3,6 +3,7 @@ package cofty.core.parser;
 import cofty.core.compiler.diagnostic.DiagnosticCode;
 import cofty.core.compiler.diagnostic.DiagnosticEngine;
 import cofty.core.lexer.Lexer;
+import cofty.core.parser.parser.Parser;
 import cofty.type.TextContent;
 import cofty.util.Cast;
 import org.jetbrains.annotations.NotNull;

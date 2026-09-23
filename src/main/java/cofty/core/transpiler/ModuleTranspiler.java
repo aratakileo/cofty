@@ -13,11 +13,13 @@ import cofty.core.semantics.symbol.ArgsSignature;
 import cofty.core.semantics.symbol.CompletedFieldSymbol;
 import cofty.core.semantics.symbol.TypeDescriptor;
 import cofty.core.semantics.symbol.path.AbsSymbolPath;
+import cofty.core.semantics.symbol.path.RelativeSymbolPath;
 import cofty.core.semantics.symbol.scope.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public final class ModuleTranspiler {
     private final ArrayList<WithBody> bodyObjectsStack = new ArrayList<>();
@@ -73,14 +75,17 @@ public final class ModuleTranspiler {
 
                     emitLine();
 
-                    if (currentScope instanceof ModuleScope)
+                    if (currentScope instanceof ModuleScope || currentScope instanceof ClassScope)
                         emit("public static ");
 
                     if (!fieldSymbol.isMutable())
                         emit("final ");
 
                     emit(
-                            normalizeType(fieldSymbol.valueType(), fieldDeclarationObject.value == null),
+                            normalizeType(
+                                    Objects.requireNonNull(fieldSymbol.valueType()),
+                                    fieldDeclarationObject.value == null
+                            ),
                             fieldName,
                             "= "
                     );
@@ -208,6 +213,9 @@ public final class ModuleTranspiler {
             );
 
             case FuncCallObject funcCallObject -> {
+                if (currentScope.resolve(funcCallObject.name()) instanceof ClassScope)
+                    emit("new ");
+
                 emit(normalizeFuncCallName(funcCallObject.name()));
                 emit("(");
 
@@ -309,7 +317,8 @@ public final class ModuleTranspiler {
     }
 
     private static @NotNull String normalizeType(@NotNull TypeDescriptor<AbsSymbolPath> type, boolean nullable) {
-        if (!isCoftyBuiltinType(type.path.parts.getLast())) return type.path.sliceParts(2).fullName;
+        if (!isCoftyBuiltinType(type.path.parts.getLast()))
+            return type.path.sliceParts(2).fullName;
 
         return switch (type.path.parts.getLast()) {
             case "str" -> "String";

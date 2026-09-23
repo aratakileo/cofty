@@ -76,4 +76,21 @@ public final class FieldDeclarationObject implements DeclarationObject, WithName
     ) {
         return new FieldDeclarationObject(null, mutable, name, explicitlySpecifiedType, value);
     }
+
+    @Override
+    public @NotNull String prettyString(@NotNull String offset, int increase) {
+        final var result = new StringBuilder(offset);
+
+        result.append("define ")
+                .append(mutable == null ? "immutable" : "mutable")
+                .append(" field [`")
+                .append(name.content).append("`; ")
+                .append(valueType == null ? "type as in value" : valueType.prettyString("", increase))
+                .append(']');
+
+        if (value != null)
+            result.append(" := ").append(value.prettyString("", increase));
+
+        return result.toString();
+    }
 }

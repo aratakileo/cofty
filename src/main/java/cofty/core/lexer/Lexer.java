@@ -21,6 +21,7 @@ public final class Lexer {
     public final DiagnosticEngine.TextAssociated messages;
 
     private final Matcher matcher;
+    private ArrayList<TypedToken<?>> tokens;
 
     public Lexer(@NotNull TextContent text, @NotNull DiagnosticEngine messages) {
         this.text = text;
@@ -29,7 +30,8 @@ public final class Lexer {
     }
 
     public @NotNull ArrayList<TypedToken<?>> parse() {
-        final var tokens = new ArrayList<TypedToken<?>>();
+        tokens = new ArrayList<>();
+        
         var prevToken = (TypedToken<?>)null;
 
         for (final var matchResult: matcher.results().toList()) {
@@ -66,6 +68,17 @@ public final class Lexer {
             messages.report(prevToken, Errors.LEXER_SYNTAX_ERROR);
 
         return tokens;
+    }
+
+    public @NotNull String prettyString() {
+        if (tokens == null) return "";
+
+        final var textBuilder = new StringBuilder();
+
+        for (final var lexeme: tokens)
+            textBuilder.append(lexeme.prettyString()).append("\n");
+
+        return textBuilder.toString();
     }
 
     static {

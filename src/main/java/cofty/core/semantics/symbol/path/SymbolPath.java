@@ -68,8 +68,8 @@ public sealed abstract class SymbolPath<T extends SymbolPath<T>> permits AbsSymb
         return true;
     }
 
-    public @NotNull T sliceParts(int startPart) {
-        return Cast.quiet(raw(parts.subList(startPart, parts.size())));
+    public @NotNull RelativeSymbolPath sliceParts(int startPart) {
+        return relative(parts.subList(startPart, parts.size()));
     }
 
     public @NotNull T sliceUntilPart(int endPart) {
@@ -154,7 +154,10 @@ public sealed abstract class SymbolPath<T extends SymbolPath<T>> permits AbsSymb
         checkValidity(slicedPath, path);
 
         if (!startsWithRootName(slicedPath, path))
-            throw new IllegalArgumentException("not an absolute path");
+            throw new IllegalArgumentException(String.format(
+                    "not an absolute path `%s`",
+                    String.join(".", slicedPath)
+            ));
 
         return slicedPath == null ? new AbsSymbolPath(path) : new AbsSymbolPath(slicedPath);
     }

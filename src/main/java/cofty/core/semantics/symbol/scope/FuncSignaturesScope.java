@@ -21,7 +21,7 @@ public final class FuncSignaturesScope extends ChildScope {
     @Override
     public void put(@NotNull String name, @NotNull Symbol symbol) {
         if (!name.equals(name()))
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException(String.format("`%s` as `%s`", name, name()));
 
         if (symbol instanceof FuncScope<?> newFuncScope) {
             newFuncScope.setParent(this);

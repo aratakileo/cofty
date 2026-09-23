@@ -18,11 +18,11 @@ public interface Symbol {
         return Objects.requireNonNull(parent());
     }
 
-    default @NotNull String representedHeader() {
+    default @NotNull String prettyStringHeader() {
         return String.format("%s [%s]", name(), getClass().getSimpleName());
     }
 
-    default @NotNull String represented() {
-        return representedHeader() + ';';
+    default @NotNull String prettyString() {
+        return prettyStringHeader() + ';';
     }
 }

@@ -15,9 +15,11 @@ public sealed abstract class FuncScope<T extends SymbolPath<T>> extends ChildSco
 
     public final ArgsSignature<T> argsSignature;
     public final TypeDescriptor<T> returnedValueTypePath;
+    public final boolean classInitializer;
 
     protected FuncScope(
             @NotNull String name,
+            boolean classInitializer,
             @NotNull ArgsSignature<T> argsSignature,
             @NotNull TypeDescriptor<T> returnedValueTypePath
     ) {
@@ -25,6 +27,7 @@ public sealed abstract class FuncScope<T extends SymbolPath<T>> extends ChildSco
 
         this.returnedValueTypePath = returnedValueTypePath;
         this.argsSignature = argsSignature;
+        this.classInitializer = classInitializer;
     }
 
     @Override
@@ -76,10 +79,10 @@ public sealed abstract class FuncScope<T extends SymbolPath<T>> extends ChildSco
     }
 
     @Override
-    public @NotNull String representedHeader() {
+    public @NotNull String prettyStringHeader() {
         return String.format(
                 "%s (%s) -> %s",
-                super.representedHeader(),
+                super.prettyStringHeader(),
                 IntStream.range(0, argsSignature.size())
                         .mapToObj(i -> argsSignature.getName(i) + ": " + argsSignature.getType(i))
                         .collect(Collectors.joining(", ")),

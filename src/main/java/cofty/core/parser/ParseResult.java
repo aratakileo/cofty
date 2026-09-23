@@ -7,15 +7,15 @@ import java.util.Objects;
 
 public final class ParseResult<R> {
     private final R value;
-    private final boolean isCanceled;
+    private final boolean isSkipped;
 
-    private ParseResult(@Nullable R value, boolean isCanceled) {
+    private ParseResult(@Nullable R value, boolean isSkipped) {
         this.value = value;
-        this.isCanceled = isCanceled;
+        this.isSkipped = isSkipped;
     }
 
     public boolean isSkipped() {
-        return isCanceled;
+        return isSkipped;
     }
 
     public boolean isOK() {
@@ -23,7 +23,7 @@ public final class ParseResult<R> {
     }
 
     public boolean isFailed() {
-        return value == null && !isCanceled;
+        return value == null && !isSkipped;
     }
 
     public @Nullable R value() {

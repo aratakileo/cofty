@@ -5,6 +5,7 @@ import cofty.core.lexer.token.type.Simple;
 import cofty.core.parser.ast.value.BinaryExpressionObject;
 import cofty.core.parser.ast.value.UnaryExpressionObject;
 import cofty.core.parser.ast.value.complex.SimpleValueObject;
+import cofty.core.parser.parser.ValueExpressionParser;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

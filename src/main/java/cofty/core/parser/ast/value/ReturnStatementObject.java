@@ -7,6 +7,7 @@ import cofty.core.parser.ast.body.BodyResidentObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.MessageFormat;
 import java.util.List;
 
 public final class ReturnStatementObject implements BodyResidentObject, WithDiagnosticFailAnchor {
@@ -22,5 +23,14 @@ public final class ReturnStatementObject implements BodyResidentObject, WithDiag
     @Override
     public @NotNull List<TypedToken<?>> failTokensRange() {
         return value == null ? List.of(firstToken) : List.of(firstToken, value.lastFailToken());
+    }
+
+    @Override
+    public @NotNull String prettyString(@NotNull String offset, int increase) {
+        return MessageFormat.format(
+                "{1}returns {0}",
+                value == null ? "nothing" : value.prettyString("", increase),
+                offset
+        );
     }
 }

@@ -1,6 +1,7 @@
 package cofty.core.parser;
 
 import cofty.core.compiler.diagnostic.Errors;
+import cofty.core.parser.parser.FieldValueAssignmentParser;
 import cofty.type.Representable;
 import cofty.core.parser.ast.value.complex.ComplexValueObject;
 import cofty.core.parser.ast.value.complex.FieldAccessObject;

@@ -3,6 +3,7 @@ package cofty.core.parser;
 import cofty.core.compiler.diagnostic.Errors;
 import cofty.core.lexer.token.type.Keyword;
 import cofty.core.lexer.token.type.Simple;
+import cofty.core.parser.parser.FieldDeclarationParser;
 import cofty.type.Representable;
 import cofty.core.parser.ast.value.complex.SimpleValueObject;
 import org.junit.jupiter.api.Assertions;

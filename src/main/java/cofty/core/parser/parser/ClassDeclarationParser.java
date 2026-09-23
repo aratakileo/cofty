@@ -1,8 +1,10 @@
-package cofty.core.parser;
+package cofty.core.parser.parser;
 
 import cofty.core.compiler.diagnostic.Errors;
 import cofty.core.lexer.token.type.Keyword;
 import cofty.core.lexer.token.type.Simple;
+import cofty.core.parser.ParseContext;
+import cofty.core.parser.ParseResult;
 import cofty.core.parser.ast.ClassDeclarationObject;
 import org.jetbrains.annotations.NotNull;
 

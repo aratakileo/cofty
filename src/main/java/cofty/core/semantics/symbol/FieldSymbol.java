@@ -29,10 +29,10 @@ public sealed abstract class FieldSymbol<T extends SymbolPath<?>> extends ChildS
     }
 
     @Override
-    public @NotNull String represented() {
+    public @NotNull String prettyString() {
         return String.format(
                 "%s mutable=%s inited=%s -> %s;",
-                representedHeader(),
+                prettyStringHeader(),
                 isMutable,
                 isValuePassed,
                 valueTypePath

@@ -8,9 +8,10 @@ import org.jetbrains.annotations.NotNull;
 public final class ExternalFuncScope extends CompletedFuncScope {
     public ExternalFuncScope(
             @NotNull String name,
+            boolean classInitializer,
             @NotNull ArgsSignature<AbsSymbolPath> argsSignature,
             @NotNull TypeDescriptor<AbsSymbolPath> returnedValueTypePath
     ) {
-        super(name, argsSignature, returnedValueTypePath);
+        super(name, classInitializer, argsSignature, returnedValueTypePath);
     }
 }

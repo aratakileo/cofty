@@ -9,7 +9,7 @@ import cofty.core.semantics.ModuleQuickScanner;
 import cofty.core.semantics.symbol.scope.RootScope;
 import cofty.core.transpiler.ModuleTranspiler;
 import cofty.type.TextContent;
-import cofty.core.parser.BodyParser;
+import cofty.core.parser.parser.BodyParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Files;
@@ -40,6 +40,8 @@ public final class Compiler {
             return messages.isEmpty();
         }
 
+        tryWriteLexemes(lexer);
+
         resultLogger.checkInLexer(true);
 
         final var parseResult = BodyParser.MODULE_BODY.parse(new ParseContext(parsedTokens, text, messages));
@@ -49,9 +51,12 @@ public final class Compiler {
             return false;
         }
 
+        final var moduleContext = ModuleContext.create(text, messages, RootScope.create(), parseResult.valueOrThrow());
+
+        tryWriteAst(moduleContext);
+
         resultLogger.checkInParser(true);
 
-        final var moduleContext = ModuleContext.create(text, messages, RootScope.create(), parseResult.valueOrThrow());
         final var quickAnalyzer = new ModuleQuickScanner(moduleContext);
 
         if (!quickAnalyzer.scan()) {
@@ -88,11 +93,35 @@ public final class Compiler {
         return true;
     }
 
+    private static void tryWriteAst(@NotNull ModuleContext context) {
+        final var writePath = context.text.dirPath() + '/' + context.text.simpleName() + ".ast";
+
+        try {
+            Files.writeString(Paths.get(writePath), context.bodyObject.prettyString());
+        } catch (Exception e) {
+            System.out.printf("Failed to write AST file \"%s\":%n", writePath);
+            e.printStackTrace(System.out);
+            System.out.println();
+        }
+    }
+
+    private static void tryWriteLexemes(@NotNull Lexer lexer) {
+        final var writePath = lexer.text.dirPath() + '/' + lexer.text.simpleName() + ".lexemes";
+
+        try {
+            Files.writeString(Paths.get(writePath), lexer.prettyString());
+        } catch (Exception e) {
+            System.out.printf("Failed to write lexemes file \"%s\":%n", writePath);
+            e.printStackTrace(System.out);
+            System.out.println();
+        }
+    }
+
     private static void tryWriteScopeTreeSnapshot(@NotNull ModuleContext context, boolean isQuick) {
         final var writePath = context.text.dirPath() + '/' + context.scope.name() + (isQuick ? ".qscope" : ".scope");
 
         try {
-            Files.writeString(Paths.get(writePath), context.scope.represented());
+            Files.writeString(Paths.get(writePath), context.scope.prettyString());
         } catch (Exception e) {
             System.out.printf("Failed to write scope file \"%s\":%n", writePath);
             e.printStackTrace(System.out);

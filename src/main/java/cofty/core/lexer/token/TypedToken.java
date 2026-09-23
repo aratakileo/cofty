@@ -8,6 +8,7 @@ import cofty.util.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.MessageFormat;
 import java.util.Objects;
 import java.util.regex.MatchResult;
 
@@ -43,6 +44,10 @@ public final class TypedToken<T extends TokenType> {
         return Cast.quiet(this);
     }
 
+    public @NotNull String content() {
+        return content;
+    }
+
     @Override
     public @NotNull String toString() {
         return getClass().getSimpleName() + '{' +
@@ -51,6 +56,16 @@ public final class TypedToken<T extends TokenType> {
                 ", position=[" + start +
                 "-" + end +
                 "]}";
+    }
+
+    public @NotNull String prettyString() {
+        return MessageFormat.format(
+                "{0} [{1}-{2}] -> {3}",
+                Representable.repr(type),
+                start,
+                end,
+                Representable.repr(content)
+        );
     }
 
     public static <_T extends TokenType> @NotNull TypedToken<_T> build(

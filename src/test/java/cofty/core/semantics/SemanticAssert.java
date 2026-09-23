@@ -2,7 +2,7 @@ package cofty.core.semantics;
 
 import cofty.core.parser.ParseResultAssert;
 import cofty.core.compiler.diagnostic.DiagnosticCode;
-import cofty.core.parser.BodyParser;
+import cofty.core.parser.parser.BodyParser;
 import cofty.core.semantics.symbol.scope.RootScope;
 import cofty.core.semantics.symbol.scope.Scope;
 import org.jetbrains.annotations.NotNull;

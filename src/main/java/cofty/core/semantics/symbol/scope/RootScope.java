@@ -80,6 +80,7 @@ public final class RootScope extends ChildScope {
 
                 funcSignaturesScope.put(new ExternalFuncScope(
                         method.getName(),
+                        false,
                         args.isEmpty()
                                 ? ArgsSignature.EMPTY_ABSOLUTE
                                 : ArgsSignature.create(args, Lists.createList(null, args.size())),

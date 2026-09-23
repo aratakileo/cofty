@@ -12,4 +12,9 @@ public class ModuleBodyObject extends BodyObject implements DeclarationObject {
         super(residents, false);
         this.name = name;
     }
+
+    @Override
+    public @NotNull String prettyString(@NotNull String offset, int increase) {
+        return prettyString(offset, increase, false);
+    }
 }

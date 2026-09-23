@@ -46,4 +46,6 @@ bin/
 *.cft
 *.scope
 *.qscope
+*.lexemes
+*.ast
 src/test/java/test.java

@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDeepScanner {
     private final ArrayList<WithBody> bodyObjectsStack = new ArrayList<>();
@@ -175,6 +176,7 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
 
         final var completedFuncScope = new CoftyFuncScope(
                 funcDeclarationObject.nameToken(),
+                false,
                 ArgsSignature.create(
                         args,
                         funcDeclarationObject.args.stream().map(arg -> arg.value).toList()
@@ -341,6 +343,9 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
             return null;
         }
 
+        if (resolvedValue instanceof CoftyClassScope coftyClassScope)
+            return TypeDescriptor.reference(coftyClassScope.absPath());
+
         return Cast.<Symbol, WithValueType<AbsSymbolPath>>quiet(resolvedValue).valueTypeOrThrow();
     }
 
@@ -351,6 +356,7 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
         final var initialScope = currentScope;
 
         var resolvedSymbol = (Symbol)null;
+        var classInitializer = false;
 
         for (final var currentValueSegment: valueSegments) {
             switch (currentValueSegment) {
@@ -381,16 +387,17 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
                         return null;
                     }
 
-                    currentScope = (Scope)currentScope.resolve(
-                            ((CompletedFuncScope)resolvedSymbol).valueTypeOrThrow().path
-                    );
+                    if (resolvedSymbol instanceof CompletedFuncScope completedFuncScope)
+                        currentScope = (Scope) currentScope.resolve(completedFuncScope.valueTypeOrThrow().path);
+                    else
+                        classInitializer = true;
                 }
 
-                default -> throw new IllegalStateException();
+                default -> throw new IllegalStateException(currentValueSegment.prettyString("", 0));
             }
         }
 
-        if (resolvedSymbol instanceof ClassScope) {
+        if (resolvedSymbol instanceof ClassScope && !classInitializer) {
             context.messages.reportRange(
                     valueSegments.getLast().failTokensRange(),
                     Errors.NOT_A_VALUE,
@@ -417,12 +424,12 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
                 : currentScope.resolve(funcCallObject.name());
 
         if (isNotDefined(funcCallObject, resolvedFuncSignaturesScope)) return null;
-        if (isNotInstanceof(resolvedFuncSignaturesScope, funcCallObject, SymbolType.FUNCTION)) return null;
+        if (isNotInstanceof(resolvedFuncSignaturesScope, funcCallObject, SymbolType.FUNCTION, SymbolType.CLASS)) return null;
 
         final var initialScope = currentScope;
         currentScope = argsScope;
 
-        var resolvedFuncScope = (FuncScope<?>)null;
+        var resolvedScope = (Scope)null;
 
         if (!funcCallObject.args.isEmpty()) {
             final var passingArgsSignature = new ArrayList<TypeDescriptor<AbsSymbolPath>>();
@@ -471,9 +478,9 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
                 return null;
             }
 
-            resolvedFuncScope = (FuncScope<?>)funcSignatureScope.resolve(ArgsSignature.viewOf(passingArgsSignature));
+            resolvedScope = (Scope) funcSignatureScope.resolve(ArgsSignature.viewOf(passingArgsSignature));
 
-            if (resolvedFuncScope == null) {
+            if (resolvedScope == null) {
                 var resolveResult = funcSignatureScope.resolveByArgsSignature(passingArgsSignature);
 
                 while (resolveResult.isErr() && resolveResult.unwrapErrOrThrow().func instanceof IncompletedFuncScope incompletedFuncScope) {
@@ -507,22 +514,24 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
                     return null;
                 }
 
-                resolvedFuncScope = resolveResult.unwrapOrThrow();
+                resolvedScope = resolveResult.unwrapOrThrow();
             }
-        } else resolvedFuncScope = ((FuncSignaturesScope)resolvedFuncSignaturesScope).resolveByEmptyArgsSignature();
+        } else if (resolvedFuncSignaturesScope instanceof ClassScope)
+            resolvedScope = (Scope)resolvedFuncSignaturesScope;
+        else resolvedScope = ((FuncSignaturesScope) resolvedFuncSignaturesScope).resolveByEmptyArgsSignature();
 
-        if (resolvedFuncScope == null) {
+        if (resolvedScope == null) {
             context.messages.reportRange(
                     funcCallObject.failTokensRange(),
                     Errors.NOT_ENOUGH_ARGUMENTS,
                     funcCallObject.name(),
-                    ((FuncSignaturesScope)resolvedFuncSignaturesScope).minArgumentsCount(),
+                    ((FuncSignaturesScope) resolvedFuncSignaturesScope).minArgumentsCount(),
                     0
             );
             return null;
         }
 
-        if (resolvedFuncScope instanceof IncompletedFuncScope incompletedFuncScope) {
+        if (resolvedScope instanceof IncompletedFuncScope incompletedFuncScope) {
             currentScope = incompletedFuncScope.parentOrThrow();
 
             final var completedFuncScope = scanFunc(incompletedFuncScope.basedOn(), false);
@@ -531,10 +540,10 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
 
             if (completedFuncScope == null) return null;
 
-            resolvedFuncScope = completedFuncScope;
+            resolvedScope = completedFuncScope;
         }
 
-        return Objects.requireNonNull(resolvedFuncScope);
+        return Objects.requireNonNull(resolvedScope);
     }
 
     private @Nullable Symbol resolveSymbol(@NotNull FieldAccessObject fieldAccessObject, boolean localOnly) {
@@ -629,13 +638,15 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
     private boolean isNotInstanceof(
             @NotNull Symbol symbol,
             @NotNull WithDiagnosticFailAnchor failAnchor,
-            @NotNull SymbolType expectedInstance
+            @NotNull SymbolType... expectedInstances
     ) {
-        if (expectedInstance.isinstance(symbol)) return false;
+        for (final var expectedInstance: expectedInstances)
+            if (expectedInstance.isinstance(symbol)) return false;
 
         context.messages.reportRange(
                 failAnchor.failTokensRange(),
-                Errors.NOT_A_VALUE, expectedInstance,
+                Errors.NOT_A_VALUE,
+                Arrays.stream(expectedInstances).map(SymbolType::represent).collect(Collectors.joining(" or ")),
                 SymbolType.of(Cast.quiet(symbol))
         );
         return true;

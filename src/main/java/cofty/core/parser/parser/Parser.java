@@ -1,9 +1,12 @@
-package cofty.core.parser;
+package cofty.core.parser.parser;
 
 import cofty.core.compiler.diagnostic.DiagnosticCode;
 import cofty.core.compiler.diagnostic.Errors;
 import cofty.core.lexer.token.TypedToken;
 import cofty.core.lexer.token.type.TokenType;
+import cofty.core.parser.AstObjectFilter;
+import cofty.core.parser.ParseContext;
+import cofty.core.parser.ParseResult;
 import cofty.core.parser.ast.AstObject;
 import cofty.core.parser.ast.WithDiagnosticFailAnchor;
 import org.jetbrains.annotations.NotNull;

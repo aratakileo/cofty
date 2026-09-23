@@ -1,4 +1,4 @@
-package cofty.core.parser;
+package cofty.core.parser.parser;
 
 import cofty.core.compiler.diagnostic.DiagnosticRepresentable;
 import cofty.core.compiler.diagnostic.Errors;
@@ -7,6 +7,7 @@ import cofty.core.lexer.token.type.Keyword;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.type.operator.Assign;
 import cofty.core.lexer.token.type.operator.Separator;
+import cofty.core.parser.*;
 import cofty.core.parser.ast.FieldDeclarationObject;
 import cofty.core.parser.ast.value.complex.SimpleValueObject;
 import cofty.util.Types;

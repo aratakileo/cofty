@@ -12,8 +12,10 @@ import cofty.core.semantics.symbol.path.RelativeSymbolPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public final class FuncDeclarationObject implements DeclarationObject, WithBody, WithName {
     public final TypedToken<Simple> name;
@@ -80,5 +82,27 @@ public final class FuncDeclarationObject implements DeclarationObject, WithBody,
 
     public @NotNull ArgsSignature<RelativeSymbolPath> argsSignature() {
         return argsSignature;
+    }
+
+    @Override
+    public @NotNull String prettyString(@NotNull String offset, int increase) {
+        final var stringifiedArgs = args == null || args.isEmpty()
+                ? "no args"
+                : (
+                '\n' + args.stream()
+                        .map(arg -> arg.prettyString(
+                                offset.length() + increase,
+                                increase
+                        )).collect(Collectors.joining("\n")) + '\n' + offset
+        );
+
+        return MessageFormat.format(
+                "{4}define function [`{0}`; returns {1}] consumes [{2}] body '{'\n{3}{4}\n'}'",
+                name(),
+                returnType == null ? "nothing" : returnType.prettyString("", increase),
+                stringifiedArgs,
+                body.prettyString(offset.length() + increase, increase),
+                offset
+        );
     }
 }

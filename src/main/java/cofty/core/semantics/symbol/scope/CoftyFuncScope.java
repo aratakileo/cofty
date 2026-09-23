@@ -13,10 +13,11 @@ public final class CoftyFuncScope extends CompletedFuncScope implements WithName
 
     public CoftyFuncScope(
             @NotNull TypedToken<Simple> name,
+            boolean classInitializer,
             @NotNull ArgsSignature<AbsSymbolPath> argsSignature,
             @NotNull TypeDescriptor<AbsSymbolPath> returnedValueTypePath
     ) {
-        super(name.content, argsSignature, returnedValueTypePath);
+        super(name.content, classInitializer, argsSignature, returnedValueTypePath);
         this.name = name;
     }
 

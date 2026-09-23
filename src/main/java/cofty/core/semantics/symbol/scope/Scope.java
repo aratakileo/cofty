@@ -4,20 +4,14 @@ import cofty.core.compiler.diagnostic.Errors;
 import cofty.core.lexer.token.TypedToken;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.type.TokenType;
-import cofty.core.parser.ast.value.ExpressionValueObject;
-import cofty.core.parser.ast.value.complex.FieldAccessObject;
-import cofty.core.parser.ast.value.complex.FuncCallObject;
-import cofty.core.parser.ast.value.complex.SimpleValueObject;
 import cofty.core.semantics.symbol.*;
 import cofty.core.semantics.symbol.path.AbsSymbolPath;
 import cofty.core.semantics.symbol.path.RelativeSymbolPath;
 import cofty.core.semantics.symbol.path.SymbolPath;
-import cofty.core.semantics.symbol.TypeDescriptor;
 import cofty.type.Result;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -127,15 +121,15 @@ public interface Scope extends Symbol {
     int childrenCount();
 
     @Override
-    default @NotNull String represented() {
-        return represented(0, 3);
+    default @NotNull String prettyString() {
+        return prettyPrinted(0, 3);
     }
 
-    default @NotNull String represented(int offset, int childrenOffset) {
+    default @NotNull String prettyPrinted(int offset, int childrenOffset) {
         return String.format(
                 "%s%s {%s%s%s};",
                 " ".repeat(offset),
-                representedHeader(),
+                prettyStringHeader(),
                 isEmpty() ? "" : "\n",
                 representedChildren(offset, childrenOffset),
                 isEmpty() ? "" : "\n" + " ".repeat(offset)
@@ -146,8 +140,8 @@ public interface Scope extends Symbol {
         return childNames().stream().map(name -> {
             final var resolved = resolve(name);
 
-            if (resolved instanceof Scope scope) return scope.represented(offset + childrenOffset, childrenOffset);
-            return " ".repeat(offset + childrenOffset) + resolveOrThrow(name).represented();
+            if (resolved instanceof Scope scope) return scope.prettyPrinted(offset + childrenOffset, childrenOffset);
+            return " ".repeat(offset + childrenOffset) + resolveOrThrow(name).prettyString();
         }).collect(Collectors.joining("\n"));
     }
 

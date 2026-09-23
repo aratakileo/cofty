@@ -6,6 +6,7 @@ import cofty.core.parser.ast.body.BodyObject;
 import cofty.core.parser.ast.body.BodyResidentObject;
 import org.jetbrains.annotations.NotNull;
 
+import java.text.MessageFormat;
 import java.util.List;
 
 public final class ClassDeclarationObject implements DeclarationObject, WithBody, WithName {
@@ -25,5 +26,16 @@ public final class ClassDeclarationObject implements DeclarationObject, WithBody
     @Override
     public @NotNull TypedToken<Simple> nameToken() {
         return name;
+    }
+
+    @Override
+    public @NotNull String prettyString(@NotNull String offset, int increase) {
+
+        return MessageFormat.format(
+                "{2}define class `{0}` '{'\n{1}\n{2}'}'",
+                name.content,
+                body.prettyString(offset.length() + increase, increase),
+                offset
+        );
     }
 }

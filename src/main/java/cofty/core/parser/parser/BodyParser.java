@@ -1,8 +1,9 @@
-package cofty.core.parser;
+package cofty.core.parser.parser;
 
 import cofty.core.compiler.diagnostic.Errors;
 import cofty.core.lexer.token.type.Simple;
 import cofty.core.lexer.token.type.operator.Bracket;
+import cofty.core.parser.*;
 import cofty.core.parser.ast.*;
 import cofty.core.parser.ast.body.BodyObject;
 import cofty.core.parser.ast.body.BodyResidentObject;

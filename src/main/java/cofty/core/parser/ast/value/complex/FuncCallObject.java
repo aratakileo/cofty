@@ -7,7 +7,9 @@ import cofty.core.parser.ast.value.ExpressionValueObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.MessageFormat;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public final class FuncCallObject implements ValueSegmentObject, WithName {
     public final TypedToken<Simple> name;
@@ -45,5 +47,19 @@ public final class FuncCallObject implements ValueSegmentObject, WithName {
 
     public static @NotNull FuncCallObject createPostfixFuncCall(@NotNull TypedToken<Simple> name) {
         return new FuncCallObject(name, List.of(), null, true);
+    }
+
+    @Override
+    public @NotNull String prettyString(@NotNull String offset, int increase) {
+        return MessageFormat.format(
+                "{3}call {0} function `{1}` pass [{2}]",
+                isPostfix ? "postfix" : "normal",
+                name.content,
+                args.isEmpty()
+                        ? "no args"
+                        : args.stream().map(value -> value.prettyString("", increase))
+                            .collect(Collectors.joining("; ")),
+                offset
+        );
     }
 }
