@@ -2,7 +2,6 @@ package cofty.core.semantics;
 
 import cofty.core.compiler.diagnostic.Errors;
 import cofty.core.lexer.token.TypedToken;
-import cofty.core.lexer.token.type.Simple;
 import cofty.core.parser.ast.*;
 import cofty.core.parser.ast.value.ExpressionValueObject;
 import cofty.core.parser.ast.value.complex.ComplexValueObject;
@@ -62,7 +61,9 @@ public sealed abstract class ModuleScanner permits ModuleQuickScanner, ModuleDee
     }
 
     protected @Nullable FuncScope<?> scanFunc(@NotNull FuncDeclarationObject funcDeclarationObject, boolean quickScan) {
-        final var resolvedSymbol = currentScope.resolve(funcDeclarationObject.name());
+        final var resolvedSymbol = quickScan
+                ? currentScope.resolveLocal(funcDeclarationObject.name())
+                : currentScope.resolve(funcDeclarationObject.name());
 
         if (resolvedSymbol != null && !(resolvedSymbol instanceof FuncSignaturesScope)) {
             reportDuplicateName((NamedSymbol)resolvedSymbol, funcDeclarationObject.nameToken());

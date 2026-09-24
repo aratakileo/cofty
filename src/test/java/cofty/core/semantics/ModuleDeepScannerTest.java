@@ -88,11 +88,18 @@ class ModuleDeepScannerTest {
                         fun3()
                         fun3(69)
                         fun3(69, "Oooopsie! I'm overriding the default one argument")
+                        
+                        class Container {
+                            fun fun1(num: int) {
+                               fun1(num)
+                               Container.fun1(num)
+                           }
+                        }
                         """)
                 .ok()
                 .hasNoDiagnosticMessages()
                 .scope()
-                .containsChildren(SemanticAssert.BUILTINS_CLASSES + 3);
+                .containsChildren(SemanticAssert.BUILTINS_CLASSES + 4);
 
         scope.completedPossibleFuncScope("fun1").containsChildren(0);
         scope.completedPossibleFuncScope("fun2").containsChildren(0);

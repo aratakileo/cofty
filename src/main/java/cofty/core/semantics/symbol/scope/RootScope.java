@@ -7,6 +7,7 @@ import cofty.core.semantics.symbol.TypeDescriptor;
 import cofty.core.semantics.symbol.path.AbsSymbolPath;
 import cofty.core.semantics.symbol.path.SymbolPath;
 import cofty.util.Lists;
+import cofty.util.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,8 +61,8 @@ public final class RootScope extends ChildScope {
 
                 final var args = new ArrayList<CompletedFieldSymbol>();
 
-                for (final var arg: method.getParameterTypes()) {
-                    final var coftyType = javaToCoftyType(arg);
+                for (final var arg: method.getParameters()) {
+                    final var coftyType = javaToCoftyType(arg.getType());
 
                     args.add(new ExternalFieldSymbol(
                             arg.getName(),
@@ -98,6 +99,22 @@ public final class RootScope extends ChildScope {
     }
 
     private static @NotNull TypeDescriptor<AbsSymbolPath> javaToCoftyType(@NotNull Class<?> javaType) {
+        if (javaType.isArray()) {
+            final var canonicalName = javaType.getCanonicalName();
+            final var dimensions = Strings.count(canonicalName, "[]");
+
+            var arrayType = javaType;
+
+            while (arrayType.isArray())
+                arrayType = arrayType.getComponentType();
+
+            return TypeDescriptor.reference(SymbolPath.asAbsolute(
+                    "cofty.lang." + "array<".repeat(dimensions)
+                            + javaToCoftyType(arrayType)
+                            + ">".repeat(dimensions)
+            ));
+        }
+
         final var coftyTypeName = switch (javaType.getName()) {
             case "java.lang.String" -> "str";
             case "java.lang.Ineteger" -> "int";
